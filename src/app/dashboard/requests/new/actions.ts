@@ -1,0 +1,189 @@
+"use server";
+
+import { redirect } from "next/navigation";
+import { createClient } from "@/lib/supabase/server";
+import { generateLetter } from "@/lib/anthropic";
+import { getMissingRequiredFields, PayerKey, DEFAULT_PROMPT_TEMPLATE } from "@/lib/criteria";
+import { getActivePromptTemplate, getProcedureByKey } from "@/lib/criteria-repo";
+import { logAccess } from "@/lib/access-log";
+import { notifyLetterReady, notifyUsageThreshold } from "./notify";
+
+export async function createRequestAction(formData: FormData) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) redirect("/sign-in");
+
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("practice_id")
+    .eq("id", user.id)
+    .single();
+
+  if (!profile?.practice_id) redirect("/onboarding");
+
+  const { data: practice } = await supabase
+    .from("practices")
+    .select("plan, letters_included, letters_used_this_period, billing_status")
+    .eq("id", profile.practice_id)
+    .single();
+
+  if (practice?.billing_status === "suspended") {
+    redirect(`/dashboard/billing?error=${encodeURIComponent("Your account is suspended. Update billing to resume.")}`);
+  }
+
+  if (practice && practice.letters_used_this_period >= practice.letters_included) {
+    redirect(
+      `/dashboard/billing?error=${encodeURIComponent(
+        `You've used all ${practice.letters_included} letters on the ${practice.plan} plan. Upgrade to keep drafting.`
+      )}`
+    );
+  }
+
+  const procedureType = String(formData.get("procedure_type") || "");
+  const procedure = await getProcedureByKey(procedureType);
+  if (!procedure) {
+    redirect(`/dashboard/requests/new?error=${encodeURIComponent("Select a procedure type.")}`);
+    return;
+  }
+
+  const caseFields: Record<string, string> = {};
+  for (const field of procedure.requiredFields) {
+    caseFields[field.key] = String(formData.get(field.key) || "").trim();
+  }
+
+  const missing = getMissingRequiredFields(procedure, caseFields);
+  if (missing.length > 0) {
+    const params = new URLSearchParams();
+    params.set("procedure_type", procedureType);
+    params.set(
+      "error",
+      `Missing required fields before this can go to Claude: ${missing.map((f) => f.label).join(", ")}`
+    );
+    redirect(`/dashboard/requests/new?${params.toString()}`);
+  }
+
+  const patientReference = String(formData.get("patient_reference") || "").trim();
+  const payer = String(formData.get("payer") || "") as PayerKey;
+  const icd10Codes = String(formData.get("icd10_codes") || "")
+    .split(",")
+    .map((c) => c.trim())
+    .filter(Boolean);
+  const orderingPhysicianName = String(formData.get("ordering_physician_name") || "").trim();
+  const orderingPhysicianCredentials = String(formData.get("ordering_physician_credentials") || "").trim();
+  const intendedUse = String(formData.get("intended_use") || caseFields.intended_use || "").trim();
+  const redFlags = formData.getAll("red_flags").map(String);
+
+  if (!patientReference || !payer || !orderingPhysicianName) {
+    redirect(
+      `/dashboard/requests/new?procedure_type=${procedureType}&error=${encodeURIComponent(
+        "Patient reference, payer, and ordering physician are required."
+      )}`
+    );
+  }
+
+  const { data: request, error: insertError } = await supabase
+    .from("pa_requests")
+    .insert({
+      practice_id: profile.practice_id,
+      created_by: user.id,
+      patient_reference: patientReference,
+      procedure_type: procedureType,
+      payer,
+      icd10_codes: icd10Codes,
+      symptom_duration: caseFields.symptom_duration || null,
+      case_fields: caseFields,
+      red_flags: redFlags,
+      intended_use: intendedUse || null,
+      ordering_physician_name: orderingPhysicianName,
+      ordering_physician_credentials: orderingPhysicianCredentials || null,
+      status: "draft",
+    })
+    .select("id")
+    .single();
+
+  if (insertError || !request) {
+    redirect(
+      `/dashboard/requests/new?procedure_type=${procedureType}&error=${encodeURIComponent(
+        insertError?.message || "Could not save this request."
+      )}`
+    );
+    return;
+  }
+
+  await logAccess({ userId: user.id, action: "create", resourceType: "pa_request", resourceId: request.id });
+
+  await draftLetterForRequest(request.id);
+  redirect(`/dashboard/requests/${request.id}`);
+}
+
+export async function draftLetterForRequest(requestId: string) {
+  const supabase = await createClient();
+
+  const { data: request } = await supabase
+    .from("pa_requests")
+    .select("*")
+    .eq("id", requestId)
+    .single();
+
+  if (!request) throw new Error("Request not found");
+
+  const procedure = await getProcedureByKey(request.procedure_type);
+  if (!procedure) throw new Error(`Unknown or disabled procedure: ${request.procedure_type}`);
+
+  const activeTemplate = await getActivePromptTemplate();
+  const promptTemplate = activeTemplate?.content || DEFAULT_PROMPT_TEMPLATE;
+
+  const content = await generateLetter({
+    procedure,
+    promptTemplate,
+    payer: request.payer as PayerKey,
+    patientReference: request.patient_reference,
+    icd10Codes: request.icd10_codes,
+    orderingPhysicianName: request.ordering_physician_name,
+    orderingPhysicianCredentials: request.ordering_physician_credentials ?? undefined,
+    intendedUse: request.intended_use ?? undefined,
+    redFlags: request.red_flags,
+    caseFields: request.case_fields as Record<string, string>,
+  });
+
+  const { data: lastVersion } = await supabase
+    .from("letters")
+    .select("version")
+    .eq("pa_request_id", requestId)
+    .order("version", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  await supabase.from("letters").insert({
+    pa_request_id: requestId,
+    content,
+    version: (lastVersion?.version || 0) + 1,
+    model: process.env.ANTHROPIC_MODEL || "claude-sonnet-5",
+  });
+
+  await notifyLetterReady(requestId, request.created_by);
+
+  const { data: practice } = await supabase
+    .from("practices")
+    .select("id, plan, letters_used_this_period, letters_included")
+    .eq("id", request.practice_id)
+    .single();
+
+  if (practice) {
+    const newUsage = practice.letters_used_this_period + 1;
+    await supabase.from("practices").update({ letters_used_this_period: newUsage }).eq("id", practice.id);
+
+    if (practice.plan === "pilot") {
+      await notifyUsageThreshold(practice.id, newUsage, practice.letters_included);
+    }
+  }
+}
+
+export async function redraftLetterAction(formData: FormData) {
+  const requestId = String(formData.get("request_id") || "");
+  if (!requestId) return;
+  await draftLetterForRequest(requestId);
+  redirect(`/dashboard/requests/${requestId}`);
+}
