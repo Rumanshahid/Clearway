@@ -1,7 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, createAdminClient } from "@/lib/supabase/server";
 import type { PracticePlan } from "@/lib/database.types";
 import { PILOT_LETTERS_INCLUDED } from "@/lib/billing";
 
@@ -30,7 +30,13 @@ export async function completeOnboardingAction(formData: FormData) {
     redirect(`/onboarding?error=${encodeURIComponent("You must accept the Business Associate Agreement to continue.")}`);
   }
 
-  const { data: practice, error: practiceError } = await supabase
+  // This one insert is a deliberate RLS bypass: creating-and-linking-yourself-to
+  // a brand-new practice is a bootstrapping step that the normal per-practice
+  // RLS policies can't express (your profile isn't linked to the practice
+  // until the next step, so the standard SELECT policy can't see the row it
+  // just inserted). `user` above is already verified as a real logged-in user.
+  const admin = await createAdminClient();
+  const { data: practice, error: practiceError } = await admin
     .from("practices")
     .insert({
       name,
