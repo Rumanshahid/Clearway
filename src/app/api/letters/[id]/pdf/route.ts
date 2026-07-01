@@ -11,12 +11,20 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
   const { id } = await params;
   const supabase = await createClient();
 
-  const { data: letter } = await supabase.from("letters").select("*, pa_requests(*)").eq("id", id).single();
+  const { data: letter } = await supabase.from("letters").select("*").eq("id", id).single();
   if (!letter) {
     return NextResponse.json({ error: "Letter not found" }, { status: 404 });
   }
 
-  const paRequest = Array.isArray(letter.pa_requests) ? letter.pa_requests[0] : letter.pa_requests;
+  const { data: paRequest } = await supabase
+    .from("pa_requests")
+    .select("*")
+    .eq("id", letter.pa_request_id)
+    .single();
+  if (!paRequest) {
+    return NextResponse.json({ error: "Request not found" }, { status: 404 });
+  }
+
   const procedure = await getProcedureByKey(paRequest.procedure_type);
 
   const {

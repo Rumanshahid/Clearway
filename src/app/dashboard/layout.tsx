@@ -11,15 +11,27 @@ export default async function DashboardLayout({ children }: { children: React.Re
   } = await supabase.auth.getUser();
   if (!user) redirect("/sign-in");
 
-  const { data: profile } = await supabase
+  const { data: profile, error: profileError } = await supabase
     .from("profiles")
-    .select("practice_id, full_name, role, practices(name, plan, billing_status)")
+    .select("practice_id, full_name, role")
     .eq("id", user.id)
     .single();
 
+  if (profileError) {
+    console.error("dashboard layout: failed to load profile", profileError);
+  }
+
   if (!profile?.practice_id) redirect("/onboarding");
 
-  const practice = Array.isArray(profile.practices) ? profile.practices[0] : profile.practices;
+  const { data: practice, error: practiceError } = await supabase
+    .from("practices")
+    .select("name, plan, billing_status")
+    .eq("id", profile.practice_id)
+    .single();
+
+  if (practiceError) {
+    console.error("dashboard layout: failed to load practice", practiceError);
+  }
 
   const { data: notifications } = await supabase
     .from("notifications")

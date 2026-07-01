@@ -37,9 +37,11 @@ export async function getUsersWithProfiles(query?: string) {
   const supabase = await createClient();
 
   const { data: authList } = await admin.auth.admin.listUsers({ perPage: 200 });
-  const { data: profiles } = await supabase.from("profiles").select("*, practices(name)");
+  const { data: profiles } = await supabase.from("profiles").select("*");
+  const { data: practices } = await supabase.from("practices").select("id, name");
 
   const profileMap = new Map((profiles || []).map((p) => [p.id, p]));
+  const practiceNameById = new Map((practices || []).map((p) => [p.id, p.name]));
 
   let rows = (authList?.users || []).map((u) => {
     const profile = profileMap.get(u.id);
@@ -49,7 +51,7 @@ export async function getUsersWithProfiles(query?: string) {
       fullName: profile?.full_name || "",
       role: (profile?.role || "clinic_user") as UserRole,
       flagged: profile?.flagged || false,
-      practiceName: (profile as unknown as { practices?: { name: string } })?.practices?.name || "",
+      practiceName: (profile?.practice_id && practiceNameById.get(profile.practice_id)) || "",
       createdAt: u.created_at,
     };
   });
