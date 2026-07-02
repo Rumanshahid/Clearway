@@ -38,6 +38,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
       procedureLabel: procedure?.label || paRequest.procedure_type,
       payer: paRequest.payer,
       content: letter.content,
+      sections: letter.sections,
     })
   );
 

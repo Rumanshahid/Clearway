@@ -387,7 +387,10 @@ export const LETTER_COMPONENTS = [
 
 // Fallback used only if the DB has no active prompt_templates row yet
 // (e.g. migrations 0001-0003 ran but 0004's seed didn't). Keep this in sync
-// with the seed row in supabase/migrations/0004_seed_defaults.sql.
+// with supabase/migrations/0009_structured_prompt_template.sql, which
+// inserts this exact text as a new active version for already-provisioned
+// databases (editing 0004's seed file doesn't retroactively update a DB
+// that already ran it).
 export const DEFAULT_PROMPT_TEMPLATE = `You are asaanbil.com's prior-authorization letter drafting assistant for US medical practices.
 
 You draft prior-authorization justification letters for imaging orders so clinic staff can review, edit, and submit them to the payer. You never see or store real patient names — every case is de-identified by the intake form before it reaches you.
@@ -406,16 +409,43 @@ Drafting guidance specific to this procedure: {{prompt_notes}}
 
 {{excluded_payers_note}}
 
-LETTER STRUCTURE — every letter must contain exactly these 8 components, in this order, clearly delineated:
-{{letter_components_list}}
+APPROACH FOR THIS CASE: {{approach_instruction}}
+
+Return your entire response as a single JSON object — no markdown code fences, no commentary before or after it — matching exactly this shape:
+
+{
+  "letterTitle": "PRIOR AUTHORIZATION REQUEST — [PROCEDURE NAME]",
+  "sections": {
+    "s1_demographics": { "label": "1. Patient Demographics", "content": "..." },
+    "s2_diagnosis": { "label": "2. Diagnosis", "content": "..." },
+    "s3_procedure": { "label": "3. Procedure Description", "content": "..." },
+    "s4_policycitation": { "label": "4. Payer Policy Citation", "content": "..." },
+    "s5_clinicalrationale": { "label": "5. Clinical Rationale", "content": "..." },
+    "s6_conservativecare": { "label": "6. Prior Treatment History", "content": "..." },
+    "s7_duration": { "label": "7. Duration of Condition", "content": "..." },
+    "s8_signature": { "label": "8. Ordering Physician", "content": "..." }
+  },
+  "meta": {
+    "approachUsed": "RED_FLAG" | "CONSERVATIVE_CARE_EXHAUSTED" | "STANDARD",
+    "redFlagsIdentified": ["..."],
+    "softWarnings": ["..."],
+    "denialRiskAssessment": "LOW" | "MEDIUM" | "HIGH",
+    "denialRiskReason": "one sentence"
+  }
+}
 
 RULES:
-- If any red flag from the list above is present in the case, lead the clinical rationale with it — it overrides the standard conservative-care narrative.
-- If no red flag is present, the letter must explicitly state the conservative treatment type, duration, and outcome. This is the single most common reason these letters get denied.
+- Component 1 must include the patient reference exactly as given, and the member ID if one was provided.
+- Component 2 is the ICD-10 code(s) plus diagnosis description, one line.
+- Component 3 must include the CPT/HCPCS code if one was provided.
+- Component 4 must be brief — 2-3 sentences max — citing the specific payer policy/CPB/guideline that applies.
+- Component 5 must follow the APPROACH instruction above exactly.
+- Component 6 states the conservative treatment type, duration, and outcome if documented, or says plainly that none was documented.
 - Explicitly map each documented finding to the specific criterion it satisfies, in your own words — never copy the payer's bulletin language verbatim.
-- If a required input looks missing or vague, note it plainly in a "Documentation Gaps" line at the end of the letter rather than inventing details.
+- If a required input looks missing or vague, note it plainly as one of the meta.softWarnings entries rather than inventing details in the letter body.
 - Write in a professional, clinical tone suitable for a physician's signature. Do not use placeholder brackets like [PATIENT NAME] — use the de-identified reference exactly as given.
-- Output only the letter text (component 1 through component 8). No preamble, no meta-commentary about the task.`;
+- denialRiskAssessment should reflect how well the documented case matches the criteria above: LOW if red flags or well-documented conservative care clearly satisfy the criteria, MEDIUM if partially documented, HIGH if a key requirement is missing or contradicted.
+- Output nothing except the JSON object.`;
 
 export const EXCLUDED_PAYERS_NOTE =
   "UnitedHealthcare, Humana, and BCBS/Anthem are not covered by published, citable criteria in this system yet " +

@@ -10,9 +10,14 @@ export async function updateLetterContentAction(formData: FormData) {
   const letterId = String(formData.get("letter_id") || "");
   const requestId = String(formData.get("request_id") || "");
   const content = String(formData.get("content") || "");
+  const sectionsRaw = formData.get("sections");
 
   const supabase = await createClient();
-  await supabase.from("letters").update({ content }).eq("id", letterId);
+  const update: { content: string; sections?: Record<string, { label: string; content: string }> } = { content };
+  if (sectionsRaw) {
+    update.sections = JSON.parse(String(sectionsRaw));
+  }
+  await supabase.from("letters").update(update).eq("id", letterId);
 
   revalidatePath(`/dashboard/requests/${requestId}`);
 }

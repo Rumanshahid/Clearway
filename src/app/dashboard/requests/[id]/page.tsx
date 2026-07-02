@@ -96,6 +96,8 @@ export default async function RequestDetailPage({
             letterId={letter.id}
             requestId={request.id}
             content={letter.content}
+            sections={letter.sections}
+            meta={letter.meta}
             locked={!!letter.approved_at}
           />
           <div className="flex items-center gap-3 mt-4">

@@ -1,7 +1,5 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-
-export const maxDuration = 60;
 import { generateLetter } from "@/lib/anthropic";
 import { getProcedureByKey } from "@/lib/criteria-repo";
 import type { PayerKey } from "@/lib/criteria";
@@ -18,7 +16,11 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Admin access required" }, { status: 403 });
   }
 
-  const { template, procedureKey } = (await request.json()) as { template: string; procedureKey: string };
+  const { template, procedureKey, useRedFlags } = (await request.json()) as {
+    template: string;
+    procedureKey: string;
+    useRedFlags?: boolean;
+  };
   if (!template?.trim()) {
     return NextResponse.json({ error: "Template can't be empty" }, { status: 400 });
   }
@@ -34,19 +36,21 @@ export async function POST(request: Request) {
   }
 
   try {
-    const content = await generateLetter({
+    const result = await generateLetter({
       procedure,
       promptTemplate: template,
       payer: "aetna" as PayerKey,
       patientReference: "PT-PREVIEW-01",
+      memberId: "M-SAMPLE-001",
       icd10Codes: ["M54.5"],
+      cptCode: "72148",
       orderingPhysicianName: "Dr. Jane Sample",
       orderingPhysicianCredentials: "MD",
       intendedUse: "Preview / test generation",
-      redFlags: [],
+      redFlags: useRedFlags ? procedure.redFlags : [],
       caseFields: dummyCaseFields,
     });
-    return NextResponse.json({ content });
+    return NextResponse.json(result);
   } catch (err) {
     return NextResponse.json({ error: err instanceof Error ? err.message : "Generation failed" }, { status: 500 });
   }

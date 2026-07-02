@@ -5,6 +5,16 @@ export type PracticePlan = "pilot" | "practice" | "multi_site";
 export type BillingStatus = "active" | "grace_period" | "suspended";
 export type UserRole = "clinic_user" | "clinic_admin" | "super_admin";
 export type RequestStatus = "draft" | "reviewed" | "submitted" | "approved" | "denied";
+export type LetterApproach = "RED_FLAG" | "CONSERVATIVE_CARE_EXHAUSTED" | "STANDARD";
+export type DenialRisk = "LOW" | "MEDIUM" | "HIGH";
+
+export interface LetterMeta {
+  approachUsed: LetterApproach;
+  redFlagsIdentified: string[];
+  softWarnings: string[];
+  denialRiskAssessment: DenialRisk;
+  denialRiskReason: string;
+}
 
 export interface Database {
   public: {
@@ -69,6 +79,8 @@ export interface Database {
           procedure_type: string;
           payer: string;
           icd10_codes: string[];
+          member_id: string | null;
+          cpt_code: string | null;
           symptom_duration: string | null;
           case_fields: Record<string, unknown>;
           red_flags: string[];
@@ -103,6 +115,8 @@ export interface Database {
           id: string;
           pa_request_id: string;
           content: string;
+          sections: Record<string, { label: string; content: string }> | null;
+          meta: LetterMeta | null;
           version: number;
           model: string | null;
           approved_at: string | null;

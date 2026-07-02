@@ -70,6 +70,8 @@ export async function createRequestAction(formData: FormData) {
     .split(",")
     .map((c) => c.trim())
     .filter(Boolean);
+  const memberId = String(formData.get("member_id") || "").trim();
+  const cptCode = String(formData.get("cpt_code") || "").trim();
   const orderingPhysicianName = String(formData.get("ordering_physician_name") || "").trim();
   const orderingPhysicianCredentials = String(formData.get("ordering_physician_credentials") || "").trim();
   const intendedUse = String(formData.get("intended_use") || caseFields.intended_use || "").trim();
@@ -92,6 +94,8 @@ export async function createRequestAction(formData: FormData) {
       procedure_type: procedureType,
       payer,
       icd10_codes: icd10Codes,
+      member_id: memberId || null,
+      cpt_code: cptCode || null,
       symptom_duration: caseFields.symptom_duration || null,
       case_fields: caseFields,
       red_flags: redFlags,
@@ -135,12 +139,14 @@ export async function draftLetterForRequest(requestId: string) {
   const activeTemplate = await getActivePromptTemplate();
   const promptTemplate = activeTemplate?.content || DEFAULT_PROMPT_TEMPLATE;
 
-  const content = await generateLetter({
+  const result = await generateLetter({
     procedure,
     promptTemplate,
     payer: request.payer as PayerKey,
     patientReference: request.patient_reference,
+    memberId: request.member_id ?? undefined,
     icd10Codes: request.icd10_codes,
+    cptCode: request.cpt_code ?? undefined,
     orderingPhysicianName: request.ordering_physician_name,
     orderingPhysicianCredentials: request.ordering_physician_credentials ?? undefined,
     intendedUse: request.intended_use ?? undefined,
@@ -158,7 +164,9 @@ export async function draftLetterForRequest(requestId: string) {
 
   await supabase.from("letters").insert({
     pa_request_id: requestId,
-    content,
+    content: result.plainText,
+    sections: result.sections,
+    meta: result.meta,
     version: (lastVersion?.version || 0) + 1,
     model: process.env.ANTHROPIC_MODEL || "claude-sonnet-5",
   });

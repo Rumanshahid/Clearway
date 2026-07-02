@@ -93,6 +93,14 @@ export default function NewRequestForm({
             <label className="label" htmlFor="icd10_codes">ICD-10 diagnosis code(s)</label>
             <input className="input" id="icd10_codes" name="icd10_codes" placeholder="M54.5, M51.16" required />
           </div>
+          <div>
+            <label className="label" htmlFor="member_id">Member ID</label>
+            <input className="input" id="member_id" name="member_id" placeholder="Payer member ID" />
+          </div>
+          <div>
+            <label className="label" htmlFor="cpt_code">CPT/HCPCS code</label>
+            <input className="input" id="cpt_code" name="cpt_code" placeholder="e.g. 72148" />
+          </div>
         </div>
       </section>
 
