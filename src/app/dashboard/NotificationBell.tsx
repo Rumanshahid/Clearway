@@ -43,8 +43,8 @@ export default function NotificationBell({ notifications }: { notifications: Not
     <div className="relative">
       <button
         type="button"
-        className="relative w-9 h-9 rounded-full flex items-center justify-center border flex-shrink-0"
-        style={{ borderColor: "var(--gray-200)" }}
+        className="relative w-10 h-10 rounded-full flex items-center justify-center border flex-shrink-0 transition-colors hover:bg-gray-100 active:scale-95"
+        style={{ borderColor: "var(--gray-200)", transition: "background-color 0.2s ease, transform 0.1s ease" }}
         onClick={() => setOpen((v) => !v)}
         aria-label="Notifications"
       >

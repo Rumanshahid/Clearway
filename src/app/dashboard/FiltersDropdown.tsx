@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useRef, useState } from "react";
+import { useState } from "react";
 
 interface FiltersDropdownProps {
   status?: string;
@@ -26,9 +26,9 @@ export default function FiltersDropdown({
 }: FiltersDropdownProps) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
-  const closeTimeout = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
   const current = { status, payer, procedure, from, to };
+  const activeCount = Object.values(current).filter(Boolean).length;
 
   function applyFilter(key: keyof typeof current, value: string) {
     const params = new URLSearchParams();
@@ -37,13 +37,6 @@ export default function FiltersDropdown({
       if (v) params.set(k, v);
     });
     router.push(`/dashboard${params.toString() ? `?${params.toString()}` : ""}`);
-  }
-
-  function scheduleClose() {
-    closeTimeout.current = setTimeout(() => setOpen(false), 150);
-  }
-  function cancelClose() {
-    if (closeTimeout.current) clearTimeout(closeTimeout.current);
   }
 
   const labelFor = (options: [string, string][], value?: string) => options.find(([v]) => v === value)?.[1];
@@ -56,90 +49,77 @@ export default function FiltersDropdown({
   if (to) chips.push({ key: "to", label: `To: ${to}` });
 
   return (
-    <div className="mb-6">
-      <div className="relative inline-block" onMouseEnter={cancelClose} onMouseLeave={scheduleClose}>
-        <button type="button" className="btn btn-outline btn-sm" onClick={() => setOpen((v) => !v)}>
-          Filters {chips.length > 0 && `(${chips.length})`} ▾
+    <aside className="w-[230px] flex-shrink-0">
+      <div className="card p-4">
+        <button
+          type="button"
+          className="flex items-center justify-between w-full text-[13px] font-semibold text-gray-900"
+          onClick={() => setOpen((v) => !v)}
+        >
+          <span>Filters {activeCount > 0 && `(${activeCount})`}</span>
+          <svg
+            width="12" height="12" viewBox="0 0 12 12" fill="none"
+            style={{ transform: open ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.28s cubic-bezier(0.16,1,0.3,1)" }}
+          >
+            <path d="M2.5 4.5L6 8l3.5-3.5" stroke="var(--gray-600)" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
         </button>
 
-        <div className={`dropdown-panel absolute left-0 top-11 w-[280px] card p-4 z-30 flex flex-col gap-4${open ? " open" : ""}`}>
+        <div className={`collapse-panel${open ? " open" : ""}`}>
           <div>
-            <label className="label" htmlFor="filter-status">Status</label>
-            <select
-              className="input"
-              id="filter-status"
-              value={status || ""}
-              onChange={(e) => applyFilter("status", e.target.value)}
-            >
-              <option value="">All</option>
-              {statusOptions.map(([v, l]) => (
-                <option key={v} value={v}>{l}</option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <label className="label" htmlFor="filter-payer">Payer</label>
-            <select
-              className="input"
-              id="filter-payer"
-              value={payer || ""}
-              onChange={(e) => applyFilter("payer", e.target.value)}
-            >
-              <option value="">All</option>
-              {payerOptions.map(([v, l]) => (
-                <option key={v} value={v}>{l}</option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <label className="label" htmlFor="filter-procedure">Procedure</label>
-            <select
-              className="input"
-              id="filter-procedure"
-              value={procedure || ""}
-              onChange={(e) => applyFilter("procedure", e.target.value)}
-            >
-              <option value="">All</option>
-              {procedureOptions.map(([v, l]) => (
-                <option key={v} value={v}>{l}</option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <label className="label" htmlFor="filter-from">From</label>
-            <input
-              className="input"
-              type="date"
-              id="filter-from"
-              value={from || ""}
-              onChange={(e) => applyFilter("from", e.target.value)}
-            />
-          </div>
-          <div>
-            <label className="label" htmlFor="filter-to">To</label>
-            <input
-              className="input"
-              type="date"
-              id="filter-to"
-              value={to || ""}
-              onChange={(e) => applyFilter("to", e.target.value)}
-            />
+            <div className="flex flex-col gap-4 pt-4">
+              <div>
+                <label className="label" htmlFor="filter-status">Status</label>
+                <select className="input" id="filter-status" value={status || ""} onChange={(e) => applyFilter("status", e.target.value)}>
+                  <option value="">All</option>
+                  {statusOptions.map(([v, l]) => (
+                    <option key={v} value={v}>{l}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="label" htmlFor="filter-payer">Payer</label>
+                <select className="input" id="filter-payer" value={payer || ""} onChange={(e) => applyFilter("payer", e.target.value)}>
+                  <option value="">All</option>
+                  {payerOptions.map(([v, l]) => (
+                    <option key={v} value={v}>{l}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="label" htmlFor="filter-procedure">Procedure</label>
+                <select className="input" id="filter-procedure" value={procedure || ""} onChange={(e) => applyFilter("procedure", e.target.value)}>
+                  <option value="">All</option>
+                  {procedureOptions.map(([v, l]) => (
+                    <option key={v} value={v}>{l}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="label" htmlFor="filter-from">From</label>
+                <input className="input" type="date" id="filter-from" value={from || ""} onChange={(e) => applyFilter("from", e.target.value)} />
+              </div>
+              <div>
+                <label className="label" htmlFor="filter-to">To</label>
+                <input className="input" type="date" id="filter-to" value={to || ""} onChange={(e) => applyFilter("to", e.target.value)} />
+              </div>
+            </div>
           </div>
         </div>
-      </div>
 
-      {chips.length > 0 && (
-        <div className="flex flex-wrap items-center gap-2 mt-3">
-          {chips.map((chip) => (
-            <span key={chip.key} className="status-pill" style={{ background: "var(--gray-100)", color: "var(--gray-600)" }}>
-              {chip.label}
-            </span>
-          ))}
-          <button type="button" className="text-btn text-[12.5px] text-gray-400" onClick={() => router.push("/dashboard")}>
-            Clear filters
-          </button>
-        </div>
-      )}
-    </div>
+        {chips.length > 0 && (
+          <div className="flex flex-col items-start gap-2 mt-4 pt-4" style={{ borderTop: "1px solid var(--gray-200)" }}>
+            {chips.map((chip) => (
+              <span key={chip.key} className="status-pill" style={{ background: "var(--gray-100)", color: "var(--gray-600)" }}>
+                {chip.label}
+              </span>
+            ))}
+            <button type="button" className="text-btn text-[12.5px] text-gray-400" onClick={() => router.push("/dashboard")}>
+              Clear filters
+            </button>
+          </div>
+        )}
+      </div>
+    </aside>
   );
 }

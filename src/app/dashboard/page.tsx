@@ -3,16 +3,15 @@ import { createClient } from "@/lib/supabase/server";
 import { PAYERS } from "@/lib/criteria";
 import { getProcedureLabelMap } from "@/lib/criteria-repo";
 import type { RequestStatus } from "@/lib/database.types";
-import StatusSelect from "./StatusSelect";
-import RowActions from "./RowActions";
+import RequestRow from "./RequestRow";
 import FiltersDropdown from "./FiltersDropdown";
 
-const STATUS_STYLES: Record<RequestStatus, { bg: string; color: string; label: string }> = {
-  draft: { bg: "var(--gray-100)", color: "var(--gray-600)", label: "Draft" },
-  reviewed: { bg: "#EEF0FF", color: "var(--indigo-600)", label: "Reviewed" },
-  submitted: { bg: "var(--amber-bg)", color: "var(--amber)", label: "Submitted" },
-  approved: { bg: "var(--success-bg)", color: "var(--success-green)", label: "Approved" },
-  denied: { bg: "var(--danger-bg)", color: "var(--danger-red)", label: "Denied" },
+const STATUS_STYLES: Record<RequestStatus, { label: string }> = {
+  draft: { label: "Draft" },
+  reviewed: { label: "Reviewed" },
+  submitted: { label: "Submitted" },
+  approved: { label: "Approved" },
+  denied: { label: "Denied" },
 };
 
 export default async function DashboardPage({
@@ -83,9 +82,9 @@ export default async function DashboardPage({
 
   return (
     <div className="max-w-[1300px] mx-auto py-8 px-5">
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-[24px] font-semibold">Prior authorization requests</h1>
-        <Link href="/dashboard/requests/new" className="btn btn-primary">New Request →</Link>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
+        <h1 className="text-[20px] sm:text-[24px] font-semibold">Prior authorization requests</h1>
+        <Link href="/dashboard/requests/new" className="btn btn-primary self-start sm:self-auto">New Request →</Link>
       </div>
 
       {drafted && (
@@ -97,67 +96,63 @@ export default async function DashboardPage({
         </div>
       )}
 
-      <div className="grid grid-cols-4 gap-4 mb-6">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
         <StatCard label="This Month" value={stats.total} />
         <StatCard label="Approved" value={stats.approved} accent="var(--success-green)" />
         <StatCard label="Pending" value={stats.pending} accent="var(--indigo-600)" />
         <StatCard label="Denied" value={stats.denied} accent="var(--danger-red)" />
       </div>
 
-      <FiltersDropdown
-        status={status}
-        payer={payer}
-        procedure={procedure}
-        from={from}
-        to={to}
-        statusOptions={Object.entries(STATUS_STYLES).map(([k, v]) => [k, v.label])}
-        payerOptions={PAYERS.map((p) => [p.key, p.label])}
-        procedureOptions={Object.entries(procedureLabels)}
-      />
+      <div className="flex flex-col lg:flex-row gap-6 items-start">
+        <FiltersDropdown
+          status={status}
+          payer={payer}
+          procedure={procedure}
+          from={from}
+          to={to}
+          statusOptions={Object.entries(STATUS_STYLES).map(([k, v]) => [k, v.label])}
+          payerOptions={PAYERS.map((p) => [p.key, p.label])}
+          procedureOptions={Object.entries(procedureLabels)}
+        />
 
-      <div className="card overflow-hidden">
-        <table className="w-full text-[13.5px]">
-          <thead>
-            <tr className="text-left text-gray-400 text-[11px] uppercase tracking-wide" style={{ borderBottom: "1px solid var(--gray-200)" }}>
-              <th className="px-5 py-3 font-semibold">Patient Ref</th>
-              <th className="px-5 py-3 font-semibold">Procedure</th>
-              <th className="px-5 py-3 font-semibold">Payer</th>
-              <th className="px-5 py-3 font-semibold">Status</th>
-              <th className="px-5 py-3 font-semibold">Created</th>
-              <th className="px-5 py-3 font-semibold"></th>
-            </tr>
-          </thead>
-          <tbody>
-            {requests && requests.length > 0 ? (
-              requests.map((r) => {
-                const procLabel = procedureLabels[r.procedure_type] || r.procedure_type;
-                const letterId = latestLetterByRequest.get(r.id);
-                return (
-                  <tr key={r.id} className="hover:bg-gray-50" style={{ borderBottom: "1px solid var(--gray-200)" }}>
-                    <td className="px-5 py-3">
-                      <Link href={`/dashboard/requests/${r.id}`} className="block">{r.patient_reference}</Link>
-                    </td>
-                    <td className="px-5 py-3">{procLabel}</td>
-                    <td className="px-5 py-3 capitalize">{r.payer.replace(/_/g, " ")}</td>
-                    <td className="px-5 py-3">
-                      <StatusSelect requestId={r.id} status={r.status as RequestStatus} />
-                    </td>
-                    <td className="px-5 py-3 text-gray-400">{new Date(r.created_at).toLocaleDateString()}</td>
-                    <td className="px-5 py-3">
-                      <RowActions requestId={r.id} letterId={letterId} />
+        <div className="flex-1 min-w-0 w-full">
+          <div className="card overflow-hidden overflow-x-auto">
+            <table className="w-full text-[13.5px]">
+              <thead>
+                <tr className="text-left text-gray-400 text-[11px] uppercase tracking-wide" style={{ borderBottom: "1px solid var(--gray-200)" }}>
+                  <th className="px-5 py-3 font-semibold">Patient Ref</th>
+                  <th className="px-5 py-3 font-semibold">Procedure</th>
+                  <th className="px-5 py-3 font-semibold">Payer</th>
+                  <th className="px-5 py-3 font-semibold">Status</th>
+                  <th className="px-5 py-3 font-semibold">Created</th>
+                  <th className="px-5 py-3 font-semibold"></th>
+                </tr>
+              </thead>
+              <tbody>
+                {requests && requests.length > 0 ? (
+                  requests.map((r) => (
+                    <RequestRow
+                      key={r.id}
+                      requestId={r.id}
+                      patientReference={r.patient_reference}
+                      procedureLabel={procedureLabels[r.procedure_type] || r.procedure_type}
+                      payer={r.payer}
+                      status={r.status as RequestStatus}
+                      createdAt={r.created_at}
+                      letterId={latestLetterByRequest.get(r.id)}
+                    />
+                  ))
+                ) : (
+                  <tr>
+                    <td className="px-5 py-10 text-center text-gray-400" colSpan={6}>
+                      No requests yet. <Link href="/dashboard/requests/new" className="text-indigo-600">Create your first one →</Link>
                     </td>
                   </tr>
-                );
-              })
-            ) : (
-              <tr>
-                <td className="px-5 py-10 text-center text-gray-400" colSpan={6}>
-                  No requests yet. <Link href="/dashboard/requests/new" className="text-indigo-600">Create your first one →</Link>
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
       </div>
     </div>
   );
