@@ -62,49 +62,45 @@ export default function NotificationBell({ notifications }: { notifications: Not
         )}
       </button>
 
-      {open && (
-        <>
-          <div className="fixed inset-0 z-10" onClick={() => setOpen(false)} />
-          <div
-            className="fixed sm:absolute right-3 sm:right-0 left-3 sm:left-auto top-16 sm:top-11 sm:w-[320px] card z-20 overflow-hidden"
-          >
-            <div className="flex items-center justify-between px-4 py-3" style={{ borderBottom: "1px solid var(--gray-200)" }}>
-              <span className="text-[13.5px] font-semibold">Notifications</span>
-              {unreadCount > 0 && (
-                <button className="text-[12px] text-indigo-600" type="button" onClick={markAllRead}>
-                  Mark all read
-                </button>
-              )}
-            </div>
-            <div className="max-h-[360px] overflow-y-auto">
-              {notifications.length === 0 && (
-                <div className="px-4 py-8 text-center text-[13px] text-gray-400">No notifications yet.</div>
-              )}
-              {notifications.map((n) => {
-                const read = isRead(n);
-                return (
-                  <Link
-                    key={n.id}
-                    href={n.link || "/dashboard"}
-                    className="px-4 py-3 flex flex-col gap-1"
-                    style={{ borderBottom: "1px solid var(--gray-200)", background: read ? "transparent" : "var(--gray-50)" }}
-                    onClick={() => {
-                      if (!read) markOneRead(n.id);
-                      setOpen(false);
-                    }}
-                  >
-                    <span className="text-[13px] text-gray-900 flex items-center gap-2">
-                      {!read && <span className="w-[6px] h-[6px] rounded-full flex-shrink-0" style={{ background: "var(--indigo-600)" }} />}
-                      {n.message}
-                    </span>
-                    <span className="text-[11px] text-gray-400">{new Date(n.created_at).toLocaleString()}</span>
-                  </Link>
-                );
-              })}
-            </div>
-          </div>
-        </>
-      )}
+      {open && <div className="fixed inset-0 z-10" onClick={() => setOpen(false)} />}
+      <div
+        className={`dropdown-panel fixed sm:absolute right-3 sm:right-0 left-3 sm:left-auto top-16 sm:top-11 sm:w-[320px] card z-20 overflow-hidden${open ? " open" : ""}`}
+      >
+        <div className="flex items-center justify-between px-4 py-3" style={{ borderBottom: "1px solid var(--gray-200)" }}>
+          <span className="text-[13.5px] font-semibold">Notifications</span>
+          {unreadCount > 0 && (
+            <button className="text-btn text-[12px] text-indigo-600" type="button" onClick={markAllRead}>
+              Mark all read
+            </button>
+          )}
+        </div>
+        <div className="max-h-[360px] overflow-y-auto">
+          {notifications.length === 0 && (
+            <div className="px-4 py-8 text-center text-[13px] text-gray-400">No notifications yet.</div>
+          )}
+          {notifications.map((n) => {
+            const read = isRead(n);
+            return (
+              <Link
+                key={n.id}
+                href={n.link || "/dashboard"}
+                className="px-4 py-3 flex flex-col gap-1 transition-colors"
+                style={{ borderBottom: "1px solid var(--gray-200)", background: read ? "transparent" : "var(--gray-50)" }}
+                onClick={() => {
+                  if (!read) markOneRead(n.id);
+                  setOpen(false);
+                }}
+              >
+                <span className="text-[13px] text-gray-900 flex items-center gap-2">
+                  {!read && <span className="w-[6px] h-[6px] rounded-full flex-shrink-0" style={{ background: "var(--indigo-600)" }} />}
+                  {n.message}
+                </span>
+                <span className="text-[11px] text-gray-400">{new Date(n.created_at).toLocaleString()}</span>
+              </Link>
+            );
+          })}
+        </div>
+      </div>
     </div>
   );
 }

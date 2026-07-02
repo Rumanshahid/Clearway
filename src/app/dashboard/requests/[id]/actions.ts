@@ -67,6 +67,22 @@ export async function updateStatusAction(formData: FormData) {
   revalidatePath("/dashboard");
 }
 
+export async function deleteRequestAction(formData: FormData) {
+  const requestId = String(formData.get("request_id") || "");
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  await logAccess({ userId: user?.id || null, action: "delete", resourceType: "pa_request", resourceId: requestId });
+
+  // Letters cascade-delete via the pa_request_id foreign key.
+  await supabase.from("pa_requests").delete().eq("id", requestId);
+
+  revalidatePath("/dashboard");
+}
+
 export async function redraftAction(formData: FormData) {
   const requestId = String(formData.get("request_id") || "");
 

@@ -5,7 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 // survives even if the underlying record is later purged by retention policy).
 export async function logAccess(params: {
   userId: string | null;
-  action: "view" | "create" | "download" | "approve" | "status_change" | "redraft";
+  action: "view" | "create" | "download" | "approve" | "status_change" | "redraft" | "delete";
   resourceType: "pa_request" | "letter";
   resourceId: string;
 }) {

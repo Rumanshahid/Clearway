@@ -43,7 +43,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
   return (
     <div className="min-h-screen flex flex-col">
       <nav className="bg-white border-b" style={{ borderColor: "var(--gray-200)" }}>
-        <div className="max-w-[1100px] mx-auto px-6 h-14 flex items-center justify-between">
+        <div className="max-w-[1300px] mx-auto px-5 h-14 flex items-center justify-between">
           <div className="flex items-center gap-8">
             <Link href="/dashboard" className="flex items-center gap-2 text-[17px] font-semibold text-gray-900">
               <span className="w-[24px] h-[24px] rounded-[6px] bg-navy-900 flex items-center justify-center">
