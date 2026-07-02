@@ -11,6 +11,12 @@ export async function proxy(request: NextRequest) {
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
+      cookieOptions: {
+        maxAge: 60 * 60 * 24 * 365, // 1 year — explicit so session survives tab/browser close
+        sameSite: "lax",
+        secure: true,
+        path: "/",
+      },
       cookies: {
         getAll() {
           return request.cookies.getAll();

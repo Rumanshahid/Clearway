@@ -1,8 +1,18 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { useFormStatus } from "react-dom";
 import type { FieldDef, PayerKey, ProcedureCriteria } from "@/lib/criteria";
 import { createRequestAction } from "./actions";
+
+function SubmitButton() {
+  const { pending } = useFormStatus();
+  return (
+    <button className="btn btn-primary w-full justify-center" type="submit" disabled={pending}>
+      {pending ? "Drafting with Claude… (can take up to a minute)" : "Draft letter →"}
+    </button>
+  );
+}
 
 export default function NewRequestForm({
   procedures,
@@ -133,9 +143,7 @@ export default function NewRequestForm({
         </div>
       </section>
 
-      <button className="btn btn-primary w-full justify-center" type="submit">
-        Draft letter with Claude →
-      </button>
+      <SubmitButton />
     </form>
   );
 }

@@ -44,7 +44,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
   return new NextResponse(new Uint8Array(buffer), {
     headers: {
       "Content-Type": "application/pdf",
-      "Content-Disposition": `inline; filename="clearway-${paRequest.patient_reference}.pdf"`,
+      "Content-Disposition": `inline; filename="asaanbil-${paRequest.patient_reference}.pdf"`,
     },
   });
 }

@@ -29,7 +29,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
         <div className="max-w-[1200px] mx-auto px-6 h-14 flex items-center justify-between">
           <div className="flex items-center gap-8">
             <Link href="/admin/practices" className="flex items-center gap-2 text-[16px] font-semibold text-white">
-              Clearway <span className="text-[11px] font-medium px-2 py-0.5 rounded-full" style={{ background: "rgba(255,255,255,.14)" }}>Admin</span>
+              asaanbil.com <span className="text-[11px] font-medium px-2 py-0.5 rounded-full" style={{ background: "rgba(255,255,255,.14)" }}>Admin</span>
             </Link>
             <div className="flex items-center gap-5 text-[13.5px]" style={{ color: "#A0A8C0" }}>
               {NAV.map((item) => (

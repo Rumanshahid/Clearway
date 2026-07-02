@@ -56,7 +56,7 @@ export default async function OnboardingPage({
           </div>
 
           <div>
-            <label className="label" htmlFor="staff_count">Number of staff who&apos;ll use Clearway</label>
+            <label className="label" htmlFor="staff_count">Number of staff who&apos;ll use asaanbil.com</label>
             <input className="input max-w-[140px]" id="staff_count" name="staff_count" type="number" min={1} defaultValue={1} required />
           </div>
 
@@ -76,16 +76,16 @@ export default async function OnboardingPage({
             <label className="label mb-2">Business Associate Agreement</label>
             <div className="text-[12.5px] text-gray-600 leading-relaxed mb-3 max-h-[140px] overflow-y-auto pr-1">
               <p className="mb-2">
-                By checking the box below, {"{Practice Name}"} (&quot;Covered Entity&quot;) and Clearway (&quot;Business
-                Associate&quot;) agree that Clearway may access, process, and store protected health information
+                By checking the box below, {"{Practice Name}"} (&quot;Covered Entity&quot;) and asaanbil.com (&quot;Business
+                Associate&quot;) agree that asaanbil.com may access, process, and store protected health information
                 (PHI) submitted through the platform solely to provide the prior-authorization drafting service,
                 in accordance with HIPAA&apos;s Privacy, Security, and Breach Notification Rules.
               </p>
               <p className="mb-2">
-                Clearway will: (1) use PHI only as permitted by this Agreement or required by law; (2) apply
+                asaanbil.com will: (1) use PHI only as permitted by this Agreement or required by law; (2) apply
                 appropriate administrative, physical, and technical safeguards; (3) report any unauthorized use or
                 disclosure without unreasonable delay; and (4) ensure any subcontractor with access to PHI (including
-                Anthropic, under Clearway&apos;s own BAA with Anthropic) agrees to the same restrictions.
+                Anthropic, under asaanbil.com&apos;s own BAA with Anthropic) agrees to the same restrictions.
               </p>
               <p>
                 This summary is provided for onboarding convenience. The full, signed agreement will be countersigned

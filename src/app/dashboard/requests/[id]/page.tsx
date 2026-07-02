@@ -7,6 +7,10 @@ import { logAccess } from "@/lib/access-log";
 import LetterPanel from "./LetterPanel";
 import { approveLetterAction, redraftAction, updateStatusAction } from "./actions";
 
+// redraftAction calls Claude via draftLetterForRequest, which can exceed the
+// platform's 10s default serverless timeout.
+export const maxDuration = 60;
+
 const STATUS_FLOW: RequestStatus[] = ["draft", "reviewed", "submitted", "approved"];
 
 export default async function RequestDetailPage({

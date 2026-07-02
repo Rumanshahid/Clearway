@@ -23,7 +23,7 @@ export async function notifyLetterReady(requestId: string, createdByUserId: stri
     type: "letter_ready",
     message: `Your letter for ${request.patient_reference} is ready to review.`,
     link: `/dashboard/requests/${requestId}`,
-    emailSubject: "Your Clearway letter is ready to review",
+    emailSubject: "Your asaanbil.com letter is ready to review",
     emailHtml: `<p>The draft letter for <strong>${request.patient_reference}</strong> is ready.</p><p><a href="${process.env.NEXT_PUBLIC_SITE_URL}/dashboard/requests/${requestId}">Review it now →</a></p>`,
   });
 }
@@ -74,7 +74,7 @@ export async function notifyUsageThreshold(practiceId: string, used: number, inc
       type: "usage_threshold",
       message,
       link: "/dashboard/billing",
-      emailSubject: used >= included ? "You've used all your Clearway Pilot letters" : "Approaching your Clearway Pilot limit",
+      emailSubject: used >= included ? "You've used all your asaanbil.com Pilot letters" : "Approaching your asaanbil.com Pilot limit",
       emailHtml: `<p>${message}</p><p><a href="${process.env.NEXT_PUBLIC_SITE_URL}/dashboard/billing">Manage billing →</a></p>`,
     });
   }

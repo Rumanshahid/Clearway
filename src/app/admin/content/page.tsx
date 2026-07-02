@@ -22,7 +22,7 @@ export default async function AdminContentPage() {
   return (
     <div className="max-w-[760px] mx-auto py-8 px-5">
       <h1 className="text-[24px] font-semibold mb-1">Landing page content</h1>
-      <p className="text-[14px] text-gray-600 mb-6">Edits go live on clearway.health immediately after saving.</p>
+      <p className="text-[14px] text-gray-600 mb-6">Edits go live on asaanbil.com immediately after saving.</p>
 
       <form action={saveSiteContentAction} className="flex flex-col gap-6">
         <section className="card p-6">

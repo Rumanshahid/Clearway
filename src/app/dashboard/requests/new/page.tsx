@@ -2,6 +2,12 @@ import { PAYERS } from "@/lib/criteria";
 import { getAllPayerToggles, getEnabledProcedures } from "@/lib/criteria-repo";
 import NewRequestForm from "./NewRequestForm";
 
+// Claude generation regularly takes longer than the platform's 10s default
+// serverless timeout; this raises it to the max allowed on a Vercel Hobby
+// plan for the Server Action this page's form submits to. Bump alongside
+// any plan upgrade.
+export const maxDuration = 60;
+
 export default async function NewRequestPage({
   searchParams,
 }: {

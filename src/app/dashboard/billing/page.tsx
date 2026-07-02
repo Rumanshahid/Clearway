@@ -98,7 +98,7 @@ export default async function BillingPage({
         )}
 
         {practice.plan === "multi_site" && (
-          <p className="text-[13px] text-gray-400">Multi-Site plans are managed directly — contact hello@clearway.health.</p>
+          <p className="text-[13px] text-gray-400">Multi-Site plans are managed directly — contact hello@asaanbil.com.</p>
         )}
       </section>
 

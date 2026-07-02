@@ -10,7 +10,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
               <path d="M2 7h10M7 2l5 5-5 5" stroke="#fff" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
           </span>
-          Clearway
+          asaanbil.com
         </Link>
       </div>
       <div className="flex-1 flex items-start justify-center px-5 pb-16">

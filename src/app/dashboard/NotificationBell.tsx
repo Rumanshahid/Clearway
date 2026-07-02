@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useTransition } from "react";
 import Link from "next/link";
 import { markAllNotificationsReadAction, markNotificationReadAction } from "./notification-actions";
 
@@ -15,13 +15,35 @@ interface NotificationRow {
 
 export default function NotificationBell({ notifications }: { notifications: NotificationRow[] }) {
   const [open, setOpen] = useState(false);
-  const unreadCount = notifications.filter((n) => !n.read).length;
+  // Optimistic overlay on top of the server-provided prop so read-state
+  // updates feel instant instead of waiting on a full server round trip.
+  const [locallyRead, setLocallyRead] = useState<Set<string>>(new Set());
+  const [, startTransition] = useTransition();
+
+  const isRead = (n: NotificationRow) => n.read || locallyRead.has(n.id);
+  const unreadCount = notifications.filter((n) => !isRead(n)).length;
+
+  function markOneRead(id: string) {
+    setLocallyRead((prev) => new Set(prev).add(id));
+    startTransition(() => {
+      const fd = new FormData();
+      fd.append("id", id);
+      markNotificationReadAction(fd);
+    });
+  }
+
+  function markAllRead() {
+    setLocallyRead(new Set(notifications.map((n) => n.id)));
+    startTransition(() => {
+      markAllNotificationsReadAction();
+    });
+  }
 
   return (
     <div className="relative">
       <button
         type="button"
-        className="relative w-9 h-9 rounded-full flex items-center justify-center border"
+        className="relative w-9 h-9 rounded-full flex items-center justify-center border flex-shrink-0"
         style={{ borderColor: "var(--gray-200)" }}
         onClick={() => setOpen((v) => !v)}
         aria-label="Notifications"
@@ -43,39 +65,42 @@ export default function NotificationBell({ notifications }: { notifications: Not
       {open && (
         <>
           <div className="fixed inset-0 z-10" onClick={() => setOpen(false)} />
-          <div className="absolute right-0 top-11 w-[320px] card z-20 overflow-hidden">
+          <div
+            className="fixed sm:absolute right-3 sm:right-0 left-3 sm:left-auto top-16 sm:top-11 sm:w-[320px] card z-20 overflow-hidden"
+          >
             <div className="flex items-center justify-between px-4 py-3" style={{ borderBottom: "1px solid var(--gray-200)" }}>
               <span className="text-[13.5px] font-semibold">Notifications</span>
               {unreadCount > 0 && (
-                <form action={markAllNotificationsReadAction}>
-                  <button className="text-[12px] text-indigo-600" type="submit">Mark all read</button>
-                </form>
+                <button className="text-[12px] text-indigo-600" type="button" onClick={markAllRead}>
+                  Mark all read
+                </button>
               )}
             </div>
             <div className="max-h-[360px] overflow-y-auto">
               {notifications.length === 0 && (
                 <div className="px-4 py-8 text-center text-[13px] text-gray-400">No notifications yet.</div>
               )}
-              {notifications.map((n) => (
-                <div
-                  key={n.id}
-                  className="px-4 py-3 flex flex-col gap-1"
-                  style={{ borderBottom: "1px solid var(--gray-200)", background: n.read ? "transparent" : "var(--gray-50)" }}
-                >
-                  <Link href={n.link || "/dashboard"} className="text-[13px] text-gray-900" onClick={() => setOpen(false)}>
-                    {n.message}
-                  </Link>
-                  <div className="flex items-center justify-between">
+              {notifications.map((n) => {
+                const read = isRead(n);
+                return (
+                  <Link
+                    key={n.id}
+                    href={n.link || "/dashboard"}
+                    className="px-4 py-3 flex flex-col gap-1"
+                    style={{ borderBottom: "1px solid var(--gray-200)", background: read ? "transparent" : "var(--gray-50)" }}
+                    onClick={() => {
+                      if (!read) markOneRead(n.id);
+                      setOpen(false);
+                    }}
+                  >
+                    <span className="text-[13px] text-gray-900 flex items-center gap-2">
+                      {!read && <span className="w-[6px] h-[6px] rounded-full flex-shrink-0" style={{ background: "var(--indigo-600)" }} />}
+                      {n.message}
+                    </span>
                     <span className="text-[11px] text-gray-400">{new Date(n.created_at).toLocaleString()}</span>
-                    {!n.read && (
-                      <form action={markNotificationReadAction}>
-                        <input type="hidden" name="id" value={n.id} />
-                        <button className="text-[11px] text-indigo-600" type="submit">Mark read</button>
-                      </form>
-                    )}
-                  </div>
-                </div>
-              ))}
+                  </Link>
+                );
+              })}
             </div>
           </div>
         </>

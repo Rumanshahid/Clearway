@@ -15,6 +15,6 @@ export async function sendEmail({ to, subject, html }: { to: string; subject: st
     return;
   }
 
-  const from = process.env.RESEND_FROM_EMAIL || "Clearway <notifications@clearway.health>";
+  const from = process.env.RESEND_FROM_EMAIL || "asaanbil.com <notifications@asaanbil.com>";
   await resend.emails.send({ from, to, subject, html });
 }

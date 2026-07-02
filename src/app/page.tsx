@@ -4,16 +4,16 @@ import LandingScripts from "./LandingScripts";
 import { getSiteContent } from "@/lib/criteria-repo";
 
 const CMP_SLIDES = [
-  { before: "Letters took 30–45 minutes, written from scratch every time — Clearway now drafts one in ", em: "under 10 minutes", after: "." },
-  { before: "Staff used to guess which clause a payer wanted — Clearway now ", em: "cites the exact one", after: " automatically." },
-  { before: "Denials surfaced weeks later, after care was delayed — Clearway now ", em: "flags the risk before you submit", after: "." },
-  { before: "Missing docs were found after rejection — Clearway now ", em: "tracks every request", after: " end to end." },
+  { before: "Letters took 30–45 minutes, written from scratch every time — asaanbil.com now drafts one in ", em: "under 10 minutes", after: "." },
+  { before: "Staff used to guess which clause a payer wanted — asaanbil.com now ", em: "cites the exact one", after: " automatically." },
+  { before: "Denials surfaced weeks later, after care was delayed — asaanbil.com now ", em: "flags the risk before you submit", after: "." },
+  { before: "Missing docs were found after rejection — asaanbil.com now ", em: "tracks every request", after: " end to end." },
 ];
 
 const DEFAULTS: Record<string, string> = {
   hero_headline: "Stop writing the same letter forty times a week.",
   hero_subheadline:
-    "Clearway drafts prior authorization letters from your chart notes — citing the exact medical necessity criteria each payer requires — in minutes, not hours.",
+    "asaanbil.com drafts prior authorization letters from your chart notes — citing the exact medical necessity criteria each payer requires — in minutes, not hours.",
   hero_cta_primary: "Start Free Pilot",
   stat1_number: "13",
   stat1_label: "Hours Lost Weekly",
@@ -46,7 +46,7 @@ export default async function LandingPage() {
                 <path d="M2 7h10M7 2l5 5-5 5" stroke="#fff" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
             </div>
-            Clearway
+            asaanbil.com
           </div>
           <div className="nav-links" id="navLinks">
             <a href="#how">How It Works</a>
@@ -138,7 +138,7 @@ export default async function LandingPage() {
               <div className="step-item">
                 <div className="step-bullet">02</div>
                 <div>
-                  <div className="step-title">Draft — Clearway writes it</div>
+                  <div className="step-title">Draft — asaanbil.com writes it</div>
                   <div className="step-desc">Matched against the payer&apos;s exact published medical necessity criteria. Missing fields are flagged before submission, not after a denial.</div>
                 </div>
               </div>
@@ -146,7 +146,7 @@ export default async function LandingPage() {
                 <div className="step-bullet">03</div>
                 <div>
                   <div className="step-title">Review — sign and send</div>
-                  <div className="step-desc">A physician reads the draft, edits as needed, and submits as usual. Clearway drafts — your clinic decides.</div>
+                  <div className="step-desc">A physician reads the draft, edits as needed, and submits as usual. asaanbil.com drafts — your clinic decides.</div>
                 </div>
               </div>
             </div>
@@ -210,11 +210,11 @@ export default async function LandingPage() {
           <div className="ins-grid">
             <div className="ins-card">
               <div className="ins-head"><div className="ins-name">Aetna</div><div className="status-pill" style={{ background: "var(--success-bg)", color: "var(--success-green)" }}>LIVE</div></div>
-              <div className="ins-desc">800+ Clinical Policy Bulletins, publicly available and mapped into Clearway. Imaging criteria all reference the exact CPB clause reviewers check for.</div>
+              <div className="ins-desc">800+ Clinical Policy Bulletins, publicly available and mapped into asaanbil.com. Imaging criteria all reference the exact CPB clause reviewers check for.</div>
             </div>
             <div className="ins-card">
               <div className="ins-head"><div className="ins-name">Cigna / eviCore</div><div className="status-pill" style={{ background: "var(--success-bg)", color: "var(--success-green)" }}>LIVE</div></div>
-              <div className="ins-desc">eviCore manages imaging PA for Cigna and several delegated plans. Public clinical guidelines mapped into Clearway — one criteria set, multiple insurers.</div>
+              <div className="ins-desc">eviCore manages imaging PA for Cigna and several delegated plans. Public clinical guidelines mapped into asaanbil.com — one criteria set, multiple insurers.</div>
             </div>
             <div className="ins-card">
               <div className="ins-head"><div className="ins-name">UnitedHealthcare</div><div className="status-pill" style={{ background: "var(--amber-bg)", color: "var(--amber)" }}>SOON</div></div>
@@ -300,7 +300,7 @@ export default async function LandingPage() {
               <div className="price-feat"><span className="chk">✓</span>Volume-based pricing</div>
               <div className="price-feat"><span className="chk">✓</span>Extra payer criteria on request</div>
               <div className="price-feat"><span className="chk">✓</span>Dedicated onboarding</div>
-              <div className="price-btn"><a href="mailto:hello@clearway.health">Talk to Us</a></div>
+              <div className="price-btn"><a href="mailto:hello@asaanbil.com">Talk to Us</a></div>
             </div>
           </div>
         </div>
@@ -311,7 +311,7 @@ export default async function LandingPage() {
         <div className="wrap">
           <h2>{c("cta_final_headline")}</h2>
           <p>{c("cta_final_copy")}</p>
-          <a className="btn btn-primary" href="mailto:hello@clearway.health" style={{ fontSize: "15px", padding: "14px 28px" }}>Request a Free Pilot →</a>
+          <a className="btn btn-primary" href="mailto:hello@asaanbil.com" style={{ fontSize: "15px", padding: "14px 28px" }}>Request a Free Pilot →</a>
         </div>
       </section>
 
@@ -323,7 +323,7 @@ export default async function LandingPage() {
                 <div className="footer-logo-mark">
                   <svg width="13" height="13" viewBox="0 0 14 14" fill="none"><path d="M2 7h10M7 2l5 5-5 5" stroke="#fff" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
                 </div>
-                Clearway
+                asaanbil.com
               </div>
               <div className="footer-newsletter">
                 <input className="footer-input" placeholder="Enter e-mail address" />
@@ -339,8 +339,8 @@ export default async function LandingPage() {
             <div className="footer-col"><h4>Payers</h4><a href="#">Aetna</a><a href="#">Cigna / eviCore</a><a href="#">Roadmap</a></div>
           </div>
           <div className="footer-bottom">
-            <span>© 2026 Clearway. Not affiliated with Aetna, Cigna, or eviCore.</span>
-            <span>hello@clearway.health</span>
+            <span>© 2026 asaanbil.com. Not affiliated with Aetna, Cigna, or eviCore.</span>
+            <span>hello@asaanbil.com</span>
           </div>
         </div>
       </footer>

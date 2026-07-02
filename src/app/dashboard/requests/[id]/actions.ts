@@ -64,6 +64,7 @@ export async function updateStatusAction(formData: FormData) {
   }
 
   revalidatePath(`/dashboard/requests/${requestId}`);
+  revalidatePath("/dashboard");
 }
 
 export async function redraftAction(formData: FormData) {

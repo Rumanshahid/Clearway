@@ -51,11 +51,10 @@ export default async function DashboardLayout({ children }: { children: React.Re
                   <path d="M2 7h10M7 2l5 5-5 5" stroke="#fff" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
               </span>
-              Clearway
+              asaanbil.com
             </Link>
             <div className="flex items-center gap-6 text-[13.5px] text-gray-600">
-              <Link href="/dashboard">Requests</Link>
-              <Link href="/dashboard/requests/new">New Request</Link>
+              <Link href="/dashboard">Dashboard</Link>
               <Link href="/dashboard/billing">Billing</Link>
             </div>
           </div>

@@ -388,7 +388,7 @@ export const LETTER_COMPONENTS = [
 // Fallback used only if the DB has no active prompt_templates row yet
 // (e.g. migrations 0001-0003 ran but 0004's seed didn't). Keep this in sync
 // with the seed row in supabase/migrations/0004_seed_defaults.sql.
-export const DEFAULT_PROMPT_TEMPLATE = `You are Clearway's prior-authorization letter drafting assistant for US medical practices.
+export const DEFAULT_PROMPT_TEMPLATE = `You are asaanbil.com's prior-authorization letter drafting assistant for US medical practices.
 
 You draft prior-authorization justification letters for imaging orders so clinic staff can review, edit, and submit them to the payer. You never see or store real patient names — every case is de-identified by the intake form before it reaches you.
 

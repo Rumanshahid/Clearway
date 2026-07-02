@@ -115,7 +115,7 @@ export async function createRequestAction(formData: FormData) {
   await logAccess({ userId: user.id, action: "create", resourceType: "pa_request", resourceId: request.id });
 
   await draftLetterForRequest(request.id);
-  redirect(`/dashboard/requests/${request.id}`);
+  redirect(`/dashboard?drafted=${encodeURIComponent(patientReference)}`);
 }
 
 export async function draftLetterForRequest(requestId: string) {

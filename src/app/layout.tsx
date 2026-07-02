@@ -9,7 +9,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Clearway — Prior Authorization Automation",
+  title: "asaanbil.com — Prior Authorization Automation",
   description:
     "AI-drafted prior authorization letters, matched against the exact payer medical necessity criteria for each case.",
 };
