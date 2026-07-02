@@ -4,14 +4,10 @@ import LandingScripts from "./LandingScripts";
 import { getSiteContent } from "@/lib/criteria-repo";
 
 const CMP_SLIDES = [
-  { label: "bad", title: "30–45 minutes per letter, written from scratch", desc: "Every prior auth starts from a blank page, with staff re-typing the same structure case after case." },
-  { label: "good", title: "5–10 minutes to review a criteria-matched draft", desc: "Clearway writes the first draft. Your staff reviews, edits if needed, and sends." },
-  { label: "bad", title: "Guessing which clause the payer actually wants", desc: "Staff rely on memory or outdated templates to match a payer's medical necessity criteria." },
-  { label: "good", title: "The exact payer clause cited automatically", desc: "Every letter references the specific CPB or guideline clause that applies to this case." },
-  { label: "bad", title: "Denials discovered weeks later, care already delayed", desc: "By the time a denial letter arrives, the patient has already been waiting." },
-  { label: "good", title: "Denial risks flagged before you hit submit", desc: "Missing documentation is caught and flagged at draft time, not after rejection." },
-  { label: "bad", title: "Missing documentation found only after rejection", desc: "A gap in conservative-care history often isn't noticed until the denial comes back." },
-  { label: "good", title: "Every request tracked — nothing falls through", desc: "A standing record of every letter, its status, and its outcome." },
+  { before: "Letters took 30–45 minutes, written from scratch every time — Clearway now drafts one in ", em: "under 10 minutes", after: "." },
+  { before: "Staff used to guess which clause a payer wanted — Clearway now ", em: "cites the exact one", after: " automatically." },
+  { before: "Denials surfaced weeks later, after care was delayed — Clearway now ", em: "flags the risk before you submit", after: "." },
+  { before: "Missing docs were found after rejection — Clearway now ", em: "tracks every request", after: " end to end." },
 ];
 
 const DEFAULTS: Record<string, string> = {
@@ -41,7 +37,7 @@ export default async function LandingPage() {
   const visible = (key: string) => content[key]?.visible !== false;
 
   return (
-    <>
+    <div className="landing-root">
       <nav className="site-nav" id="siteNav">
         <div className="wrap">
           <div className="logo">
@@ -58,7 +54,8 @@ export default async function LandingPage() {
             <a href="#pricing">Pricing</a>
           </div>
           <div className="nav-right">
-            <Link className="btn btn-primary" href="/sign-up" id="navCta">Request Pilot →</Link>
+            <Link className="btn btn-text" href="/sign-in" id="navSignIn">Sign In</Link>
+            <Link className="btn btn-primary" href="/sign-up" id="navCta">Sign Up</Link>
             <button className="hamburger" id="mobileHamburger" aria-label="Open menu">
               <span></span><span></span><span></span>
             </button>
@@ -74,7 +71,8 @@ export default async function LandingPage() {
         <a href="#insurers">Coverage</a>
         <a href="#pricing">Pricing</a>
         <div className="dd-divider"></div>
-        <Link className="btn btn-primary dd-cta" href="/sign-up" style={{ display: "block", textAlign: "center" }}>Request Pilot →</Link>
+        <Link className="btn btn-outline dd-cta" href="/sign-in" style={{ display: "block", textAlign: "center", marginBottom: "8px" }}>Sign In</Link>
+        <Link className="btn btn-primary dd-cta" href="/sign-up" style={{ display: "block", textAlign: "center" }}>Sign Up</Link>
       </div>
 
       <section className="hero">
@@ -204,7 +202,7 @@ export default async function LandingPage() {
       </section>
 
       {visible("section_insurers") && (
-      <section className="block center" id="insurers">
+      <section className="block alt center" id="insurers">
         <div className="wrap">
           <div className="section-eyebrow">Payer Coverage</div>
           <h2 className="section-h">We only cover what we can get right.</h2>
@@ -249,11 +247,13 @@ export default async function LandingPage() {
               <div className="carousel-slides" id="cmpSlides">
                 {CMP_SLIDES.map((slide, i) => (
                   <div className="cmp-slide" key={i}>
-                    <div className={`cmp-slide-label ${slide.label}`}>{slide.label === "bad" ? "Without Clearway" : "With Clearway"}</div>
-                    <div className="cmp-slide-title">{slide.title}</div>
-                    <div className="cmp-slide-desc">{slide.desc}</div>
+                    <div className="cmp-slide-desc">{slide.before}<em>{slide.em}</em>{slide.after}</div>
                   </div>
                 ))}
+                {/* clone of slide 1, used to fake an infinite forward loop */}
+                <div className="cmp-slide" aria-hidden="true">
+                  <div className="cmp-slide-desc">{CMP_SLIDES[0].before}<em>{CMP_SLIDES[0].em}</em>{CMP_SLIDES[0].after}</div>
+                </div>
               </div>
             </div>
 
@@ -264,7 +264,7 @@ export default async function LandingPage() {
       )}
 
       {visible("section_pricing") && (
-      <section className="block center" id="pricing">
+      <section className="block alt center" id="pricing">
         <div className="wrap">
           <div className="section-eyebrow">Pricing</div>
           <h2 className="section-h">Earn a place before charging for it.</h2>
@@ -346,6 +346,6 @@ export default async function LandingPage() {
       </footer>
 
       <LandingScripts />
-    </>
+    </div>
   );
 }

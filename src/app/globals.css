@@ -82,6 +82,14 @@ body {
 .btn-outline:hover {
   border-color: var(--gray-400);
 }
+.btn-text {
+  background: none;
+  color: var(--gray-900);
+  padding: 12px 6px;
+}
+.btn-text:hover {
+  color: var(--indigo-600);
+}
 .btn-sm {
   padding: 9px 18px;
   font-size: 13.5px;

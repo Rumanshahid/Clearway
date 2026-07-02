@@ -54,43 +54,61 @@ export default function LandingScripts() {
       timeouts.push(setTimeout(runStages, 200));
     }, 9500);
 
-    // ---- compare carousel ----
+    // ---- compare carousel (continuous forward loop via a trailing clone slide) ----
     const slidesWrap = document.getElementById("cmpSlides");
     const dotsWrap = document.getElementById("cmpDots");
     const prevBtn = document.getElementById("cmpPrev");
     const nextBtn = document.getElementById("cmpNext");
-    let index = 0;
+    let index = 0; // can exceed realCount-1 by 1 (the clone)
     let carouselTimer: ReturnType<typeof setInterval> | undefined;
     let dots: HTMLCollectionOf<Element> | undefined;
-
-    function goTo(i: number, slideCount: number) {
-      index = (i + slideCount) % slideCount;
-      if (slidesWrap) slidesWrap.style.transform = `translateX(-${index * 100}%)`;
-      if (dots) {
-        for (let j = 0; j < dots.length; j++) {
-          dots[j].classList.toggle("active", j === index);
-        }
-      }
-    }
+    let cloneSnapTimeout: ReturnType<typeof setTimeout> | undefined;
 
     let next: () => void = () => {};
     let prev: () => void = () => {};
     let resetTimer: () => void = () => {};
 
     if (slidesWrap && dotsWrap) {
-      const slideCount = slidesWrap.children.length;
-      for (let i = 0; i < slideCount; i++) {
+      const realCount = slidesWrap.children.length - 1; // excludes the trailing clone
+
+      function updateDots(realIndex: number) {
+        if (!dots) return;
+        for (let j = 0; j < dots.length; j++) {
+          dots[j].classList.toggle("active", j === realIndex);
+        }
+      }
+
+      function goTo(i: number, animate = true) {
+        index = i;
+        if (slidesWrap) {
+          slidesWrap.style.transition = animate ? "transform .5s cubic-bezier(.4,0,.2,1)" : "none";
+          slidesWrap.style.transform = `translateX(-${index * 100}%)`;
+        }
+        updateDots(index % realCount);
+      }
+
+      for (let i = 0; i < realCount; i++) {
         const dot = document.createElement("button");
         dot.className = "cdot" + (i === 0 ? " active" : "");
         dot.addEventListener("click", () => {
-          goTo(i, slideCount);
+          goTo(i);
           resetTimer();
         });
         dotsWrap.appendChild(dot);
       }
       dots = dotsWrap.children;
-      next = () => goTo(index + 1, slideCount);
-      prev = () => goTo(index - 1, slideCount);
+
+      // always move forward; when landing on the clone, snap invisibly back to real slide 0
+      next = () => {
+        goTo(index + 1);
+        if (index === realCount) {
+          cloneSnapTimeout = setTimeout(() => goTo(0, false), 500);
+        }
+      };
+      prev = () => {
+        const target = index === 0 ? realCount - 1 : index - 1;
+        goTo(target);
+      };
       resetTimer = () => {
         if (carouselTimer) clearInterval(carouselTimer);
         carouselTimer = setInterval(next, 4000);
@@ -103,7 +121,7 @@ export default function LandingScripts() {
         next();
         resetTimer();
       });
-      goTo(0, slideCount);
+      goTo(0, false);
       resetTimer();
     }
 
@@ -164,6 +182,7 @@ export default function LandingScripts() {
       timeouts.forEach(clearTimeout);
       clearInterval(interval);
       if (carouselTimer) clearInterval(carouselTimer);
+      if (cloneSnapTimeout) clearTimeout(cloneSnapTimeout);
       window.removeEventListener("scroll", onScroll);
       window.removeEventListener("resize", checkWidth);
       document.removeEventListener("click", onDocClick);
