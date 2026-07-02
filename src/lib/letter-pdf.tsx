@@ -1,4 +1,5 @@
 import { Document, Page, Text, View, StyleSheet } from "@react-pdf/renderer";
+import { LETTER_SECTION_KEYS } from "@/lib/anthropic";
 
 const styles = StyleSheet.create({
   page: { padding: 48, fontSize: 11, fontFamily: "Helvetica", lineHeight: 1.5, color: "#1A1D24" },
@@ -24,7 +25,7 @@ export function LetterPdfDocument({
   content: string;
   sections?: Record<string, { label: string; content: string }> | null;
 }) {
-  const sectionList = sections ? Object.values(sections) : null;
+  const sectionList = sections ? LETTER_SECTION_KEYS.filter((key) => sections[key]).map((key) => sections[key]) : null;
 
   return (
     <Document>

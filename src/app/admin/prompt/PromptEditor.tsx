@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { saveTemplateVersionAction } from "./actions";
+import { LETTER_SECTION_KEYS, type LetterSectionKey } from "@/lib/anthropic";
 
 interface LetterSection {
   label: string;
@@ -10,7 +11,7 @@ interface LetterSection {
 
 interface PreviewResult {
   letterTitle: string;
-  sections: Record<string, LetterSection>;
+  sections: Partial<Record<LetterSectionKey, LetterSection>>;
   meta: {
     approachUsed: string;
     redFlagsIdentified: string[];
@@ -133,12 +134,15 @@ export default function PromptEditor({
 
             <div className="p-4 rounded-lg flex flex-col gap-4" style={{ background: "var(--gray-50)" }}>
               <div className="font-semibold text-[13.5px]">{preview.letterTitle}</div>
-              {Object.values(preview.sections).map((section) => (
-                <div key={section.label}>
-                  <div className="text-[11px] uppercase tracking-wide text-gray-400 font-semibold mb-1">{section.label}</div>
-                  <div className="text-[13px] leading-relaxed whitespace-pre-wrap">{section.content}</div>
-                </div>
-              ))}
+              {LETTER_SECTION_KEYS.filter((key) => preview.sections[key]).map((key) => {
+                const section = preview.sections[key]!;
+                return (
+                  <div key={key}>
+                    <div className="text-[11px] uppercase tracking-wide text-gray-400 font-semibold mb-1">{section.label}</div>
+                    <div className="text-[13px] leading-relaxed whitespace-pre-wrap">{section.content}</div>
+                  </div>
+                );
+              })}
             </div>
           </div>
         )}
