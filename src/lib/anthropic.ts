@@ -1,7 +1,7 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { EXCLUDED_PAYERS_NOTE, LETTER_COMPONENTS, PayerKey, ProcedureCriteria } from "@/lib/criteria";
-import { determineLetterApproach, checkSoftWarnings } from "@/lib/letter-logic";
-import type { LetterMeta } from "@/lib/database.types";
+import { determineLetterApproach, checkSoftWarnings, buildAuthoringModeInstruction } from "@/lib/letter-logic";
+import type { AuthoringMode, LetterMeta } from "@/lib/database.types";
 
 let client: Anthropic | null = null;
 
@@ -23,6 +23,7 @@ export interface LetterCaseInput {
   memberId?: string;
   icd10Codes: string[];
   cptCode?: string;
+  authoringMode: AuthoringMode;
   orderingPhysicianName: string;
   orderingPhysicianCredentials?: string;
   intendedUse?: string;
@@ -58,7 +59,12 @@ export interface LetterOutput {
 // The admin-editable wrapper prompt (prompt_templates table) is rendered with
 // these placeholders. Keep this list in sync with the seed/update SQL and the
 // admin editor's preview.
-export function renderSystemPrompt(template: string, procedure: ProcedureCriteria, approachInstruction: string): string {
+export function renderSystemPrompt(
+  template: string,
+  procedure: ProcedureCriteria,
+  approachInstruction: string,
+  authoringMode: AuthoringMode
+): string {
   const vars: Record<string, string> = {
     procedure_label: procedure.label,
     aetna: procedure.aetna,
@@ -69,6 +75,7 @@ export function renderSystemPrompt(template: string, procedure: ProcedureCriteri
     excluded_payers_note: EXCLUDED_PAYERS_NOTE,
     letter_components_list: LETTER_COMPONENTS.map((c, i) => `${i + 1}. ${c}`).join("\n"),
     approach_instruction: approachInstruction,
+    authoring_mode_instruction: buildAuthoringModeInstruction(authoringMode),
   };
 
   return template.replace(/\{\{(\w+)\}\}/g, (match, key: string) => vars[key] ?? match);
@@ -99,7 +106,7 @@ function parseLetterJson(raw: string): { letterTitle: string; sections: Record<L
 
 export async function generateLetter(input: LetterCaseInput): Promise<LetterOutput> {
   const { approach, instruction } = determineLetterApproach(input.redFlags, input.caseFields);
-  const system = renderSystemPrompt(input.promptTemplate, input.procedure, instruction);
+  const system = renderSystemPrompt(input.promptTemplate, input.procedure, instruction, input.authoringMode);
   const computedWarnings = checkSoftWarnings(input.procedure, input.payer, input.caseFields);
 
   const userMessage = `Draft the prior-authorization letter for this case.

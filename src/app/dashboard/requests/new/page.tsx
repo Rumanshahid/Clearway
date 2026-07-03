@@ -1,8 +1,11 @@
+import { createClient } from "@/lib/supabase/server";
 import { PAYERS } from "@/lib/criteria";
 import { getAllPayerToggles, getEnabledProcedures } from "@/lib/criteria-repo";
+import type { AuthoringMode } from "@/lib/database.types";
 import NewRequestForm from "./NewRequestForm";
+import TipsRotator from "@/app/dashboard/TipsRotator";
 
-// Claude generation regularly takes longer than the platform's 10s default
+// Letter generation regularly takes longer than the platform's 10s default
 // serverless timeout; this raises it to the max allowed on a Vercel Hobby
 // plan for the Server Action this page's form submits to. Bump alongside
 // any plan upgrade.
@@ -14,13 +17,29 @@ export default async function NewRequestPage({
   searchParams: Promise<{ error?: string; procedure_type?: string }>;
 }) {
   const { error, procedure_type } = await searchParams;
+  const supabase = await createClient();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("practice_id")
+    .eq("id", user!.id)
+    .single();
+  const { data: practice } = await supabase
+    .from("practices")
+    .select("default_authoring_mode")
+    .eq("id", profile!.practice_id!)
+    .single();
+
   const [procedures, payerToggles] = await Promise.all([getEnabledProcedures(), getAllPayerToggles()]);
 
   return (
     <div className="max-w-[760px] mx-auto py-8 px-5">
       <h1 className="text-[24px] font-semibold mb-1">New prior authorization request</h1>
       <p className="text-[14px] text-gray-600 mb-6">
-        Under three minutes to fill in. Claude drafts the letter from what you enter here.
+        Under three minutes to fill in. Your letter is drafted automatically from what you enter here.
       </p>
 
       {error && (
@@ -28,6 +47,8 @@ export default async function NewRequestPage({
           {error}
         </div>
       )}
+
+      <TipsRotator className="mb-6" />
 
       {procedures.length === 0 ? (
         <div className="card p-6 text-center text-gray-400">
@@ -39,6 +60,7 @@ export default async function NewRequestPage({
           payers={PAYERS}
           payerToggles={payerToggles}
           initialProcedure={procedure_type}
+          defaultAuthoringMode={(practice?.default_authoring_mode || "doctor") as AuthoringMode}
         />
       )}
     </div>

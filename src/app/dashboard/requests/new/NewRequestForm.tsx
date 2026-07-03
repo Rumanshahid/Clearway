@@ -3,13 +3,14 @@
 import { useMemo, useState } from "react";
 import { useFormStatus } from "react-dom";
 import type { FieldDef, PayerKey, ProcedureCriteria } from "@/lib/criteria";
+import type { AuthoringMode } from "@/lib/database.types";
 import { createRequestAction } from "./actions";
 
 function SubmitButton() {
   const { pending } = useFormStatus();
   return (
     <button className="btn btn-primary w-full justify-center" type="submit" disabled={pending}>
-      {pending ? "Drafting with Claude… (can take up to a minute)" : "Draft letter →"}
+      {pending ? "Drafting your letter… (can take up to a minute)" : "Draft letter →"}
     </button>
   );
 }
@@ -19,13 +20,16 @@ export default function NewRequestForm({
   payers,
   payerToggles,
   initialProcedure,
+  defaultAuthoringMode,
 }: {
   procedures: ProcedureCriteria[];
   payers: { key: PayerKey; label: string; hasCriteria: boolean }[];
   payerToggles: Record<string, Record<string, boolean>>;
   initialProcedure?: string;
+  defaultAuthoringMode: AuthoringMode;
 }) {
   const [procedureKey, setProcedureKey] = useState(initialProcedure || procedures[0].key);
+  const [authoringMode, setAuthoringMode] = useState<AuthoringMode>(defaultAuthoringMode);
 
   const procedure = useMemo(
     () => procedures.find((p) => p.key === procedureKey) || procedures[0],
@@ -50,6 +54,43 @@ export default function NewRequestForm({
     <form action={createRequestAction} className="flex flex-col gap-6">
       <section className="card p-6">
         <h2 className="text-[15px] font-semibold mb-4">Case</h2>
+
+        <div className="mb-5">
+          <label className="label mb-2">Written for</label>
+          <div className="inline-flex rounded-[10px] border overflow-hidden" style={{ borderColor: "var(--gray-200)" }}>
+            <button
+              type="button"
+              className="px-4 py-2 text-[13px] font-medium transition-colors"
+              style={
+                authoringMode === "doctor"
+                  ? { background: "var(--indigo-600)", color: "#fff" }
+                  : { background: "#fff", color: "var(--gray-600)" }
+              }
+              onClick={() => setAuthoringMode("doctor")}
+            >
+              Doctor-authored
+            </button>
+            <button
+              type="button"
+              className="px-4 py-2 text-[13px] font-medium transition-colors"
+              style={
+                authoringMode === "patient"
+                  ? { background: "var(--indigo-600)", color: "#fff" }
+                  : { background: "#fff", color: "var(--gray-600)" }
+              }
+              onClick={() => setAuthoringMode("patient")}
+            >
+              Patient-authored
+            </button>
+          </div>
+          <input type="hidden" name="authoring_mode" value={authoringMode} />
+          <p className="text-[12px] text-gray-400 mt-1">
+            {authoringMode === "doctor"
+              ? "Written in first person by the ordering physician — the standard for a new request."
+              : "Written in the patient's own voice, for a patient filing their own appeal — the ordering physician's statement is referenced as an enclosure."}
+          </p>
+        </div>
+
         <div className="grid grid-cols-2 gap-4">
           <div>
             <label className="label" htmlFor="patient_reference">Patient reference (de-identified)</label>
@@ -84,8 +125,8 @@ export default function NewRequestForm({
             </select>
             {!availablePayers.find((p) => p.key === payerKey)?.hasCriteria && (
               <p className="text-[12px] mt-1" style={{ color: "var(--amber)" }}>
-                No published criteria for this payer yet — Claude will draft against general clinical necessity
-                and flag that explicitly.
+                No published criteria for this payer yet — the letter will be drafted against general clinical
+                necessity and flag that explicitly.
               </p>
             )}
           </div>
@@ -107,7 +148,7 @@ export default function NewRequestForm({
       <section className="card p-6">
         <h2 className="text-[15px] font-semibold mb-1">{procedure.label} — required details</h2>
         <p className="text-[12.5px] text-gray-400 mb-4">
-          Fields marked * are required before this can be sent to Claude for drafting.
+          Fields marked * are required before drafting can start.
         </p>
         <div className="flex flex-col gap-4">
           {procedure.requiredFields.map((field) => (
@@ -120,7 +161,7 @@ export default function NewRequestForm({
         <section className="card p-6">
           <h2 className="text-[15px] font-semibold mb-1">Red flags present?</h2>
           <p className="text-[12.5px] text-gray-400 mb-4">
-            Any of these bypass the standard conservative-care requirement — Claude will lead the letter with them.
+            Any of these bypass the standard conservative-care requirement — the letter will lead with them.
           </p>
           <div className="flex flex-col gap-2">
             {procedure.redFlags.map((flag) => (

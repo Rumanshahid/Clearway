@@ -1,6 +1,8 @@
 import Link from "next/link";
 import "./landing.css";
 import LandingScripts from "./LandingScripts";
+import SiteNav from "./SiteNav";
+import SiteFooter from "./SiteFooter";
 import { getSiteContent } from "@/lib/criteria-repo";
 
 const CMP_SLIDES = [
@@ -38,42 +40,7 @@ export default async function LandingPage() {
 
   return (
     <div className="landing-root">
-      <nav className="site-nav" id="siteNav">
-        <div className="wrap">
-          <div className="logo">
-            <div className="logo-mark">
-              <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                <path d="M2 7h10M7 2l5 5-5 5" stroke="#fff" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-            </div>
-            asaanbil.com
-          </div>
-          <div className="nav-links" id="navLinks">
-            <a href="#how">How It Works</a>
-            <a href="#insurers">Coverage</a>
-            <a href="#pricing">Pricing</a>
-          </div>
-          <div className="nav-right">
-            <Link className="btn btn-text" href="/sign-in" id="navSignIn">Sign In</Link>
-            <Link className="btn btn-primary" href="/sign-up" id="navCta">Sign Up</Link>
-            <button className="hamburger" id="mobileHamburger" aria-label="Open menu">
-              <span></span><span></span><span></span>
-            </button>
-          </div>
-        </div>
-      </nav>
-
-      <button className="floating-menu-btn" id="floatingHamburger" aria-label="Open menu">
-        <span></span><span></span><span></span>
-      </button>
-      <div className="nav-dropdown" id="navDropdown">
-        <a href="#how">How It Works</a>
-        <a href="#insurers">Coverage</a>
-        <a href="#pricing">Pricing</a>
-        <div className="dd-divider"></div>
-        <Link className="btn btn-outline dd-cta" href="/sign-in" style={{ display: "block", textAlign: "center", marginBottom: "8px" }}>Sign In</Link>
-        <Link className="btn btn-primary dd-cta" href="/sign-up" style={{ display: "block", textAlign: "center" }}>Sign Up</Link>
-      </div>
+      <SiteNav />
 
       <section className="hero">
         <div className="wrap">
@@ -315,35 +282,7 @@ export default async function LandingPage() {
         </div>
       </section>
 
-      <footer className="site-footer">
-        <div className="wrap">
-          <div className="footer-top">
-            <div>
-              <div className="footer-logo">
-                <div className="footer-logo-mark">
-                  <svg width="13" height="13" viewBox="0 0 14 14" fill="none"><path d="M2 7h10M7 2l5 5-5 5" stroke="#fff" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
-                </div>
-                asaanbil.com
-              </div>
-              <div className="footer-newsletter">
-                <input className="footer-input" placeholder="Enter e-mail address" />
-                <a className="btn btn-primary btn-sm" href="#">Subscribe</a>
-              </div>
-            </div>
-          </div>
-          <div className="footer-cols">
-            <div className="footer-col"><h4>Product</h4><a href="#how">How It Works</a><a href="#insurers">Coverage</a><a href="#pricing">Pricing</a></div>
-            <div className="footer-col"><h4>Company</h4><a href="#">About Us</a><a href="#">Contact</a><a href="#">Careers</a></div>
-            <div className="footer-col"><h4>Resources</h4><a href="#">Help Center</a><a href="#">Documentation</a><a href="#">FAQs</a></div>
-            <div className="footer-col"><h4>Legal</h4><a href="#">Privacy Policy</a><a href="#">Terms of Service</a><a href="#">HIPAA</a></div>
-            <div className="footer-col"><h4>Payers</h4><a href="#">Aetna</a><a href="#">Cigna / eviCore</a><a href="#">Roadmap</a></div>
-          </div>
-          <div className="footer-bottom">
-            <span>© 2026 asaanbil.com. Not affiliated with Aetna, Cigna, or eviCore.</span>
-            <span>hello@asaanbil.com</span>
-          </div>
-        </div>
-      </footer>
+      <SiteFooter />
 
       <LandingScripts />
     </div>

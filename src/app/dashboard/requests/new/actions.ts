@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { generateLetter } from "@/lib/anthropic";
 import { getMissingRequiredFields, PayerKey, DEFAULT_PROMPT_TEMPLATE } from "@/lib/criteria";
+import type { AuthoringMode } from "@/lib/database.types";
 import { getActivePromptTemplate, getProcedureByKey } from "@/lib/criteria-repo";
 import { logAccess } from "@/lib/access-log";
 import { notifyLetterReady, notifyUsageThreshold } from "./notify";
@@ -59,7 +60,7 @@ export async function createRequestAction(formData: FormData) {
     params.set("procedure_type", procedureType);
     params.set(
       "error",
-      `Missing required fields before this can go to Claude: ${missing.map((f) => f.label).join(", ")}`
+      `Missing required fields before this letter can be drafted: ${missing.map((f) => f.label).join(", ")}`
     );
     redirect(`/dashboard/requests/new?${params.toString()}`);
   }
@@ -72,6 +73,7 @@ export async function createRequestAction(formData: FormData) {
     .filter(Boolean);
   const memberId = String(formData.get("member_id") || "").trim();
   const cptCode = String(formData.get("cpt_code") || "").trim();
+  const authoringMode = String(formData.get("authoring_mode") || "doctor") as AuthoringMode;
   const orderingPhysicianName = String(formData.get("ordering_physician_name") || "").trim();
   const orderingPhysicianCredentials = String(formData.get("ordering_physician_credentials") || "").trim();
   const intendedUse = String(formData.get("intended_use") || caseFields.intended_use || "").trim();
@@ -96,6 +98,7 @@ export async function createRequestAction(formData: FormData) {
       icd10_codes: icd10Codes,
       member_id: memberId || null,
       cpt_code: cptCode || null,
+      authoring_mode: authoringMode,
       symptom_duration: caseFields.symptom_duration || null,
       case_fields: caseFields,
       red_flags: redFlags,
@@ -147,6 +150,7 @@ export async function draftLetterForRequest(requestId: string) {
     memberId: request.member_id ?? undefined,
     icd10Codes: request.icd10_codes,
     cptCode: request.cpt_code ?? undefined,
+    authoringMode: request.authoring_mode as AuthoringMode,
     orderingPhysicianName: request.ordering_physician_name,
     orderingPhysicianCredentials: request.ordering_physician_credentials ?? undefined,
     intendedUse: request.intended_use ?? undefined,

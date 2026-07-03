@@ -44,6 +44,7 @@ export async function POST(request: Request) {
       memberId: "M-SAMPLE-001",
       icd10Codes: ["M54.5"],
       cptCode: "72148",
+      authoringMode: "doctor",
       orderingPhysicianName: "Dr. Jane Sample",
       orderingPhysicianCredentials: "MD",
       intendedUse: "Preview / test generation",

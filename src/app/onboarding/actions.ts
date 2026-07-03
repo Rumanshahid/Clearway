@@ -2,7 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { createClient, createAdminClient } from "@/lib/supabase/server";
-import type { PracticePlan } from "@/lib/database.types";
+import type { AuthoringMode, PracticePlan } from "@/lib/database.types";
 import { PILOT_LETTERS_INCLUDED } from "@/lib/billing";
 
 export async function completeOnboardingAction(formData: FormData) {
@@ -20,6 +20,7 @@ export async function completeOnboardingAction(formData: FormData) {
   const primaryPayers = formData.getAll("primary_payers").map(String);
   const staffCount = Number(formData.get("staff_count") || 1);
   const plan = String(formData.get("plan") || "pilot") as PracticePlan;
+  const defaultAuthoringMode = String(formData.get("default_authoring_mode") || "doctor") as AuthoringMode;
   const baaAccepted = formData.get("baa_accepted") === "on";
 
   if (!name) {
@@ -46,6 +47,7 @@ export async function completeOnboardingAction(formData: FormData) {
       primary_payers: primaryPayers,
       staff_count: staffCount,
       plan,
+      default_authoring_mode: defaultAuthoringMode,
       letters_included: plan === "pilot" ? PILOT_LETTERS_INCLUDED : 999_999,
       baa_accepted_at: new Date().toISOString(),
       baa_accepted_by: user.id,

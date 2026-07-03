@@ -6,6 +6,7 @@ import type { RequestStatus } from "@/lib/database.types";
 import { logAccess } from "@/lib/access-log";
 import LetterPanel from "./LetterPanel";
 import { approveLetterAction, redraftAction, updateStatusAction } from "./actions";
+import TipsRotator from "@/app/dashboard/TipsRotator";
 
 // redraftAction calls Claude via draftLetterForRequest, which can exceed the
 // platform's 10s default serverless timeout.
@@ -54,7 +55,7 @@ export default async function RequestDetailPage({
         </div>
         <form action={redraftAction}>
           <input type="hidden" name="request_id" value={request.id} />
-          <button className="btn btn-outline btn-sm" type="submit">Re-draft with Claude</button>
+          <button className="btn btn-outline btn-sm" type="submit">Re-draft letter</button>
         </form>
       </div>
 
@@ -89,6 +90,8 @@ export default async function RequestDetailPage({
           ))}
         </div>
       </div>
+
+      <TipsRotator className="mb-6" />
 
       {letter ? (
         <>

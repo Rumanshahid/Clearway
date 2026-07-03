@@ -61,6 +61,25 @@ export default async function OnboardingPage({
           </div>
 
           <div>
+            <label className="label mb-2">Who will most letters be written for?</label>
+            <div className="grid grid-cols-2 gap-3">
+              <label className="border rounded-[12px] p-3 cursor-pointer flex flex-col gap-0.5 has-[:checked]:border-indigo-600 has-[:checked]:border-2" style={{ borderColor: "var(--gray-200)" }}>
+                <input type="radio" name="default_authoring_mode" value="doctor" defaultChecked className="sr-only" />
+                <span className="text-[13.5px] font-semibold">Doctor-authored</span>
+                <span className="text-[12px] text-gray-400">Ordering physician signs and speaks in first person — the standard for submitting a request</span>
+              </label>
+              <label className="border rounded-[12px] p-3 cursor-pointer flex flex-col gap-0.5 has-[:checked]:border-indigo-600 has-[:checked]:border-2" style={{ borderColor: "var(--gray-200)" }}>
+                <input type="radio" name="default_authoring_mode" value="patient" className="sr-only" />
+                <span className="text-[13.5px] font-semibold">Patient-authored</span>
+                <span className="text-[12px] text-gray-400">Written in the patient&apos;s own voice — for appeals the patient is filing themselves</span>
+              </label>
+            </div>
+            <p className="text-[12px] text-gray-400 mt-2">
+              You can switch this per request — this just sets the default.
+            </p>
+          </div>
+
+          <div>
             <label className="label">Choose a plan</label>
             <div className="grid grid-cols-3 gap-3">
               <PlanCard value="pilot" title="Pilot" price="Free" desc="10 letters" defaultChecked />

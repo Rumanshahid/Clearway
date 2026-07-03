@@ -5,6 +5,7 @@ export type PracticePlan = "pilot" | "practice" | "multi_site";
 export type BillingStatus = "active" | "grace_period" | "suspended";
 export type UserRole = "clinic_user" | "clinic_admin" | "super_admin";
 export type RequestStatus = "draft" | "reviewed" | "submitted" | "approved" | "denied";
+export type AuthoringMode = "doctor" | "patient";
 export type LetterApproach = "RED_FLAG" | "CONSERVATIVE_CARE_EXHAUSTED" | "STANDARD";
 export type DenialRisk = "LOW" | "MEDIUM" | "HIGH";
 
@@ -38,6 +39,7 @@ export interface Database {
           baa_accepted_at: string | null;
           baa_accepted_by: string | null;
           retention_months: number;
+          default_authoring_mode: AuthoringMode;
           created_at: string;
         };
         Insert: Partial<Database["public"]["Tables"]["practices"]["Row"]> & {
@@ -81,6 +83,7 @@ export interface Database {
           icd10_codes: string[];
           member_id: string | null;
           cpt_code: string | null;
+          authoring_mode: AuthoringMode;
           symptom_duration: string | null;
           case_fields: Record<string, unknown>;
           red_flags: string[];
