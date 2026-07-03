@@ -1,5 +1,5 @@
 import Anthropic from "@anthropic-ai/sdk";
-import { EXCLUDED_PAYERS_NOTE, LETTER_COMPONENTS, PayerKey, ProcedureCriteria } from "@/lib/criteria";
+import { CITATION_FORMAT_NOTE, EXCLUDED_PAYERS_NOTE, LETTER_COMPONENTS, PayerKey, ProcedureCriteria } from "@/lib/criteria";
 import { determineLetterApproach, checkSoftWarnings, buildAuthoringModeInstruction } from "@/lib/letter-logic";
 import type { AuthoringMode, LetterMeta } from "@/lib/database.types";
 
@@ -29,6 +29,17 @@ export interface LetterCaseInput {
   intendedUse?: string;
   redFlags: string[];
   caseFields: Record<string, string>;
+  patientFullName?: string;
+  patientDob?: string;
+  patientAddress?: string;
+  patientCityStateZip?: string;
+  patientPhone?: string;
+  insuranceGroupNumber?: string;
+  orderingPhysicianNpi?: string;
+  orderingPhysicianDirectPhone?: string;
+  orderingPhysicianSpecialty?: string;
+  orderingPhysicianFax?: string;
+  planType?: string;
 }
 
 export interface LetterSection {
@@ -73,6 +84,7 @@ export function renderSystemPrompt(
     red_flags_list: procedure.redFlags.map((f) => `- ${f}`).join("\n") || "- None documented for this procedure.",
     prompt_notes: procedure.promptNotes,
     excluded_payers_note: EXCLUDED_PAYERS_NOTE,
+    citation_format_note: CITATION_FORMAT_NOTE,
     letter_components_list: LETTER_COMPONENTS.map((c, i) => `${i + 1}. ${c}`).join("\n"),
     approach_instruction: approachInstruction,
     authoring_mode_instruction: buildAuthoringModeInstruction(authoringMode),
@@ -123,18 +135,33 @@ function assertCompleteSections(
 export async function generateLetter(input: LetterCaseInput): Promise<LetterOutput> {
   const { approach, instruction } = determineLetterApproach(input.redFlags, input.caseFields);
   const system = renderSystemPrompt(input.promptTemplate, input.procedure, instruction, input.authoringMode);
-  const computedWarnings = checkSoftWarnings(input.procedure, input.payer, input.caseFields);
+  const computedWarnings = checkSoftWarnings(input.procedure, input.payer, input.caseFields, {
+    insuranceGroupNumber: input.insuranceGroupNumber,
+    orderingPhysicianSpecialty: input.orderingPhysicianSpecialty,
+    orderingPhysicianFax: input.orderingPhysicianFax,
+  });
 
   const userMessage = `Draft the prior-authorization letter for this case.
 
-Patient reference (de-identified): ${input.patientReference}
+Patient full legal name: ${input.patientFullName || "(not provided — use the internal reference below instead)"}
+Patient date of birth: ${input.patientDob || "(not provided)"}
+Patient address: ${input.patientAddress || "(not provided)"}${
+    input.patientCityStateZip ? `, ${input.patientCityStateZip}` : ""
+  }
+Patient phone: ${input.patientPhone || "(not provided)"}
+Internal patient reference (never send to payer, staff-facing only): ${input.patientReference}
 Member ID: ${input.memberId || "(not provided)"}
+Insurance group number: ${input.insuranceGroupNumber || "(not provided)"}
 Payer: ${input.payer}
+Plan type: ${input.planType || "(not specified)"}
 ICD-10 code(s): ${input.icd10Codes.join(", ") || "(none provided)"}
 CPT/HCPCS code: ${input.cptCode || "(not provided)"}
 Ordering physician: ${input.orderingPhysicianName}${
     input.orderingPhysicianCredentials ? `, ${input.orderingPhysicianCredentials}` : ""
-  }
+  }${input.orderingPhysicianSpecialty ? ` (${input.orderingPhysicianSpecialty})` : ""}
+Ordering physician NPI: ${input.orderingPhysicianNpi || "(not provided)"}
+Ordering physician direct phone: ${input.orderingPhysicianDirectPhone || "(not provided)"}
+Ordering physician fax: ${input.orderingPhysicianFax || "(not provided)"}
 Intended use of imaging result: ${input.intendedUse || "(not specified)"}
 Red flags checked by staff: ${input.redFlags.length ? input.redFlags.join("; ") : "None reported"}
 Approach: ${approach}

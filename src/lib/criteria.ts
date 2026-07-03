@@ -375,15 +375,28 @@ export function getMissingRequiredFields(
 }
 
 export const LETTER_COMPONENTS = [
-  "Patient demographics with member ID",
+  "Patient demographics (full name, DOB, address, member ID, group number)",
   "Specific diagnosis with ICD-10 code(s)",
   "Detailed treatment/procedure description with CPT/HCPCS code(s)",
-  "Citation of the specific payer policy/CPB/guideline demonstrating coverage criteria compliance",
+  "Citation of the specific payer policy/CPB/guideline demonstrating coverage criteria compliance, in the citation format that payer expects",
   "Clinical rationale explaining why the treatment/imaging is necessary now",
   "Previous treatments attempted, with outcomes and duration",
   "Total treatment/symptom duration",
-  "Physician signature with credentials",
+  "Physician signature with credentials, NPI, and direct contact information",
 ];
+
+// Paraphrased guidance on how each payer expects necessity citations to be
+// shaped — a correct citation name/number matters as much as the underlying
+// clinical argument for getting past the first-level reviewer.
+export const CITATION_FORMAT_NOTE =
+  "Match the citation format to the payer named in this case: for Aetna, name the specific CPB (Clinical Policy Bulletin) number " +
+  "together with the exact numbered criterion it satisfies, not just the bulletin title. For Cigna/eviCore, name the specific guideline " +
+  "and its section identifier (e.g. the spine-imaging guideline's own section number), not just \"eviCore guidelines\" generically. " +
+  "For UnitedHealthcare, cite the specific Coverage Determination Guideline (CDG) number if one is known for this case — UHC reviewers " +
+  "expect the CDG number, not a paraphrase of its contents. For Humana, BCBS/Anthem, or any payer with no citable policy documented in " +
+  "this system, do not invent a payer policy number — instead cite the relevant specialty-society guideline by name (e.g. ACR Appropriateness " +
+  "Criteria, AHA/ACC guidance, ACOG practice bulletins, NCCN guidelines — whichever body governs this clinical area) and say plainly that " +
+  "no payer-specific bulletin was available.";
 
 // Fallback used only if the DB has no active prompt_templates row yet
 // (e.g. migrations 0001-0003 ran but 0004's seed didn't). Keep this in sync
@@ -393,7 +406,7 @@ export const LETTER_COMPONENTS = [
 // that already ran it).
 export const DEFAULT_PROMPT_TEMPLATE = `You are asaanbil.com's prior-authorization letter drafting assistant for US medical practices.
 
-You draft prior-authorization justification letters for imaging orders so clinic staff can review, edit, and submit them to the payer. You never see or store real patient names — every case is de-identified by the intake form before it reaches you.
+You draft prior-authorization justification letters for imaging orders so clinic staff can review, edit, and submit them to the payer. The intake form gives you real patient identity details (name, date of birth, address) only because a payer submission requires them to identify the patient — treat every identity field as PHI: use exactly what's given inside the letter body, never guess, embellish, or carry it anywhere outside the letter you're producing.
 
 PROCEDURE: {{procedure_label}}
 
@@ -401,6 +414,8 @@ Payer medical-necessity criteria (paraphrased reference — cite the substance, 
 — Aetna: {{aetna}}
 — Cigna / eviCore: {{evicore}}
 — Sources: {{sources}}
+
+Citation format expectations: {{citation_format_note}}
 
 Red flags that bypass the standard conservative-care requirement for this procedure:
 {{red_flags_list}}
@@ -423,7 +438,7 @@ VOICE RULES — apply to every letter regardless of mode:
 - Close with a specific, direct ask naming the exact procedure/CPT code — not a vague request for "kind consideration."
 - Never explain what the payer's policy does NOT cover or lacks — only state what supports the request. Volunteering a gap invites a denial around it.
 - Cite exactly one payer policy source, stated with confidence — never hedge between multiple possible citations.
-- Use the patient's de-identified reference by name at least once in the rationale section rather than repeating "this patient" throughout — it reads less automated.
+- Use the patient's actual name (or the internal reference, if no name was given) by name at least once in the rationale section rather than repeating "this patient" throughout — it reads less automated.
 
 Return your entire response as a single JSON object — no markdown code fences, no commentary before or after it — matching exactly this shape (use the section labels specified by the AUTHORING MODE instruction above, not necessarily the example labels below):
 
@@ -449,15 +464,16 @@ Return your entire response as a single JSON object — no markdown code fences,
 }
 
 RULES:
-- Component 1 must include the patient reference exactly as given, and the member ID if one was provided.
+- Component 1 must include the patient's full legal name and date of birth if provided (fall back to the internal reference if no name was given), plus address, member ID, and group number wherever provided — this is what lets the payer actually locate the patient's file.
 - Component 2 is the ICD-10 code(s) plus diagnosis description, one line.
 - Component 3 must include the CPT/HCPCS code if one was provided.
-- Component 4 must be brief — 2-3 sentences max — citing the specific payer policy/CPB/guideline that applies.
+- Component 4 must be brief — 2-3 sentences max — citing the specific payer policy/CPB/guideline that applies, following the citation format expectations given above for that payer.
 - Component 5 must follow the APPROACH instruction above exactly.
 - Component 6 states the conservative treatment type, duration, and outcome if documented, or says plainly that none was documented.
+- Component 8 must include the ordering physician's NPI and a direct phone or fax number if provided, alongside the credentials — a peer-to-peer offer without a real callback number is not actionable for the reviewer.
 - Explicitly map each documented finding to the specific criterion it satisfies, in your own words — never copy the payer's bulletin language verbatim.
 - If a required input looks missing or vague, note it plainly as one of the meta.softWarnings entries rather than inventing details in the letter body.
-- Do not use placeholder brackets like [PATIENT NAME] — use the de-identified reference exactly as given.
+- Do not use placeholder brackets like [PATIENT NAME] — use the real name (or internal reference, if no name was given) exactly as given.
 - denialRiskAssessment should reflect how well the documented case matches the criteria above: LOW if red flags or well-documented conservative care clearly satisfy the criteria, MEDIUM if partially documented, HIGH if a key requirement is missing or contradicted.
 - Output nothing except the JSON object.`;
 

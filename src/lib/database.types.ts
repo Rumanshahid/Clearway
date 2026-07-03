@@ -90,6 +90,17 @@ export interface Database {
           intended_use: string | null;
           ordering_physician_name: string;
           ordering_physician_credentials: string | null;
+          patient_full_name: string | null;
+          patient_dob: string | null;
+          patient_address: string | null;
+          patient_city_state_zip: string | null;
+          patient_phone: string | null;
+          insurance_group_number: string | null;
+          ordering_physician_npi: string | null;
+          ordering_physician_direct_phone: string | null;
+          ordering_physician_specialty: string | null;
+          ordering_physician_fax: string | null;
+          plan_type: string | null;
           status: RequestStatus;
           created_at: string;
           updated_at: string;

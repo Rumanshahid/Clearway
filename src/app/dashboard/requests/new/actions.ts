@@ -79,10 +79,30 @@ export async function createRequestAction(formData: FormData) {
   const intendedUse = String(formData.get("intended_use") || caseFields.intended_use || "").trim();
   const redFlags = formData.getAll("red_flags").map(String);
 
-  if (!patientReference || !payer || !orderingPhysicianName) {
+  const patientFullName = String(formData.get("patient_full_name") || "").trim();
+  const patientDob = String(formData.get("patient_dob") || "").trim();
+  const patientAddress = String(formData.get("patient_address") || "").trim();
+  const patientCityStateZip = String(formData.get("patient_city_state_zip") || "").trim();
+  const patientPhone = String(formData.get("patient_phone") || "").trim();
+  const insuranceGroupNumber = String(formData.get("insurance_group_number") || "").trim();
+  const orderingPhysicianNpi = String(formData.get("ordering_physician_npi") || "").trim();
+  const orderingPhysicianDirectPhone = String(formData.get("ordering_physician_direct_phone") || "").trim();
+  const orderingPhysicianSpecialty = String(formData.get("ordering_physician_specialty") || "").trim();
+  const orderingPhysicianFax = String(formData.get("ordering_physician_fax") || "").trim();
+  const planType = String(formData.get("plan_type") || "").trim();
+
+  if (
+    !patientReference ||
+    !payer ||
+    !orderingPhysicianName ||
+    !patientFullName ||
+    !patientDob ||
+    !orderingPhysicianNpi ||
+    !orderingPhysicianDirectPhone
+  ) {
     redirect(
       `/dashboard/requests/new?procedure_type=${procedureType}&error=${encodeURIComponent(
-        "Patient reference, payer, and ordering physician are required."
+        "Patient reference, patient full name and DOB, payer, and ordering physician (name, NPI, direct phone) are required."
       )}`
     );
   }
@@ -105,6 +125,17 @@ export async function createRequestAction(formData: FormData) {
       intended_use: intendedUse || null,
       ordering_physician_name: orderingPhysicianName,
       ordering_physician_credentials: orderingPhysicianCredentials || null,
+      patient_full_name: patientFullName || null,
+      patient_dob: patientDob || null,
+      patient_address: patientAddress || null,
+      patient_city_state_zip: patientCityStateZip || null,
+      patient_phone: patientPhone || null,
+      insurance_group_number: insuranceGroupNumber || null,
+      ordering_physician_npi: orderingPhysicianNpi || null,
+      ordering_physician_direct_phone: orderingPhysicianDirectPhone || null,
+      ordering_physician_specialty: orderingPhysicianSpecialty || null,
+      ordering_physician_fax: orderingPhysicianFax || null,
+      plan_type: planType || null,
       status: "draft",
     })
     .select("id")
@@ -169,6 +200,17 @@ export async function draftLetterForRequest(requestId: string) {
     intendedUse: request.intended_use ?? undefined,
     redFlags: request.red_flags,
     caseFields: request.case_fields as Record<string, string>,
+    patientFullName: request.patient_full_name ?? undefined,
+    patientDob: request.patient_dob ?? undefined,
+    patientAddress: request.patient_address ?? undefined,
+    patientCityStateZip: request.patient_city_state_zip ?? undefined,
+    patientPhone: request.patient_phone ?? undefined,
+    insuranceGroupNumber: request.insurance_group_number ?? undefined,
+    orderingPhysicianNpi: request.ordering_physician_npi ?? undefined,
+    orderingPhysicianDirectPhone: request.ordering_physician_direct_phone ?? undefined,
+    orderingPhysicianSpecialty: request.ordering_physician_specialty ?? undefined,
+    orderingPhysicianFax: request.ordering_physician_fax ?? undefined,
+    planType: request.plan_type ?? undefined,
   });
 
   const { data: lastVersion } = await supabase

@@ -60,8 +60,23 @@ Use the standard clinical section headings: 1. Patient Demographics / 2. Diagnos
 // Non-blocking warnings shown to staff alongside the letter — unlike missing
 // required fields (which block generation entirely), these are things that
 // commonly hurt approval odds but don't stop drafting.
-export function checkSoftWarnings(procedure: ProcedureCriteria, payer: PayerKey, caseFields: Record<string, string>): string[] {
+export function checkSoftWarnings(
+  procedure: ProcedureCriteria,
+  payer: PayerKey,
+  caseFields: Record<string, string>,
+  extras?: { insuranceGroupNumber?: string; orderingPhysicianSpecialty?: string; orderingPhysicianFax?: string }
+): string[] {
   const warnings: string[] = [];
+
+  if (!extras?.insuranceGroupNumber) {
+    warnings.push("Insurance group number wasn't provided — many payers require it alongside the member ID to locate the policy.");
+  }
+  if (!extras?.orderingPhysicianFax) {
+    warnings.push("Ordering physician fax wasn't provided — some payers still require a fax number for PA correspondence.");
+  }
+  if (!extras?.orderingPhysicianSpecialty) {
+    warnings.push("Ordering physician specialty wasn't provided — useful if this case ends up needing a peer-to-peer review.");
+  }
 
   if (payer === "other") {
     warnings.push("This payer has no published medical-necessity criteria on file — the letter will rely on general clinical necessity and red-flag/conservative-care logic instead of a cited policy.");
