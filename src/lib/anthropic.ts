@@ -130,12 +130,23 @@ Return the JSON object now, exactly as specified in your system instructions.`;
 
   const model = process.env.ANTHROPIC_MODEL || "claude-sonnet-5";
 
+  // 3000 rather than the earlier 1800: the voice-rules block asks for named
+  // specifics and one argument per sentence, which produces noticeably
+  // longer section content than the original plain-text prompt did. A tight
+  // budget risks Claude's JSON response getting cut off mid-object, which
+  // fails JSON.parse below and previously crashed the whole page.
   const response = await getClient().messages.create({
     model,
-    max_tokens: 1800,
+    max_tokens: 3000,
     system,
     messages: [{ role: "user", content: userMessage }],
   });
+
+  if (response.stop_reason === "max_tokens") {
+    throw new Error(
+      "The letter response was cut off before it finished (hit the token limit). Try again — this is usually transient."
+    );
+  }
 
   const textBlock = response.content.find((block) => block.type === "text");
   if (!textBlock || textBlock.type !== "text") {

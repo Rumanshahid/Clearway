@@ -98,6 +98,15 @@ export async function redraftAction(formData: FormData) {
   await logAccess({ userId: user?.id || null, action: "redraft", resourceType: "pa_request", resourceId: requestId });
 
   const { draftLetterForRequest } = await import("../new/actions");
-  await draftLetterForRequest(requestId);
+  try {
+    await draftLetterForRequest(requestId);
+  } catch (err) {
+    console.error("redraftAction: draftLetterForRequest failed", err);
+    redirect(
+      `/dashboard/requests/${requestId}?error=${encodeURIComponent(
+        `Re-drafting failed: ${err instanceof Error ? err.message : "unknown error"}. You can try again.`
+      )}`
+    );
+  }
   redirect(`/dashboard/requests/${requestId}`);
 }

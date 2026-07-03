@@ -16,10 +16,13 @@ const STATUS_FLOW: RequestStatus[] = ["draft", "reviewed", "submitted", "approve
 
 export default async function RequestDetailPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ error?: string }>;
 }) {
   const { id } = await params;
+  const { error } = await searchParams;
   const supabase = await createClient();
 
   const { data: request } = await supabase.from("pa_requests").select("*").eq("id", id).single();
@@ -45,6 +48,12 @@ export default async function RequestDetailPage({
   return (
     <div className="max-w-[900px] mx-auto py-8 px-5">
       <Link href="/dashboard" className="text-[13px] text-gray-400 mb-3 inline-block">← Back to requests</Link>
+
+      {error && (
+        <div className="mb-5 text-[13px] rounded-lg px-3 py-2" style={{ background: "var(--danger-bg)", color: "var(--danger-red)" }}>
+          {error}
+        </div>
+      )}
 
       <div className="flex items-start justify-between mb-6">
         <div>

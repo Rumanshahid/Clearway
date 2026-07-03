@@ -121,7 +121,20 @@ export async function createRequestAction(formData: FormData) {
 
   await logAccess({ userId: user.id, action: "create", resourceType: "pa_request", resourceId: request.id });
 
-  await draftLetterForRequest(request.id);
+  try {
+    await draftLetterForRequest(request.id);
+  } catch (err) {
+    // The request row is already saved — don't crash the page over a
+    // generation failure. Send staff to the request itself, where the
+    // "Re-draft letter" button lets them retry without re-entering the case.
+    console.error("draftLetterForRequest failed", err);
+    redirect(
+      `/dashboard/requests/${request.id}?error=${encodeURIComponent(
+        `The request was saved, but drafting the letter failed: ${err instanceof Error ? err.message : "unknown error"}. Try Re-draft letter below.`
+      )}`
+    );
+  }
+
   redirect(`/dashboard?drafted=${encodeURIComponent(patientReference)}`);
 }
 
