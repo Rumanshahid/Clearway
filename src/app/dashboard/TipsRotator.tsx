@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { getRandomTip } from "@/lib/tips";
+import { getRandomTip, TIPS } from "@/lib/tips";
 
 const CATEGORY_LABEL: Record<string, string> = {
   denial: "Denial guide",
@@ -18,10 +18,21 @@ const CATEGORY_STYLE: Record<string, { bg: string; color: string }> = {
 };
 
 export default function TipsRotator({ className }: { className?: string }) {
-  const [{ tip }, setCurrent] = useState(() => getRandomTip());
+  // Seeded with a fixed tip (index 0) so server and client render identical
+  // HTML on the first pass — picking randomly here would mismatch between
+  // the server's render and the client's hydration render and crash the
+  // page (React error #418). The real random pick happens client-only,
+  // after mount, in the effect below.
+  const [{ tip }, setCurrent] = useState<{ tip: (typeof TIPS)[number]; index: number }>({ tip: TIPS[0], index: 0 });
   const [visible, setVisible] = useState(true);
 
   useEffect(() => {
+    // One deliberate extra render to swap the deterministic SSR tip for a
+    // real random one, client-only — this is the standard fix for a
+    // server/client value mismatch, not an accidental cascading update.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setCurrent(getRandomTip());
+
     const interval = setInterval(() => {
       setVisible(false);
       setTimeout(() => {
