@@ -15,21 +15,66 @@ function SubmitButton() {
   );
 }
 
+export interface SavedPhysician {
+  id: string;
+  name: string;
+  credentials: string | null;
+  npi: string;
+  direct_phone: string | null;
+  specialty: string | null;
+  fax: string | null;
+}
+
+const BLANK_PHYSICIAN = { name: "", credentials: "", npi: "", direct_phone: "", specialty: "", fax: "" };
+
 export default function NewRequestForm({
   procedures,
   payers,
   payerToggles,
   initialProcedure,
   defaultAuthoringMode,
+  savedPhysicians,
 }: {
   procedures: ProcedureCriteria[];
   payers: { key: PayerKey; label: string; hasCriteria: boolean }[];
   payerToggles: Record<string, Record<string, boolean>>;
   initialProcedure?: string;
   defaultAuthoringMode: AuthoringMode;
+  savedPhysicians: SavedPhysician[];
 }) {
   const [procedureKey, setProcedureKey] = useState(initialProcedure || procedures[0].key);
   const [authoringMode, setAuthoringMode] = useState<AuthoringMode>(defaultAuthoringMode);
+
+  const [physicianSelection, setPhysicianSelection] = useState<string>(savedPhysicians[0]?.id || "new");
+  const [physicianFields, setPhysicianFields] = useState(
+    savedPhysicians[0]
+      ? {
+          name: savedPhysicians[0].name,
+          credentials: savedPhysicians[0].credentials || "",
+          npi: savedPhysicians[0].npi,
+          direct_phone: savedPhysicians[0].direct_phone || "",
+          specialty: savedPhysicians[0].specialty || "",
+          fax: savedPhysicians[0].fax || "",
+        }
+      : BLANK_PHYSICIAN
+  );
+
+  function handlePhysicianSelect(id: string) {
+    setPhysicianSelection(id);
+    const saved = savedPhysicians.find((p) => p.id === id);
+    setPhysicianFields(
+      saved
+        ? {
+            name: saved.name,
+            credentials: saved.credentials || "",
+            npi: saved.npi,
+            direct_phone: saved.direct_phone || "",
+            specialty: saved.specialty || "",
+            fax: saved.fax || "",
+          }
+        : BLANK_PHYSICIAN
+    );
+  }
 
   const procedure = useMemo(
     () => procedures.find((p) => p.key === procedureKey) || procedures[0],
@@ -233,30 +278,99 @@ export default function NewRequestForm({
               <input className="input" id="intended_use" name="intended_use" placeholder="e.g. surgical planning" />
             </div>
           )}
+
+          {savedPhysicians.length > 0 && (
+            <div className="col-span-2">
+              <label className="label" htmlFor="physician_selection">Ordering physician</label>
+              <select
+                className="input"
+                id="physician_selection"
+                value={physicianSelection}
+                onChange={(e) => handlePhysicianSelect(e.target.value)}
+              >
+                {savedPhysicians.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.name}{p.specialty ? ` — ${p.specialty}` : ""}
+                  </option>
+                ))}
+                <option value="new">+ Add a new physician</option>
+              </select>
+            </div>
+          )}
+
           <div>
             <label className="label" htmlFor="ordering_physician_name">Ordering physician name</label>
-            <input className="input" id="ordering_physician_name" name="ordering_physician_name" required />
+            <input
+              className="input"
+              id="ordering_physician_name"
+              name="ordering_physician_name"
+              required
+              value={physicianFields.name}
+              onChange={(e) => setPhysicianFields((prev) => ({ ...prev, name: e.target.value }))}
+            />
           </div>
           <div>
             <label className="label" htmlFor="ordering_physician_credentials">Credentials</label>
-            <input className="input" id="ordering_physician_credentials" name="ordering_physician_credentials" placeholder="MD, DO, ..." />
+            <input
+              className="input"
+              id="ordering_physician_credentials"
+              name="ordering_physician_credentials"
+              placeholder="MD, DO, ..."
+              value={physicianFields.credentials}
+              onChange={(e) => setPhysicianFields((prev) => ({ ...prev, credentials: e.target.value }))}
+            />
           </div>
           <div>
             <label className="label" htmlFor="ordering_physician_npi">NPI <span style={{ color: "var(--danger-red)" }}>*</span></label>
-            <input className="input" id="ordering_physician_npi" name="ordering_physician_npi" placeholder="10-digit NPI" required />
+            <input
+              className="input"
+              id="ordering_physician_npi"
+              name="ordering_physician_npi"
+              placeholder="10-digit NPI"
+              required
+              value={physicianFields.npi}
+              onChange={(e) => setPhysicianFields((prev) => ({ ...prev, npi: e.target.value }))}
+            />
           </div>
           <div>
             <label className="label" htmlFor="ordering_physician_direct_phone">Direct phone <span style={{ color: "var(--danger-red)" }}>*</span></label>
-            <input className="input" id="ordering_physician_direct_phone" name="ordering_physician_direct_phone" type="tel" placeholder="For the peer-to-peer offer" required />
+            <input
+              className="input"
+              id="ordering_physician_direct_phone"
+              name="ordering_physician_direct_phone"
+              type="tel"
+              placeholder="For the peer-to-peer offer"
+              required
+              value={physicianFields.direct_phone}
+              onChange={(e) => setPhysicianFields((prev) => ({ ...prev, direct_phone: e.target.value }))}
+            />
           </div>
           <div>
             <label className="label" htmlFor="ordering_physician_specialty">Specialty</label>
-            <input className="input" id="ordering_physician_specialty" name="ordering_physician_specialty" placeholder="e.g. Orthopedic Surgery" />
+            <input
+              className="input"
+              id="ordering_physician_specialty"
+              name="ordering_physician_specialty"
+              placeholder="e.g. Orthopedic Surgery"
+              value={physicianFields.specialty}
+              onChange={(e) => setPhysicianFields((prev) => ({ ...prev, specialty: e.target.value }))}
+            />
           </div>
           <div>
             <label className="label" htmlFor="ordering_physician_fax">Fax</label>
-            <input className="input" id="ordering_physician_fax" name="ordering_physician_fax" placeholder="Optional but strengthens the letter" />
+            <input
+              className="input"
+              id="ordering_physician_fax"
+              name="ordering_physician_fax"
+              placeholder="Optional but strengthens the letter"
+              value={physicianFields.fax}
+              onChange={(e) => setPhysicianFields((prev) => ({ ...prev, fax: e.target.value }))}
+            />
           </div>
+          <label className="col-span-2 flex items-center gap-2 text-[13px] text-gray-600">
+            <input type="checkbox" name="save_physician" defaultChecked className="w-4 h-4" />
+            Save this physician for next time
+          </label>
         </div>
       </section>
 

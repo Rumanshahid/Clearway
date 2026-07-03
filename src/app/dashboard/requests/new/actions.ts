@@ -152,6 +152,24 @@ export async function createRequestAction(formData: FormData) {
 
   await logAccess({ userId: user.id, action: "create", resourceType: "pa_request", resourceId: request.id });
 
+  if (formData.get("save_physician") === "on" && orderingPhysicianNpi) {
+    const { error: physicianError } = await supabase.from("physicians").upsert(
+      {
+        practice_id: profile.practice_id,
+        name: orderingPhysicianName,
+        credentials: orderingPhysicianCredentials || null,
+        npi: orderingPhysicianNpi,
+        direct_phone: orderingPhysicianDirectPhone || null,
+        specialty: orderingPhysicianSpecialty || null,
+        fax: orderingPhysicianFax || null,
+      },
+      { onConflict: "practice_id,npi" }
+    );
+    // Non-critical — the request itself is already saved either way, so a
+    // failure here shouldn't block or crash the drafting flow.
+    if (physicianError) console.error("Saving physician for reuse failed", physicianError);
+  }
+
   try {
     await draftLetterForRequest(request.id);
   } catch (err) {

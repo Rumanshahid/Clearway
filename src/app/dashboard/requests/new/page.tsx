@@ -33,7 +33,15 @@ export default async function NewRequestPage({
     .eq("id", profile!.practice_id!)
     .single();
 
-  const [procedures, payerToggles] = await Promise.all([getEnabledProcedures(), getAllPayerToggles()]);
+  const [procedures, payerToggles, { data: physicians }] = await Promise.all([
+    getEnabledProcedures(),
+    getAllPayerToggles(),
+    supabase
+      .from("physicians")
+      .select("id, name, credentials, npi, direct_phone, specialty, fax")
+      .eq("practice_id", profile!.practice_id!)
+      .order("name"),
+  ]);
 
   return (
     <div className="max-w-[760px] mx-auto py-8 px-5">
@@ -61,6 +69,7 @@ export default async function NewRequestPage({
           payerToggles={payerToggles}
           initialProcedure={procedure_type}
           defaultAuthoringMode={(practice?.default_authoring_mode || "doctor") as AuthoringMode}
+          savedPhysicians={physicians || []}
         />
       )}
     </div>

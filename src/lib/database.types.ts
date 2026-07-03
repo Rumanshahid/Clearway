@@ -241,6 +241,34 @@ export interface Database {
         Update: Partial<Database["public"]["Tables"]["site_content"]["Row"]>;
         Relationships: [];
       };
+      physicians: {
+        Row: {
+          id: string;
+          practice_id: string;
+          name: string;
+          credentials: string | null;
+          npi: string;
+          direct_phone: string | null;
+          specialty: string | null;
+          fax: string | null;
+          created_at: string;
+        };
+        Insert: Partial<Database["public"]["Tables"]["physicians"]["Row"]> & {
+          practice_id: string;
+          name: string;
+          npi: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["physicians"]["Row"]>;
+        Relationships: [
+          {
+            foreignKeyName: "physicians_practice_id_fkey";
+            columns: ["practice_id"];
+            isOneToOne: false;
+            referencedRelation: "practices";
+            referencedColumns: ["id"];
+          }
+        ];
+      };
       notifications: {
         Row: {
           id: string;
