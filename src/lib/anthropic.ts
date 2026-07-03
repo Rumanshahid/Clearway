@@ -93,7 +93,7 @@ function sectionsToPlainText(letterTitle: string, sections: Record<LetterSection
   return `${letterTitle}\n\n${body}`;
 }
 
-function parseLetterJson(raw: string): { letterTitle: string; sections: Record<LetterSectionKey, LetterSection>; meta: LetterMeta } {
+function parseLetterJson(raw: string): { letterTitle?: string; sections?: Partial<Record<LetterSectionKey, LetterSection>>; meta?: Partial<LetterMeta> } {
   let text = raw.trim();
   try {
     return JSON.parse(text);
@@ -102,6 +102,22 @@ function parseLetterJson(raw: string): { letterTitle: string; sections: Record<L
     text = cleaned;
   }
   return JSON.parse(text);
+}
+
+// Claude usually follows the JSON schema exactly, but "usually" isn't good
+// enough for a field that's the entire point of the request — a missing or
+// empty section should fail loudly and specifically, not surface as a
+// generic crash or a letter with a silent blank spot in it.
+function assertCompleteSections(
+  sections: Partial<Record<LetterSectionKey, LetterSection>> | undefined
+): asserts sections is Record<LetterSectionKey, LetterSection> {
+  if (!sections) {
+    throw new Error("Claude's response was missing the letter sections entirely. Try again.");
+  }
+  const missing = LETTER_SECTION_KEYS.filter((key) => !sections[key]?.content?.trim());
+  if (missing.length > 0) {
+    throw new Error(`Claude's response was missing content for: ${missing.join(", ")}. Try again.`);
+  }
 }
 
 export async function generateLetter(input: LetterCaseInput): Promise<LetterOutput> {
@@ -154,19 +170,24 @@ Return the JSON object now, exactly as specified in your system instructions.`;
   }
 
   const parsed = parseLetterJson(textBlock.text);
+  assertCompleteSections(parsed.sections);
 
-  const mergedWarnings = Array.from(new Set([...(parsed.meta.softWarnings || []), ...computedWarnings]));
+  const letterTitle = parsed.letterTitle?.trim() || `PRIOR AUTHORIZATION REQUEST — ${input.procedure.label.toUpperCase()}`;
+
+  const mergedWarnings = Array.from(new Set([...(parsed.meta?.softWarnings || []), ...computedWarnings]));
 
   const meta: LetterMeta = {
-    ...parsed.meta,
-    approachUsed: parsed.meta.approachUsed || approach,
+    approachUsed: parsed.meta?.approachUsed || approach,
+    redFlagsIdentified: parsed.meta?.redFlagsIdentified || input.redFlags,
     softWarnings: mergedWarnings,
+    denialRiskAssessment: parsed.meta?.denialRiskAssessment || "MEDIUM",
+    denialRiskReason: parsed.meta?.denialRiskReason || "Risk assessment wasn't provided in this draft — review the letter against the payer criteria yourself before submitting.",
   };
 
   return {
-    letterTitle: parsed.letterTitle,
+    letterTitle,
     sections: parsed.sections,
     meta,
-    plainText: sectionsToPlainText(parsed.letterTitle, parsed.sections),
+    plainText: sectionsToPlainText(letterTitle, parsed.sections),
   };
 }

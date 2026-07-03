@@ -177,10 +177,16 @@ export default function NewRequestForm({
       <section className="card p-6">
         <h2 className="text-[15px] font-semibold mb-4">Intent &amp; ordering physician</h2>
         <div className="grid grid-cols-2 gap-4">
-          <div className="col-span-2">
-            <label className="label" htmlFor="intended_use">Intended use of imaging result</label>
-            <input className="input" id="intended_use" name="intended_use" placeholder="e.g. surgical planning" />
-          </div>
+          {/* Some procedures (e.g. Lumbar Spine MRI) already collect "intended
+              use" as one of their own required fields above — skip the
+              duplicate here, since a second field with the same name would
+              silently overwrite the first in the submitted form data. */}
+          {!procedure.requiredFields.some((f) => f.key === "intended_use") && (
+            <div className="col-span-2">
+              <label className="label" htmlFor="intended_use">Intended use of imaging result</label>
+              <input className="input" id="intended_use" name="intended_use" placeholder="e.g. surgical planning" />
+            </div>
+          )}
           <div>
             <label className="label" htmlFor="ordering_physician_name">Ordering physician name</label>
             <input className="input" id="ordering_physician_name" name="ordering_physician_name" required />

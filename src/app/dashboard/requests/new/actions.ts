@@ -205,10 +205,3 @@ export async function draftLetterForRequest(requestId: string) {
     }
   }
 }
-
-export async function redraftLetterAction(formData: FormData) {
-  const requestId = String(formData.get("request_id") || "");
-  if (!requestId) return;
-  await draftLetterForRequest(requestId);
-  redirect(`/dashboard/requests/${requestId}`);
-}
