@@ -3,6 +3,7 @@
 
 export type PracticePlan = "pilot" | "practice" | "multi_site";
 export type PatientStatus = "active" | "inactive" | "deceased";
+export type DenialStatus = "open" | "appeal_filed" | "won" | "lost";
 export type BillingStatus = "active" | "grace_period" | "suspended";
 export type UserRole = "clinic_user" | "clinic_admin" | "super_admin";
 export type RequestStatus = "draft" | "reviewed" | "submitted" | "approved" | "denied";
@@ -16,6 +17,14 @@ export interface LetterMeta {
   softWarnings: string[];
   denialRiskAssessment: DenialRisk;
   denialRiskReason: string;
+}
+
+export interface ClaimLetterMeta {
+  letterType: string;
+  isAdminIssue: boolean;
+  softWarnings: string[];
+  overturnLikelihood: DenialRisk;
+  overturnReason: string;
 }
 
 export interface Database {
@@ -341,6 +350,84 @@ export interface Database {
             columns: ["practice_id"];
             isOneToOne: false;
             referencedRelation: "practices";
+            referencedColumns: ["id"];
+          }
+        ];
+      };
+      claim_denials: {
+        Row: {
+          id: string;
+          practice_id: string;
+          created_by: string;
+          patient_id: string | null;
+          pa_request_id: string | null;
+          date_of_service: string | null;
+          cpt_code: string | null;
+          icd10_code: string | null;
+          claim_number: string | null;
+          amount_billed: number | null;
+          amount_denied: number | null;
+          amount_recovered: number | null;
+          date_submitted: string | null;
+          denial_date: string;
+          denial_reason_code: string;
+          denial_reason_description: string | null;
+          payer: string | null;
+          payer_claim_reference: string | null;
+          pa_obtained: string | null;
+          appeal_deadline: string | null;
+          appeal_type: string | null;
+          assigned_to: string | null;
+          priority: string;
+          status: DenialStatus;
+          new_clinical_evidence: string | null;
+          supporting_documentation: string | null;
+          p2p_requested: boolean;
+          filing_method: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: Partial<Database["public"]["Tables"]["claim_denials"]["Row"]> & {
+          practice_id: string;
+          created_by: string;
+          denial_date: string;
+          denial_reason_code: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["claim_denials"]["Row"]>;
+        Relationships: [
+          {
+            foreignKeyName: "claim_denials_practice_id_fkey";
+            columns: ["practice_id"];
+            isOneToOne: false;
+            referencedRelation: "practices";
+            referencedColumns: ["id"];
+          }
+        ];
+      };
+      claim_appeal_letters: {
+        Row: {
+          id: string;
+          claim_denial_id: string;
+          content: string;
+          sections: Record<string, { label: string; content: string }> | null;
+          meta: ClaimLetterMeta | null;
+          version: number;
+          model: string | null;
+          approved_at: string | null;
+          approved_by: string | null;
+          created_at: string;
+        };
+        Insert: Partial<Database["public"]["Tables"]["claim_appeal_letters"]["Row"]> & {
+          claim_denial_id: string;
+          content: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["claim_appeal_letters"]["Row"]>;
+        Relationships: [
+          {
+            foreignKeyName: "claim_appeal_letters_claim_denial_id_fkey";
+            columns: ["claim_denial_id"];
+            isOneToOne: false;
+            referencedRelation: "claim_denials";
             referencedColumns: ["id"];
           }
         ];
