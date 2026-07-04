@@ -3,7 +3,7 @@
 import { useState } from "react";
 import PatientForm, { type PatientFormInitial } from "../PatientForm";
 import type { SavedPhysician } from "@/app/dashboard/requests/new/NewRequestForm";
-import { updatePatientAction } from "../new/actions";
+import { updatePatientAction, deletePatientAction } from "../new/actions";
 
 export default function PatientDetailClient({
   patientId,
@@ -36,10 +36,22 @@ export default function PatientDetailClient({
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex justify-end">
+      <div className="flex justify-end gap-2">
         <button type="button" className="btn btn-outline btn-sm" onClick={() => setEditing(true)}>
           Edit
         </button>
+        <form
+          action={deletePatientAction.bind(null, patientId)}
+          onSubmit={(e) => {
+            if (!confirm("Delete this patient? This can't be undone. Any linked PA requests or claim denials will keep their own record, just unlinked from this patient.")) {
+              e.preventDefault();
+            }
+          }}
+        >
+          <button type="submit" className="btn btn-outline btn-sm" style={{ color: "var(--danger-red)", borderColor: "var(--danger-red)" }}>
+            Delete
+          </button>
+        </form>
       </div>
 
       <div className="card p-6">

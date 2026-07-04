@@ -115,6 +115,21 @@ export async function updatePatientAction(patientId: string, formData: FormData)
   redirect(`/dashboard/patients/${patientId}`);
 }
 
+export async function deletePatientAction(patientId: string) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) redirect("/sign-in");
+
+  // pa_requests.patient_id and claim_denials.patient_id are both
+  // "on delete set null" — deleting a patient never cascades into
+  // deleting requests or denials, it just unlinks them.
+  await supabase.from("patients").delete().eq("id", patientId);
+
+  redirect("/dashboard/patients");
+}
+
 export async function importPatientsCsvAction(formData: FormData) {
   const supabase = await createClient();
   const {
