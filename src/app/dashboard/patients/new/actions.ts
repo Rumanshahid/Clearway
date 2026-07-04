@@ -86,6 +86,7 @@ export async function createPatientAction(formData: FormData) {
     .single();
 
   if (error || !patient) {
+    console.error("createPatientAction insert failed", error);
     redirect(`/dashboard/patients/new?error=${encodeURIComponent(error?.message || "Could not save this patient.")}`);
     return;
   }
