@@ -1,10 +1,9 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import Link from "next/link";
 import { useFormStatus } from "react-dom";
 import { DENIAL_ROUTING, PA_OBTAINED_OPTIONS, APPEAL_TYPES, PRIORITIES, FILING_METHODS } from "@/lib/claims";
-import { INSURANCE_COMPANIES } from "@/lib/patients";
+import { INSURANCE_COMPANIES, GENDERS } from "@/lib/patients";
 import { createDenialAction } from "./actions";
 
 interface SimplePatient {
@@ -20,6 +19,22 @@ interface SimplePaRequest {
   patient_id: string | null;
 }
 
+interface SimpleStaff {
+  id: string;
+  full_name: string | null;
+}
+
+interface EobExtraction {
+  claimNumber?: string;
+  denialDate?: string;
+  denialReasonCode?: string;
+  denialReasonDescription?: string;
+  amountBilled?: number;
+  amountDenied?: number;
+  payerClaimReference?: string;
+  memberId?: string;
+}
+
 function SubmitButton() {
   const { pending } = useFormStatus();
   return (
@@ -32,36 +47,128 @@ function SubmitButton() {
 export default function ClaimDenialForm({
   patients,
   paRequests,
+  staff,
 }: {
   patients: SimplePatient[];
   paRequests: SimplePaRequest[];
+  staff: SimpleStaff[];
 }) {
-  const [patientId, setPatientId] = useState(patients[0]?.id || "");
-  const [denialCode, setDenialCode] = useState(DENIAL_ROUTING[0].code);
+  const [patientMode, setPatientMode] = useState<"select" | "new">(patients.length > 0 ? "select" : "new");
+  const [selectedPatientId, setSelectedPatientId] = useState("");
   const [linkToPa, setLinkToPa] = useState(false);
+  const [denialCode, setDenialCode] = useState(DENIAL_ROUTING[0].code);
   const [denialDate, setDenialDate] = useState("");
   const [payer, setPayer] = useState("");
+  const [claimNumber, setClaimNumber] = useState("");
+  const [amountBilled, setAmountBilled] = useState("");
+  const [amountDenied, setAmountDenied] = useState("");
+  const [payerClaimReference, setPayerClaimReference] = useState("");
+  const [denialReasonDescription, setDenialReasonDescription] = useState("");
+
+  const [eobFile, setEobFile] = useState<File | null>(null);
+  const [eobParsing, setEobParsing] = useState(false);
+  const [eobError, setEobError] = useState<string | null>(null);
+  const [eobMemberIdHint, setEobMemberIdHint] = useState<string | null>(null);
 
   const routing = useMemo(() => DENIAL_ROUTING.find((d) => d.code === denialCode) || DENIAL_ROUTING[0], [denialCode]);
-  const patientPaRequests = useMemo(() => paRequests.filter((r) => r.patient_id === patientId), [paRequests, patientId]);
+  const patientPaRequests = useMemo(
+    () => paRequests.filter((r) => r.patient_id === selectedPatientId),
+    [paRequests, selectedPatientId]
+  );
+
+  async function handleParseEob() {
+    if (!eobFile) return;
+    setEobParsing(true);
+    setEobError(null);
+    try {
+      const formData = new FormData();
+      formData.append("file", eobFile);
+      const res = await fetch("/api/appeals/parse-eob", { method: "POST", body: formData });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Could not read this EOB");
+
+      const extracted = data as EobExtraction;
+      if (extracted.claimNumber) setClaimNumber(extracted.claimNumber);
+      if (extracted.denialDate) setDenialDate(extracted.denialDate);
+      if (extracted.denialReasonCode && DENIAL_ROUTING.some((d) => d.code === extracted.denialReasonCode)) {
+        setDenialCode(extracted.denialReasonCode);
+      }
+      if (extracted.denialReasonDescription) setDenialReasonDescription(extracted.denialReasonDescription);
+      if (extracted.amountBilled != null) setAmountBilled(String(extracted.amountBilled));
+      if (extracted.amountDenied != null) setAmountDenied(String(extracted.amountDenied));
+      if (extracted.payerClaimReference) setPayerClaimReference(extracted.payerClaimReference);
+      if (extracted.memberId) setEobMemberIdHint(extracted.memberId);
+    } catch (err) {
+      setEobError(err instanceof Error ? err.message : "Could not read this EOB");
+    } finally {
+      setEobParsing(false);
+    }
+  }
 
   return (
     <form action={createDenialAction} className="flex flex-col gap-6">
       <section className="card p-6">
+        <h2 className="text-[15px] font-semibold mb-1">Upload EOB (optional)</h2>
+        <p className="text-[12.5px] text-gray-400 mb-3">Auto-fills the claim and denial fields below — review before submitting.</p>
+        <div className="flex items-center gap-3">
+          <input
+            type="file"
+            accept=".pdf"
+            onChange={(e) => setEobFile(e.target.files?.[0] || null)}
+            className="text-[13px]"
+          />
+          <button type="button" className="btn btn-outline btn-sm" disabled={!eobFile || eobParsing} onClick={handleParseEob}>
+            {eobParsing ? "Reading EOB…" : "Auto-fill from EOB"}
+          </button>
+        </div>
+        {eobError && <p className="text-[12.5px] mt-2" style={{ color: "var(--danger-red)" }}>{eobError}</p>}
+        {eobMemberIdHint && (
+          <p className="text-[12.5px] mt-2" style={{ color: "var(--amber)" }}>
+            EOB shows member ID <strong>{eobMemberIdHint}</strong> — confirm it matches the patient selected below.
+          </p>
+        )}
+      </section>
+
+      <section className="card p-6">
         <h2 className="text-[15px] font-semibold mb-4">Claim identity</h2>
         <div className="grid grid-cols-2 gap-4">
           <div className="col-span-2">
-            <label className="label" htmlFor="patient_id">Patient <span style={{ color: "var(--danger-red)" }}>*</span></label>
-            {patients.length > 0 ? (
-              <select className="input" id="patient_id" name="patient_id" value={patientId} onChange={(e) => setPatientId(e.target.value)} required>
+            <label className="label mb-2">Patient <span style={{ color: "var(--danger-red)" }}>*</span></label>
+            {patients.length > 0 && (
+              <div className="flex gap-4 mb-2 text-[13px] text-gray-600">
+                <label className="flex items-center gap-1.5">
+                  <input type="radio" checked={patientMode === "select"} onChange={() => setPatientMode("select")} />
+                  Existing patient
+                </label>
+                <label className="flex items-center gap-1.5">
+                  <input type="radio" checked={patientMode === "new"} onChange={() => setPatientMode("new")} />
+                  Add new patient
+                </label>
+              </div>
+            )}
+            {patientMode === "select" && patients.length > 0 ? (
+              <select
+                className="input"
+                name="patient_id"
+                value={selectedPatientId}
+                onChange={(e) => setSelectedPatientId(e.target.value)}
+                required
+              >
+                <option value="" disabled>Select…</option>
                 {patients.map((p) => (
                   <option key={p.id} value={p.id}>{p.first_name} {p.last_name}</option>
                 ))}
               </select>
             ) : (
-              <p className="text-[13px] text-gray-600">
-                No patients on file yet — <Link href="/dashboard/patients/new" className="text-indigo-600">add one first →</Link>
-              </p>
+              <div className="grid grid-cols-2 gap-3">
+                <input className="input" name="new_patient_first_name" placeholder="First name" required />
+                <input className="input" name="new_patient_last_name" placeholder="Last name" required />
+                <input className="input" name="new_patient_dob" type="date" required />
+                <select className="input" name="new_patient_gender" defaultValue="" required>
+                  <option value="" disabled>Gender…</option>
+                  {GENDERS.map((g) => <option key={g} value={g}>{g}</option>)}
+                </select>
+              </div>
             )}
           </div>
           <div>
@@ -70,7 +177,7 @@ export default function ClaimDenialForm({
           </div>
           <div>
             <label className="label" htmlFor="claim_number">Claim number (from EOB)</label>
-            <input className="input" id="claim_number" name="claim_number" />
+            <input className="input" id="claim_number" name="claim_number" value={claimNumber} onChange={(e) => setClaimNumber(e.target.value)} />
           </div>
           <div>
             <label className="label" htmlFor="cpt_code">Procedure (CPT code)</label>
@@ -82,11 +189,11 @@ export default function ClaimDenialForm({
           </div>
           <div>
             <label className="label" htmlFor="amount_billed">Amount billed</label>
-            <input className="input" id="amount_billed" name="amount_billed" type="number" step="0.01" />
+            <input className="input" id="amount_billed" name="amount_billed" type="number" step="0.01" value={amountBilled} onChange={(e) => setAmountBilled(e.target.value)} />
           </div>
           <div>
             <label className="label" htmlFor="amount_denied">Amount denied</label>
-            <input className="input" id="amount_denied" name="amount_denied" type="number" step="0.01" />
+            <input className="input" id="amount_denied" name="amount_denied" type="number" step="0.01" value={amountDenied} onChange={(e) => setAmountDenied(e.target.value)} />
           </div>
           <div>
             <label className="label" htmlFor="date_submitted">Date claim originally submitted</label>
@@ -125,11 +232,11 @@ export default function ClaimDenialForm({
           </div>
           <div className="col-span-2">
             <label className="label" htmlFor="denial_reason_description">Denial reason description (paste from EOB)</label>
-            <textarea className="input" id="denial_reason_description" name="denial_reason_description" rows={2} />
+            <textarea className="input" id="denial_reason_description" name="denial_reason_description" rows={2} value={denialReasonDescription} onChange={(e) => setDenialReasonDescription(e.target.value)} />
           </div>
           <div>
             <label className="label" htmlFor="payer_claim_reference">Payer claim reference number</label>
-            <input className="input" id="payer_claim_reference" name="payer_claim_reference" />
+            <input className="input" id="payer_claim_reference" name="payer_claim_reference" value={payerClaimReference} onChange={(e) => setPayerClaimReference(e.target.value)} />
           </div>
           <div>
             <label className="label" htmlFor="pa_obtained">Was a prior authorization obtained?</label>
@@ -138,7 +245,7 @@ export default function ClaimDenialForm({
               {PA_OBTAINED_OPTIONS.map((o) => <option key={o} value={o}>{o}</option>)}
             </select>
           </div>
-          {patientPaRequests.length > 0 && (
+          {patientMode === "select" && patientPaRequests.length > 0 && (
             <div className="col-span-2">
               <label className="flex items-center gap-2 text-[13.5px] text-gray-900 mb-2">
                 <input type="checkbox" className="w-4 h-4" checked={linkToPa} onChange={(e) => setLinkToPa(e.target.checked)} />
@@ -170,6 +277,15 @@ export default function ClaimDenialForm({
             <label className="label" htmlFor="priority">Priority</label>
             <select className="input" id="priority" name="priority" defaultValue="Standard">
               {PRIORITIES.map((p) => <option key={p} value={p}>{p}</option>)}
+            </select>
+          </div>
+          <div className="col-span-2">
+            <label className="label" htmlFor="assigned_to">Assigned to</label>
+            <select className="input" id="assigned_to" name="assigned_to" defaultValue="">
+              <option value="">Unassigned</option>
+              {staff.map((s) => (
+                <option key={s.id} value={s.id}>{s.full_name || "(unnamed staff)"}</option>
+              ))}
             </select>
           </div>
         </div>

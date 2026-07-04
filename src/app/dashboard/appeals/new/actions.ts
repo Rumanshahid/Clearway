@@ -21,13 +21,37 @@ export async function createDenialAction(formData: FormData) {
     return v ? Number(v) : null;
   };
 
-  const patientId = str("patient_id");
+  let patientId = str("patient_id");
   const denialDate = str("denial_date");
   const denialReasonCode = str("denial_reason_code");
   const payer = str("payer");
 
-  if (!patientId || !denialDate || !denialReasonCode) {
-    redirect(`/dashboard/appeals/new?error=${encodeURIComponent("Patient, denial date, and denial reason code are required.")}`);
+  if (!patientId) {
+    const firstName = str("new_patient_first_name");
+    const lastName = str("new_patient_last_name");
+    const dob = str("new_patient_dob");
+    const gender = str("new_patient_gender");
+
+    if (!firstName || !lastName || !dob || !gender) {
+      redirect(`/dashboard/appeals/new?error=${encodeURIComponent("Select an existing patient or fill in the new patient's name, DOB, and gender.")}`);
+      return;
+    }
+
+    const { data: newPatient, error: patientError } = await supabase
+      .from("patients")
+      .insert({ practice_id: profile.practice_id, first_name: firstName, last_name: lastName, dob, gender })
+      .select("id")
+      .single();
+
+    if (patientError || !newPatient) {
+      redirect(`/dashboard/appeals/new?error=${encodeURIComponent(patientError?.message || "Could not save the new patient.")}`);
+      return;
+    }
+    patientId = newPatient.id;
+  }
+
+  if (!denialDate || !denialReasonCode) {
+    redirect(`/dashboard/appeals/new?error=${encodeURIComponent("Denial date and denial reason code are required.")}`);
     return;
   }
 
@@ -37,6 +61,7 @@ export async function createDenialAction(formData: FormData) {
       practice_id: profile.practice_id,
       created_by: user.id,
       patient_id: patientId,
+      assigned_to: str("assigned_to") || null,
       pa_request_id: str("pa_request_id") || null,
       date_of_service: str("date_of_service") || null,
       cpt_code: str("cpt_code") || null,

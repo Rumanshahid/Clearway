@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getDenialRouting } from "@/lib/claims";
 import ClaimLetterPanel from "./ClaimLetterPanel";
 import { updateDenialStatusAction, redraftClaimAppealAction } from "./actions";
+import DeleteDenialButton from "./DeleteDenialButton";
 
 export const maxDuration = 60;
 
@@ -23,6 +24,13 @@ export default async function ClaimDenialDetailPage({
   const { data: patient } = denial.patient_id
     ? await supabase.from("patients").select("first_name, last_name, patient_ref_id").eq("id", denial.patient_id).single()
     : { data: null };
+
+  const [{ data: staff }, { data: assignedStaff }] = await Promise.all([
+    supabase.from("profiles").select("id, full_name").eq("practice_id", denial.practice_id).order("full_name"),
+    denial.assigned_to
+      ? supabase.from("profiles").select("full_name").eq("id", denial.assigned_to).single()
+      : Promise.resolve({ data: null }),
+  ]);
 
   const { data: letters } = await supabase
     .from("claim_appeal_letters")
@@ -84,6 +92,7 @@ export default async function ClaimDenialDetailPage({
             <Field label="Payer claim ref" value={denial.payer_claim_reference} />
             <Field label="Payer" value={denial.payer} />
             <Field label="PA obtained" value={denial.pa_obtained} />
+            <Field label="Assigned to" value={assignedStaff?.full_name || "Unassigned"} />
           </dl>
         </div>
 
@@ -104,10 +113,21 @@ export default async function ClaimDenialDetailPage({
               <label className="label" htmlFor="recovered_amount">Recovered amount (if won)</label>
               <input className="input" id="recovered_amount" name="recovered_amount" type="number" step="0.01" defaultValue={denial.amount_recovered ?? ""} />
             </div>
+            <div>
+              <label className="label" htmlFor="assigned_to">Assigned to</label>
+              <select className="input" id="assigned_to" name="assigned_to" defaultValue={denial.assigned_to || ""}>
+                <option value="">Unassigned</option>
+                {(staff || []).map((s) => (
+                  <option key={s.id} value={s.id}>{s.full_name || "(unnamed staff)"}</option>
+                ))}
+              </select>
+            </div>
             <button className="btn btn-primary self-start" type="submit">Save status</button>
           </form>
         </div>
       </div>
+
+      <DeleteDenialButton denialId={denial.id} />
 
       {letter ? (
         <>

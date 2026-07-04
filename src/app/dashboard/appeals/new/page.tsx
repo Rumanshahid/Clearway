@@ -20,9 +20,10 @@ export default async function NewClaimDenialPage({
     .single();
   const practiceId = profile!.practice_id!;
 
-  const [{ data: patients }, { data: paRequests }] = await Promise.all([
+  const [{ data: patients }, { data: paRequests }, { data: staff }] = await Promise.all([
     supabase.from("patients").select("id, first_name, last_name").eq("practice_id", practiceId).order("last_name"),
     supabase.from("pa_requests").select("id, patient_reference, procedure_type, patient_id").eq("practice_id", practiceId),
+    supabase.from("profiles").select("id, full_name").eq("practice_id", practiceId).order("full_name"),
   ]);
 
   return (
@@ -38,7 +39,7 @@ export default async function NewClaimDenialPage({
         </div>
       )}
 
-      <ClaimDenialForm patients={patients || []} paRequests={paRequests || []} />
+      <ClaimDenialForm patients={patients || []} paRequests={paRequests || []} staff={staff || []} />
     </div>
   );
 }

@@ -1,5 +1,5 @@
 import Anthropic from "@anthropic-ai/sdk";
-import { getDenialRouting } from "@/lib/claims";
+import { getDenialRouting, DENIAL_ROUTING } from "@/lib/claims";
 import type { ClaimLetterMeta } from "@/lib/database.types";
 
 let client: Anthropic | null = null;
@@ -213,5 +213,68 @@ Return the JSON object now, exactly as specified in your system instructions.`;
     sections: parsed.sections,
     meta,
     plainText: sectionsToPlainText(letterTitle, parsed.sections),
+  };
+}
+
+export interface EobExtraction {
+  claimNumber?: string;
+  denialDate?: string;
+  denialReasonCode?: string;
+  denialReasonDescription?: string;
+  amountBilled?: number;
+  amountDenied?: number;
+  payerClaimReference?: string;
+  memberId?: string;
+}
+
+// Lightweight, separate from the letter-drafting call above — this only
+// reads a document and reports back structured facts, no drafting rules.
+export async function extractEobFields(eobText: string): Promise<EobExtraction> {
+  const codeList = DENIAL_ROUTING.map((d) => `${d.code} (${d.reason})`).join(", ");
+
+  const system = `You extract structured claim-denial data from the text of an Explanation of Benefits (EOB) document for a US medical practice's claims-appeal software.
+
+Read the EOB text and return a single JSON object — no markdown fences, no commentary:
+
+{
+  "claimNumber": "string or null",
+  "denialDate": "YYYY-MM-DD or null",
+  "denialReasonCode": "one of [${DENIAL_ROUTING.map((d) => d.code).join(", ")}] that best matches the denial reason, or null if none clearly match",
+  "denialReasonDescription": "the denial reason as stated on the EOB, in your own words, or null",
+  "amountBilled": number or null,
+  "amountDenied": number or null,
+  "payerClaimReference": "string or null",
+  "memberId": "string or null"
+}
+
+Known denial reason codes and what they mean: ${codeList}
+
+Only extract facts actually present in the text — use null for anything not stated. Do not guess or invent values. Output nothing except the JSON object.`;
+
+  const response = await getClient().messages.create({
+    model: process.env.ANTHROPIC_MODEL || "claude-sonnet-5",
+    max_tokens: 1000,
+    system,
+    messages: [{ role: "user", content: `EOB text:\n\n${eobText.slice(0, 15000)}` }],
+  });
+
+  const textBlock = response.content.find((block) => block.type === "text");
+  if (!textBlock || textBlock.type !== "text") {
+    throw new Error("Claude returned no text content");
+  }
+
+  let raw = textBlock.text.trim();
+  raw = raw.replace(/```json|```/g, "").trim();
+  const parsed = JSON.parse(raw) as EobExtraction;
+
+  return {
+    claimNumber: parsed.claimNumber || undefined,
+    denialDate: parsed.denialDate || undefined,
+    denialReasonCode: parsed.denialReasonCode || undefined,
+    denialReasonDescription: parsed.denialReasonDescription || undefined,
+    amountBilled: typeof parsed.amountBilled === "number" ? parsed.amountBilled : undefined,
+    amountDenied: typeof parsed.amountDenied === "number" ? parsed.amountDenied : undefined,
+    payerClaimReference: parsed.payerClaimReference || undefined,
+    memberId: parsed.memberId || undefined,
   };
 }

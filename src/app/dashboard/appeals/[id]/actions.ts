@@ -10,10 +10,13 @@ export async function updateDenialStatusAction(formData: FormData) {
   const status = String(formData.get("status") || "") as DenialStatus;
   const recoveredAmount = String(formData.get("recovered_amount") || "").trim();
 
+  const assignedTo = String(formData.get("assigned_to") || "").trim();
+
   const supabase = await createClient();
-  const update: { status: DenialStatus; updated_at: string; amount_recovered?: number } = {
+  const update: { status: DenialStatus; updated_at: string; amount_recovered?: number; assigned_to: string | null } = {
     status,
     updated_at: new Date().toISOString(),
+    assigned_to: assignedTo || null,
   };
   if (status === "won" && recoveredAmount) {
     update.amount_recovered = Number(recoveredAmount);
@@ -39,6 +42,17 @@ export async function updateClaimLetterContentAction(formData: FormData) {
   await supabase.from("claim_appeal_letters").update(update).eq("id", letterId);
 
   revalidatePath(`/dashboard/appeals/${denialId}`);
+}
+
+export async function deleteDenialAction(formData: FormData) {
+  const denialId = String(formData.get("denial_id") || "");
+
+  const supabase = await createClient();
+  // claim_appeal_letters cascade-delete via the claim_denial_id foreign key.
+  await supabase.from("claim_denials").delete().eq("id", denialId);
+
+  revalidatePath("/dashboard/appeals");
+  redirect("/dashboard/appeals");
 }
 
 export async function redraftClaimAppealAction(formData: FormData) {
