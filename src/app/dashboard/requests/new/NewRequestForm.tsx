@@ -27,6 +27,49 @@ export interface SavedPhysician {
 
 const BLANK_PHYSICIAN = { name: "", credentials: "", npi: "", direct_phone: "", specialty: "", fax: "" };
 
+export interface SavedPatient {
+  id: string;
+  patient_ref_id: string;
+  first_name: string;
+  middle_name: string | null;
+  last_name: string;
+  dob: string;
+  address: string | null;
+  city: string | null;
+  state: string | null;
+  zip: string | null;
+  phone: string | null;
+  member_id: string | null;
+  group_number: string | null;
+  plan_type: string | null;
+}
+
+const BLANK_PATIENT = {
+  patientReference: "",
+  fullName: "",
+  dob: "",
+  address: "",
+  cityStateZip: "",
+  phone: "",
+  memberId: "",
+  groupNumber: "",
+  planType: "",
+};
+
+function patientToFields(p: SavedPatient) {
+  return {
+    patientReference: p.patient_ref_id,
+    fullName: [p.first_name, p.middle_name, p.last_name].filter(Boolean).join(" "),
+    dob: p.dob,
+    address: p.address || "",
+    cityStateZip: [p.city, [p.state, p.zip].filter(Boolean).join(" ")].filter(Boolean).join(", "),
+    phone: p.phone || "",
+    memberId: p.member_id || "",
+    groupNumber: p.group_number || "",
+    planType: p.plan_type || "",
+  };
+}
+
 export default function NewRequestForm({
   procedures,
   payers,
@@ -34,6 +77,7 @@ export default function NewRequestForm({
   initialProcedure,
   defaultAuthoringMode,
   savedPhysicians,
+  savedPatients,
 }: {
   procedures: ProcedureCriteria[];
   payers: { key: PayerKey; label: string; hasCriteria: boolean }[];
@@ -41,6 +85,7 @@ export default function NewRequestForm({
   initialProcedure?: string;
   defaultAuthoringMode: AuthoringMode;
   savedPhysicians: SavedPhysician[];
+  savedPatients: SavedPatient[];
 }) {
   const [procedureKey, setProcedureKey] = useState(initialProcedure || procedures[0].key);
   const [authoringMode, setAuthoringMode] = useState<AuthoringMode>(defaultAuthoringMode);
@@ -74,6 +119,18 @@ export default function NewRequestForm({
           }
         : BLANK_PHYSICIAN
     );
+  }
+
+  // Unlike the physician picker, this always starts blank ("new") — every
+  // request is for a different patient, so pre-selecting one by default
+  // would risk staff accidentally submitting the wrong patient's data.
+  const [patientSelection, setPatientSelection] = useState<string>("new");
+  const [patientFields, setPatientFields] = useState(BLANK_PATIENT);
+
+  function handlePatientSelect(id: string) {
+    setPatientSelection(id);
+    const saved = savedPatients.find((p) => p.id === id);
+    setPatientFields(saved ? patientToFields(saved) : BLANK_PATIENT);
   }
 
   const procedure = useMemo(
@@ -139,17 +196,33 @@ export default function NewRequestForm({
         <div className="grid grid-cols-2 gap-4">
           <div>
             <label className="label" htmlFor="patient_reference">Patient reference (internal use only)</label>
-            <input className="input" id="patient_reference" name="patient_reference" placeholder="e.g. PT-00417" required />
+            <input
+              className="input"
+              id="patient_reference"
+              name="patient_reference"
+              placeholder="e.g. PT-00417"
+              required
+              value={patientFields.patientReference}
+              onChange={(e) => setPatientFields((prev) => ({ ...prev, patientReference: e.target.value }))}
+            />
             <p className="text-[12px] text-gray-400 mt-1">Used in your dashboard and notifications — never sent to the payer.</p>
           </div>
           <div>
             <label className="label" htmlFor="plan_type">Plan type</label>
-            <select className="input" id="plan_type" name="plan_type" defaultValue="">
+            <select
+              className="input"
+              id="plan_type"
+              name="plan_type"
+              value={patientFields.planType}
+              onChange={(e) => setPatientFields((prev) => ({ ...prev, planType: e.target.value }))}
+            >
               <option value="">Not specified</option>
-              <option value="Commercial">Commercial</option>
+              <option value="Commercial PPO">Commercial PPO</option>
+              <option value="Commercial HMO">Commercial HMO</option>
               <option value="Medicare Advantage">Medicare Advantage</option>
-              <option value="Medicaid">Medicaid</option>
-              <option value="ACA Exchange">ACA Exchange</option>
+              <option value="Medicaid Managed Care">Medicaid Managed Care</option>
+              <option value="ACA Marketplace">ACA Marketplace</option>
+              <option value="Self-funded employer plan">Self-funded employer plan</option>
               <option value="Other">Other</option>
             </select>
           </div>
@@ -193,11 +266,25 @@ export default function NewRequestForm({
           </div>
           <div>
             <label className="label" htmlFor="member_id">Member ID</label>
-            <input className="input" id="member_id" name="member_id" placeholder="Payer member ID" />
+            <input
+              className="input"
+              id="member_id"
+              name="member_id"
+              placeholder="Payer member ID"
+              value={patientFields.memberId}
+              onChange={(e) => setPatientFields((prev) => ({ ...prev, memberId: e.target.value }))}
+            />
           </div>
           <div>
             <label className="label" htmlFor="insurance_group_number">Insurance group number</label>
-            <input className="input" id="insurance_group_number" name="insurance_group_number" placeholder="e.g. AET-77443" />
+            <input
+              className="input"
+              id="insurance_group_number"
+              name="insurance_group_number"
+              placeholder="e.g. AET-77443"
+              value={patientFields.groupNumber}
+              onChange={(e) => setPatientFields((prev) => ({ ...prev, groupNumber: e.target.value }))}
+            />
           </div>
           <div>
             <label className="label" htmlFor="cpt_code">CPT/HCPCS code</label>
@@ -212,28 +299,90 @@ export default function NewRequestForm({
           Full legal name and date of birth are required — a payer can&apos;t process a request without them. This
           information is only used inside the letter itself; the internal reference above stays de-identified everywhere else in the app.
         </p>
+
+        {savedPatients.length > 0 && (
+          <div className="mb-4">
+            <label className="label" htmlFor="patient_selection">Patient</label>
+            <select
+              className="input"
+              id="patient_selection"
+              value={patientSelection}
+              onChange={(e) => handlePatientSelect(e.target.value)}
+            >
+              <option value="new">+ Add a new patient</option>
+              {savedPatients.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.first_name} {p.last_name} — {p.patient_ref_id}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
+
+        <input type="hidden" name="patient_id" value={patientSelection === "new" ? "" : patientSelection} />
+
         <div className="grid grid-cols-2 gap-4">
           <div>
             <label className="label" htmlFor="patient_full_name">Full legal name <span style={{ color: "var(--danger-red)" }}>*</span></label>
-            <input className="input" id="patient_full_name" name="patient_full_name" required />
+            <input
+              className="input"
+              id="patient_full_name"
+              name="patient_full_name"
+              required
+              value={patientFields.fullName}
+              onChange={(e) => setPatientFields((prev) => ({ ...prev, fullName: e.target.value }))}
+            />
           </div>
           <div>
             <label className="label" htmlFor="patient_dob">Date of birth <span style={{ color: "var(--danger-red)" }}>*</span></label>
-            <input className="input" id="patient_dob" name="patient_dob" type="date" required />
+            <input
+              className="input"
+              id="patient_dob"
+              name="patient_dob"
+              type="date"
+              required
+              value={patientFields.dob}
+              onChange={(e) => setPatientFields((prev) => ({ ...prev, dob: e.target.value }))}
+            />
           </div>
           <div>
             <label className="label" htmlFor="patient_address">Street address</label>
-            <input className="input" id="patient_address" name="patient_address" placeholder="123 Main St" />
+            <input
+              className="input"
+              id="patient_address"
+              name="patient_address"
+              placeholder="123 Main St"
+              value={patientFields.address}
+              onChange={(e) => setPatientFields((prev) => ({ ...prev, address: e.target.value }))}
+            />
           </div>
           <div>
             <label className="label" htmlFor="patient_city_state_zip">City, state, ZIP</label>
-            <input className="input" id="patient_city_state_zip" name="patient_city_state_zip" placeholder="Austin, TX 78701" />
+            <input
+              className="input"
+              id="patient_city_state_zip"
+              name="patient_city_state_zip"
+              placeholder="Austin, TX 78701"
+              value={patientFields.cityStateZip}
+              onChange={(e) => setPatientFields((prev) => ({ ...prev, cityStateZip: e.target.value }))}
+            />
           </div>
           <div>
             <label className="label" htmlFor="patient_phone">Phone</label>
-            <input className="input" id="patient_phone" name="patient_phone" type="tel" />
+            <input
+              className="input"
+              id="patient_phone"
+              name="patient_phone"
+              type="tel"
+              value={patientFields.phone}
+              onChange={(e) => setPatientFields((prev) => ({ ...prev, phone: e.target.value }))}
+            />
           </div>
         </div>
+        <label className="flex items-center gap-2 text-[13px] text-gray-600 mt-4">
+          <input type="checkbox" name="save_patient" defaultChecked className="w-4 h-4" />
+          Save this patient for next time
+        </label>
       </section>
 
       <section className="card p-6">

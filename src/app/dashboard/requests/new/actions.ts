@@ -9,6 +9,15 @@ import { getActivePromptTemplate, getProcedureByKey } from "@/lib/criteria-repo"
 import { logAccess } from "@/lib/access-log";
 import { notifyLetterReady, notifyUsageThreshold } from "./notify";
 
+// Best-effort split for the quick "save this patient" shortcut in the New
+// Request form, which only collects one combined name field — a real
+// first/last/gender breakdown is entered properly from the Patients tab;
+// this just avoids losing the name entirely when staff save from here.
+function splitFullName(fullName: string): { firstName: string; lastName: string } {
+  const parts = fullName.trim().split(/\s+/);
+  return { firstName: parts[0] || fullName, lastName: parts.slice(1).join(" ") || parts[0] || fullName };
+}
+
 export async function createRequestAction(formData: FormData) {
   const supabase = await createClient();
   const {
@@ -90,6 +99,7 @@ export async function createRequestAction(formData: FormData) {
   const orderingPhysicianSpecialty = String(formData.get("ordering_physician_specialty") || "").trim();
   const orderingPhysicianFax = String(formData.get("ordering_physician_fax") || "").trim();
   const planType = String(formData.get("plan_type") || "").trim();
+  const selectedPatientId = String(formData.get("patient_id") || "").trim();
 
   if (
     !patientReference ||
@@ -136,6 +146,7 @@ export async function createRequestAction(formData: FormData) {
       ordering_physician_specialty: orderingPhysicianSpecialty || null,
       ordering_physician_fax: orderingPhysicianFax || null,
       plan_type: planType || null,
+      patient_id: selectedPatientId || null,
       status: "draft",
     })
     .select("id")
@@ -168,6 +179,54 @@ export async function createRequestAction(formData: FormData) {
     // Non-critical — the request itself is already saved either way, so a
     // failure here shouldn't block or crash the drafting flow.
     if (physicianError) console.error("Saving physician for reuse failed", physicianError);
+  }
+
+  if (formData.get("save_patient") === "on") {
+    if (selectedPatientId) {
+      // An existing patient was picked — apply any inline edits back to their record.
+      const { error: patientUpdateError } = await supabase
+        .from("patients")
+        .update({
+          address: patientAddress || null,
+          phone: patientPhone || null,
+          member_id: memberId || null,
+          group_number: insuranceGroupNumber || null,
+          plan_type: planType || null,
+        })
+        .eq("id", selectedPatientId);
+      if (patientUpdateError) console.error("Updating saved patient failed", patientUpdateError);
+    } else if (patientFullName) {
+      // New patient — best-effort save from the name/DOB/insurance fields
+      // collected here. Gender and a proper first/last split aren't
+      // collected on this form; staff can fill those in from the Patients
+      // tab, where a saved record's full identity fields belong.
+      const { firstName, lastName } = splitFullName(patientFullName);
+      const { data: newPatient, error: patientInsertError } = await supabase
+        .from("patients")
+        .upsert(
+          {
+            practice_id: profile.practice_id,
+            first_name: firstName,
+            last_name: lastName,
+            dob: patientDob,
+            gender: "Unspecified",
+            address: patientAddress || null,
+            phone: patientPhone || null,
+            member_id: memberId || null,
+            group_number: insuranceGroupNumber || null,
+            plan_type: planType || null,
+          },
+          { onConflict: "practice_id,member_id" }
+        )
+        .select("id")
+        .single();
+
+      if (patientInsertError) {
+        console.error("Saving patient for reuse failed", patientInsertError);
+      } else if (newPatient) {
+        await supabase.from("pa_requests").update({ patient_id: newPatient.id }).eq("id", request.id);
+      }
+    }
   }
 
   try {

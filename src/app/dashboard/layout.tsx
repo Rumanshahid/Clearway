@@ -55,6 +55,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
             </Link>
             <div className="flex items-center gap-6 text-[13.5px] text-gray-600">
               <Link href="/dashboard">Dashboard</Link>
+              <Link href="/dashboard/patients">Patients</Link>
               <Link href="/dashboard/resources">Resources</Link>
               <Link href="/dashboard/billing">Billing</Link>
             </div>

@@ -2,6 +2,7 @@
 // Regenerate with `supabase gen types typescript` once a live project exists.
 
 export type PracticePlan = "pilot" | "practice" | "multi_site";
+export type PatientStatus = "active" | "inactive" | "deceased";
 export type BillingStatus = "active" | "grace_period" | "suspended";
 export type UserRole = "clinic_user" | "clinic_admin" | "super_admin";
 export type RequestStatus = "draft" | "reviewed" | "submitted" | "approved" | "denied";
@@ -101,6 +102,7 @@ export interface Database {
           ordering_physician_specialty: string | null;
           ordering_physician_fax: string | null;
           plan_type: string | null;
+          patient_id: string | null;
           status: RequestStatus;
           created_at: string;
           updated_at: string;
@@ -262,6 +264,80 @@ export interface Database {
         Relationships: [
           {
             foreignKeyName: "physicians_practice_id_fkey";
+            columns: ["practice_id"];
+            isOneToOne: false;
+            referencedRelation: "practices";
+            referencedColumns: ["id"];
+          }
+        ];
+      };
+      patients: {
+        Row: {
+          id: string;
+          practice_id: string;
+          patient_ref_id: string;
+          status: PatientStatus;
+          first_name: string;
+          middle_name: string | null;
+          last_name: string;
+          dob: string;
+          gender: string;
+          ssn_last4: string | null;
+          preferred_language: string | null;
+          address: string | null;
+          city: string | null;
+          state: string | null;
+          zip: string | null;
+          phone: string | null;
+          mobile_phone: string | null;
+          email: string | null;
+          preferred_contact_method: string | null;
+          best_time_to_call: string | null;
+          emergency_contact_name: string | null;
+          emergency_contact_phone: string | null;
+          emergency_contact_relationship: string | null;
+          insurance_company: string | null;
+          plan_type: string | null;
+          state_of_plan: string | null;
+          member_id: string | null;
+          group_number: string | null;
+          plan_name: string | null;
+          effective_date: string | null;
+          coverage_end_date: string | null;
+          insurance_phone: string | null;
+          insurance_pa_fax: string | null;
+          has_secondary_insurance: boolean;
+          secondary_insurance_company: string | null;
+          secondary_plan_type: string | null;
+          secondary_member_id: string | null;
+          secondary_group_number: string | null;
+          cob_order: string | null;
+          usual_physician_id: string | null;
+          primary_diagnosis_icd10: string | null;
+          primary_diagnosis_description: string | null;
+          known_drug_allergies: string | null;
+          current_medications: string | null;
+          consent_obtained: boolean;
+          consent_date: string | null;
+          consent_method: string | null;
+          coordinator_notes: string | null;
+          preferred_letter_author_mode: string | null;
+          preferred_submission_method: string | null;
+          special_handling_flags: string[];
+          internal_tags: string[];
+          created_at: string;
+        };
+        Insert: Partial<Database["public"]["Tables"]["patients"]["Row"]> & {
+          practice_id: string;
+          first_name: string;
+          last_name: string;
+          dob: string;
+          gender: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["patients"]["Row"]>;
+        Relationships: [
+          {
+            foreignKeyName: "patients_practice_id_fkey";
             columns: ["practice_id"];
             isOneToOne: false;
             referencedRelation: "practices";
