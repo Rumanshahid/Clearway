@@ -60,7 +60,10 @@ export async function completeOnboardingAction(formData: FormData) {
     return;
   }
 
-  const { error: profileError } = await supabase
+  // profiles.role and .practice_id can only be changed via the service-role
+  // client (see 0015_lock_profile_role_escalation.sql) — the regular client
+  // would now silently no-op this update.
+  const { error: profileError } = await admin
     .from("profiles")
     .update({ practice_id: practice.id, role: "clinic_admin" })
     .eq("id", user.id);
