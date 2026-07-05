@@ -263,6 +263,16 @@ export async function draftLetterForRequest(requestId: string) {
   const activeTemplate = await getActivePromptTemplate();
   const promptTemplate = activeTemplate?.content || DEFAULT_PROMPT_TEMPLATE;
 
+  const { data: latestEligibility } = request.patient_id
+    ? await supabase
+        .from("eligibility_checks")
+        .select("status, checked_at")
+        .eq("patient_id", request.patient_id)
+        .order("checked_at", { ascending: false })
+        .limit(1)
+        .maybeSingle()
+    : { data: null };
+
   const result = await generateLetter({
     procedure,
     promptTemplate,
@@ -288,6 +298,8 @@ export async function draftLetterForRequest(requestId: string) {
     orderingPhysicianSpecialty: request.ordering_physician_specialty ?? undefined,
     orderingPhysicianFax: request.ordering_physician_fax ?? undefined,
     planType: request.plan_type ?? undefined,
+    eligibilityStatus: latestEligibility?.status ?? undefined,
+    eligibilityCheckedAt: latestEligibility?.checked_at ?? undefined,
   });
 
   const { data: lastVersion } = await supabase

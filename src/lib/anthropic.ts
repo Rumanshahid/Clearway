@@ -1,6 +1,7 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { CITATION_FORMAT_NOTE, EXCLUDED_PAYERS_NOTE, LETTER_COMPONENTS, PayerKey, ProcedureCriteria } from "@/lib/criteria";
 import { determineLetterApproach, checkSoftWarnings, buildAuthoringModeInstruction } from "@/lib/letter-logic";
+import { isEligibilityStale } from "@/lib/eligibility";
 import type { AuthoringMode, LetterMeta } from "@/lib/database.types";
 
 let client: Anthropic | null = null;
@@ -40,6 +41,8 @@ export interface LetterCaseInput {
   orderingPhysicianSpecialty?: string;
   orderingPhysicianFax?: string;
   planType?: string;
+  eligibilityStatus?: string;
+  eligibilityCheckedAt?: string;
 }
 
 export interface LetterSection {
@@ -139,6 +142,8 @@ export async function generateLetter(input: LetterCaseInput): Promise<LetterOutp
     insuranceGroupNumber: input.insuranceGroupNumber,
     orderingPhysicianSpecialty: input.orderingPhysicianSpecialty,
     orderingPhysicianFax: input.orderingPhysicianFax,
+    eligibilityStatus: input.eligibilityStatus,
+    eligibilityStale: isEligibilityStale(input.eligibilityCheckedAt),
   });
 
   const userMessage = `Draft the prior-authorization letter for this case.

@@ -432,6 +432,40 @@ export interface Database {
           }
         ];
       };
+      eligibility_checks: {
+        Row: {
+          id: string;
+          practice_id: string;
+          patient_id: string;
+          checked_by: string;
+          checked_at: string;
+          payer: string | null;
+          member_id: string | null;
+          plan_type: string | null;
+          status: string;
+          method: string;
+          deductible_remaining: number | null;
+          copay_amount: number | null;
+          notes: string | null;
+          created_at: string;
+        };
+        Insert: Partial<Database["public"]["Tables"]["eligibility_checks"]["Row"]> & {
+          practice_id: string;
+          patient_id: string;
+          checked_by: string;
+          status: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["eligibility_checks"]["Row"]>;
+        Relationships: [
+          {
+            foreignKeyName: "eligibility_checks_patient_id_fkey";
+            columns: ["patient_id"];
+            isOneToOne: false;
+            referencedRelation: "patients";
+            referencedColumns: ["id"];
+          }
+        ];
+      };
       notifications: {
         Row: {
           id: string;

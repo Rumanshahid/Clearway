@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { useFormStatus } from "react-dom";
 import type { FieldDef, PayerKey, ProcedureCriteria } from "@/lib/criteria";
 import type { AuthoringMode } from "@/lib/database.types";
+import { isEligibilityStale } from "@/lib/eligibility";
 import { createRequestAction } from "./actions";
 
 function SubmitButton() {
@@ -42,6 +43,8 @@ export interface SavedPatient {
   member_id: string | null;
   group_number: string | null;
   plan_type: string | null;
+  latest_eligibility_status?: string | null;
+  latest_eligibility_checked_at?: string | null;
 }
 
 const BLANK_PATIENT = {
@@ -132,6 +135,12 @@ export default function NewRequestForm({
     const saved = savedPatients.find((p) => p.id === id);
     setPatientFields(saved ? patientToFields(saved) : BLANK_PATIENT);
   }
+
+  const selectedPatient = useMemo(
+    () => (patientSelection === "new" ? null : savedPatients.find((p) => p.id === patientSelection) || null),
+    [patientSelection, savedPatients]
+  );
+  const eligibilityIsStale = selectedPatient ? isEligibilityStale(selectedPatient.latest_eligibility_checked_at) : false;
 
   const procedure = useMemo(
     () => procedures.find((p) => p.key === procedureKey) || procedures[0],
@@ -317,6 +326,23 @@ export default function NewRequestForm({
               ))}
             </select>
           </div>
+        )}
+
+        {selectedPatient && (
+          <p
+            className="text-[12.5px] rounded-lg px-3 py-2 mb-4"
+            style={
+              eligibilityIsStale
+                ? { background: "var(--amber-bg)", color: "var(--amber)" }
+                : { background: "var(--success-bg)", color: "var(--success-green)" }
+            }
+          >
+            {selectedPatient.latest_eligibility_status
+              ? `Eligibility last checked ${new Date(selectedPatient.latest_eligibility_checked_at!).toLocaleDateString()}: ${selectedPatient.latest_eligibility_status}.${
+                  eligibilityIsStale ? " That's over 30 days old — verify again before filing." : ""
+                }`
+              : "No eligibility check on file for this patient — verify coverage before filing (log it from the patient's page)."}
+          </p>
         )}
 
         <input type="hidden" name="patient_id" value={patientSelection === "new" ? "" : patientSelection} />

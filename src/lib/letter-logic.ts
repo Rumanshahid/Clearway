@@ -64,7 +64,13 @@ export function checkSoftWarnings(
   procedure: ProcedureCriteria,
   payer: PayerKey,
   caseFields: Record<string, string>,
-  extras?: { insuranceGroupNumber?: string; orderingPhysicianSpecialty?: string; orderingPhysicianFax?: string }
+  extras?: {
+    insuranceGroupNumber?: string;
+    orderingPhysicianSpecialty?: string;
+    orderingPhysicianFax?: string;
+    eligibilityStatus?: string;
+    eligibilityStale?: boolean;
+  }
 ): string[] {
   const warnings: string[] = [];
 
@@ -76,6 +82,13 @@ export function checkSoftWarnings(
   }
   if (!extras?.orderingPhysicianSpecialty) {
     warnings.push("Ordering physician specialty wasn't provided — useful if this case ends up needing a peer-to-peer review.");
+  }
+  if (!extras?.eligibilityStatus) {
+    warnings.push("No insurance eligibility check is on file for this patient — verify coverage is active before submitting.");
+  } else if (extras.eligibilityStatus === "Inactive") {
+    warnings.push("This patient's last eligibility check showed coverage as Inactive — confirm current status before submitting.");
+  } else if (extras.eligibilityStale) {
+    warnings.push("This patient's eligibility was last verified over 30 days ago — re-verify before submitting.");
   }
 
   if (payer === "other") {

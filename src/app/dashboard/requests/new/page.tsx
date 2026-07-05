@@ -48,6 +48,28 @@ export default async function NewRequestPage({
       .order("last_name"),
   ]);
 
+  const patientIds = (patients || []).map((p) => p.id);
+  const { data: eligibilityChecks } = patientIds.length
+    ? await supabase
+        .from("eligibility_checks")
+        .select("patient_id, status, checked_at")
+        .in("patient_id", patientIds)
+        .order("checked_at", { ascending: false })
+    : { data: [] as { patient_id: string; status: string; checked_at: string }[] };
+
+  const latestEligibilityByPatient = new Map<string, { status: string; checked_at: string }>();
+  for (const check of eligibilityChecks || []) {
+    if (!latestEligibilityByPatient.has(check.patient_id)) {
+      latestEligibilityByPatient.set(check.patient_id, { status: check.status, checked_at: check.checked_at });
+    }
+  }
+
+  const patientsWithEligibility = (patients || []).map((p) => ({
+    ...p,
+    latest_eligibility_status: latestEligibilityByPatient.get(p.id)?.status || null,
+    latest_eligibility_checked_at: latestEligibilityByPatient.get(p.id)?.checked_at || null,
+  }));
+
   return (
     <div className="max-w-[760px] mx-auto py-8 px-5">
       <h1 className="text-[24px] font-semibold mb-1">New prior authorization request</h1>
@@ -75,7 +97,7 @@ export default async function NewRequestPage({
           initialProcedure={procedure_type}
           defaultAuthoringMode={(practice?.default_authoring_mode || "doctor") as AuthoringMode}
           savedPhysicians={physicians || []}
-          savedPatients={patients || []}
+          savedPatients={patientsWithEligibility}
         />
       )}
     </div>

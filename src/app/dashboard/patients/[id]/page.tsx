@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getProcedureLabelMap } from "@/lib/criteria-repo";
 import PatientDetailClient from "./PatientDetailClient";
+import EligibilityCard from "./EligibilityCard";
 
 export default async function PatientDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -24,22 +25,28 @@ export default async function PatientDetailPage({ params }: { params: Promise<{ 
 
   if (!patient) notFound();
 
-  const [{ data: physicians }, { data: usualPhysician }, { data: requests }, procedureLabels] = await Promise.all([
-    supabase
-      .from("physicians")
-      .select("id, name, credentials, npi, direct_phone, specialty, fax")
-      .eq("practice_id", profile!.practice_id!)
-      .order("name"),
-    patient.usual_physician_id
-      ? supabase.from("physicians").select("name").eq("id", patient.usual_physician_id).single()
-      : Promise.resolve({ data: null }),
-    supabase
-      .from("pa_requests")
-      .select("id, patient_reference, procedure_type, status, created_at")
-      .eq("patient_id", id)
-      .order("created_at", { ascending: false }),
-    getProcedureLabelMap(),
-  ]);
+  const [{ data: physicians }, { data: usualPhysician }, { data: requests }, procedureLabels, { data: eligibilityChecks }] =
+    await Promise.all([
+      supabase
+        .from("physicians")
+        .select("id, name, credentials, npi, direct_phone, specialty, fax")
+        .eq("practice_id", profile!.practice_id!)
+        .order("name"),
+      patient.usual_physician_id
+        ? supabase.from("physicians").select("name").eq("id", patient.usual_physician_id).single()
+        : Promise.resolve({ data: null }),
+      supabase
+        .from("pa_requests")
+        .select("id, patient_reference, procedure_type, status, created_at")
+        .eq("patient_id", id)
+        .order("created_at", { ascending: false }),
+      getProcedureLabelMap(),
+      supabase
+        .from("eligibility_checks")
+        .select("id, checked_at, payer, member_id, plan_type, status, method, deductible_remaining, copay_amount, notes")
+        .eq("patient_id", id)
+        .order("checked_at", { ascending: false }),
+    ]);
 
   const stats = {
     total: requests?.length ?? 0,
@@ -131,6 +138,16 @@ export default async function PatientDetailPage({ params }: { params: Promise<{ 
           internal_tags: patient.internal_tags,
         }}
       />
+
+      <div className="mt-6">
+        <EligibilityCard
+          patientId={patient.id}
+          checks={eligibilityChecks || []}
+          defaultPayer={patient.insurance_company}
+          defaultMemberId={patient.member_id}
+          defaultPlanType={patient.plan_type}
+        />
+      </div>
 
       <div className="card p-6 mt-6">
         <h2 className="text-[15px] font-semibold mb-4">PA request history</h2>
