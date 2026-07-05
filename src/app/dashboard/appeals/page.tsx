@@ -1,9 +1,11 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
+import { requireSectionAccess } from "@/lib/permissions";
 import { PRACTICE_MONTHLY_PRICE_USD } from "@/lib/billing";
 import AppealRow from "./AppealRow";
 
 export default async function AppealsPage() {
+  await requireSectionAccess("appeals");
   const supabase = await createClient();
   const {
     data: { user },

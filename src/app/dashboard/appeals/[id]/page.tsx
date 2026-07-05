@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { requireSectionAccess } from "@/lib/permissions";
 import { getDenialRouting } from "@/lib/claims";
 import ClaimLetterPanel from "./ClaimLetterPanel";
 import { updateDenialStatusAction, redraftClaimAppealAction } from "./actions";
@@ -16,6 +17,7 @@ export default async function ClaimDenialDetailPage({
 }) {
   const { id } = await params;
   const { error } = await searchParams;
+  await requireSectionAccess("appeals");
   const supabase = await createClient();
 
   const { data: denial } = await supabase.from("claim_denials").select("*").eq("id", id).single();

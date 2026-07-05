@@ -4,8 +4,10 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { estimateAppealDeadline } from "@/lib/claims";
 import { generateClaimAppealLetter } from "@/lib/claims-anthropic";
+import { requireSectionAccess } from "@/lib/permissions";
 
 export async function createDenialAction(formData: FormData) {
+  await requireSectionAccess("appeals");
   const supabase = await createClient();
   const {
     data: { user },

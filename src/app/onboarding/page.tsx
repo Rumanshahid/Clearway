@@ -13,8 +13,11 @@ export default async function OnboardingPage({
     <div className="min-h-screen bg-gray-50 py-12 px-5">
       <div className="max-w-[640px] mx-auto">
         <h1 className="text-[26px] font-semibold mb-1">Set up your practice</h1>
-        <p className="text-[14px] text-gray-600 mb-8">
+        <p className="text-[14px] text-gray-600 mb-2">
           Takes about two minutes. You can change any of this later in Account Settings.
+        </p>
+        <p className="text-[12.5px] text-gray-400 mb-8">
+          Joining an existing practice? Don&apos;t fill this in — open the invite link your practice admin sent you instead.
         </p>
 
         {error && (

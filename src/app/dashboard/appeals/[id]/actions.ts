@@ -5,8 +5,10 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import type { DenialStatus } from "@/lib/database.types";
 import { logAccess } from "@/lib/access-log";
+import { requireSectionAccess } from "@/lib/permissions";
 
 export async function updateDenialStatusAction(formData: FormData) {
+  await requireSectionAccess("appeals");
   const denialId = String(formData.get("denial_id") || "");
   const status = String(formData.get("status") || "") as DenialStatus;
   const recoveredAmount = String(formData.get("recovered_amount") || "").trim();
@@ -30,6 +32,7 @@ export async function updateDenialStatusAction(formData: FormData) {
 }
 
 export async function updateClaimLetterContentAction(formData: FormData) {
+  await requireSectionAccess("appeals");
   const letterId = String(formData.get("letter_id") || "");
   const denialId = String(formData.get("denial_id") || "");
   const content = String(formData.get("content") || "");
@@ -46,6 +49,7 @@ export async function updateClaimLetterContentAction(formData: FormData) {
 }
 
 export async function deleteDenialAction(formData: FormData) {
+  await requireSectionAccess("appeals");
   const denialId = String(formData.get("denial_id") || "");
 
   const supabase = await createClient();
@@ -62,6 +66,7 @@ export async function deleteDenialAction(formData: FormData) {
 }
 
 export async function redraftClaimAppealAction(formData: FormData) {
+  await requireSectionAccess("appeals");
   const denialId = String(formData.get("denial_id") || "");
 
   const { draftClaimAppealLetter } = await import("../new/actions");

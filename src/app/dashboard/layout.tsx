@@ -13,7 +13,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
 
   const { data: profile, error: profileError } = await supabase
     .from("profiles")
-    .select("practice_id, full_name, role")
+    .select("practice_id, full_name, role, allowed_sections")
     .eq("id", user.id)
     .single();
 
@@ -22,6 +22,12 @@ export default async function DashboardLayout({ children }: { children: React.Re
   }
 
   if (!profile?.practice_id) redirect("/onboarding");
+
+  // clinic_admin is the practice's "Doctor / Admin" role — full nav. Staff
+  // (clinic_user) only see the sections an admin granted them.
+  const isAdmin = profile.role === "clinic_admin" || profile.role === "super_admin";
+  const sections = profile.allowed_sections || [];
+  const showSection = (key: string) => isAdmin || sections.includes(key);
 
   const { data: practice, error: practiceError } = await supabase
     .from("practices")
@@ -54,11 +60,12 @@ export default async function DashboardLayout({ children }: { children: React.Re
               asaanbil.com
             </Link>
             <div className="flex items-center gap-6 text-[13.5px] text-gray-600">
-              <Link href="/dashboard">Dashboard</Link>
-              <Link href="/dashboard/patients">Patients</Link>
-              <Link href="/dashboard/appeals">Appeals</Link>
+              {showSection("requests") && <Link href="/dashboard">Dashboard</Link>}
+              {showSection("patients") && <Link href="/dashboard/patients">Patients</Link>}
+              {showSection("appeals") && <Link href="/dashboard/appeals">Appeals</Link>}
               <Link href="/dashboard/resources">Resources</Link>
-              <Link href="/dashboard/billing">Billing</Link>
+              {isAdmin && <Link href="/dashboard/team">Team</Link>}
+              {isAdmin && <Link href="/dashboard/billing">Billing</Link>}
             </div>
           </div>
           <div className="flex items-center gap-4">

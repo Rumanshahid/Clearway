@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
+import { requireSectionAccess } from "@/lib/permissions";
 import PatientRow from "./PatientRow";
 
 export default async function PatientsPage({
@@ -8,6 +9,7 @@ export default async function PatientsPage({
   searchParams: Promise<{ imported?: string; skipped?: string; errors?: string }>;
 }) {
   const { imported, skipped, errors } = await searchParams;
+  await requireSectionAccess("patients");
   const supabase = await createClient();
   const {
     data: { user },

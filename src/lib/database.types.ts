@@ -64,6 +64,7 @@ export interface Database {
           practice_id: string | null;
           full_name: string | null;
           role: UserRole;
+          allowed_sections: string[];
           flagged: boolean;
           flagged_reason: string | null;
           created_at: string;
@@ -428,6 +429,38 @@ export interface Database {
             columns: ["claim_denial_id"];
             isOneToOne: false;
             referencedRelation: "claim_denials";
+            referencedColumns: ["id"];
+          }
+        ];
+      };
+      invites: {
+        Row: {
+          id: string;
+          practice_id: string;
+          email: string;
+          role: string;
+          allowed_sections: string[];
+          token: string;
+          created_by: string;
+          created_at: string;
+          expires_at: string;
+          accepted_at: string | null;
+          accepted_by: string | null;
+        };
+        Insert: Partial<Database["public"]["Tables"]["invites"]["Row"]> & {
+          practice_id: string;
+          email: string;
+          token: string;
+          created_by: string;
+          expires_at: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["invites"]["Row"]>;
+        Relationships: [
+          {
+            foreignKeyName: "invites_practice_id_fkey";
+            columns: ["practice_id"];
+            isOneToOne: false;
+            referencedRelation: "practices";
             referencedColumns: ["id"];
           }
         ];

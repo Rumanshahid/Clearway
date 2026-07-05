@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { requireAdmin } from "@/lib/permissions";
 import { PRACTICE_MONTHLY_PRICE_USD } from "@/lib/billing";
 import UpgradeButton from "./UpgradeButton";
 import { cancelSubscriptionAction } from "./actions";
@@ -9,6 +10,9 @@ export default async function BillingPage({
   searchParams: Promise<{ error?: string; upgraded?: string }>;
 }) {
   const { error, upgraded } = await searchParams;
+  // Billing is the doctor/admin's concern — staff never see plan or payment
+  // details.
+  await requireAdmin();
   const supabase = await createClient();
 
   const {

@@ -1,12 +1,14 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { requireSectionAccess } from "@/lib/permissions";
 import { getProcedureLabelMap } from "@/lib/criteria-repo";
 import PatientDetailClient from "./PatientDetailClient";
 import EligibilityCard from "./EligibilityCard";
 
 export default async function PatientDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
+  await requireSectionAccess("patients");
   const supabase = await createClient();
   const {
     data: { user },

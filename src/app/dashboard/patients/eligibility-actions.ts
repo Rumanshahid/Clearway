@@ -3,8 +3,10 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { requireSectionAccess } from "@/lib/permissions";
 
 export async function logEligibilityCheckAction(formData: FormData) {
+  await requireSectionAccess("patients");
   const patientId = String(formData.get("patient_id") || "");
   const status = String(formData.get("status") || "").trim();
 
@@ -46,6 +48,7 @@ export async function logEligibilityCheckAction(formData: FormData) {
 }
 
 export async function deleteEligibilityCheckAction(formData: FormData) {
+  await requireSectionAccess("patients");
   const checkId = String(formData.get("check_id") || "");
   const patientId = String(formData.get("patient_id") || "");
 

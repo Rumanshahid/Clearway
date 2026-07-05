@@ -7,6 +7,7 @@ import { getMissingRequiredFields, PayerKey, DEFAULT_PROMPT_TEMPLATE } from "@/l
 import type { AuthoringMode } from "@/lib/database.types";
 import { getActivePromptTemplate, getProcedureByKey } from "@/lib/criteria-repo";
 import { logAccess } from "@/lib/access-log";
+import { requireSectionAccess } from "@/lib/permissions";
 import { notifyLetterReady, notifyUsageThreshold } from "./notify";
 
 // Best-effort split for the quick "save this patient" shortcut in the New
@@ -19,6 +20,7 @@ function splitFullName(fullName: string): { firstName: string; lastName: string 
 }
 
 export async function createRequestAction(formData: FormData) {
+  await requireSectionAccess("requests");
   const supabase = await createClient();
   const {
     data: { user },

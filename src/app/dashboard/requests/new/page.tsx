@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { requireSectionAccess } from "@/lib/permissions";
 import { PAYERS } from "@/lib/criteria";
 import { getAllPayerToggles, getEnabledProcedures } from "@/lib/criteria-repo";
 import type { AuthoringMode } from "@/lib/database.types";
@@ -17,6 +18,7 @@ export default async function NewRequestPage({
   searchParams: Promise<{ error?: string; procedure_type?: string }>;
 }) {
   const { error, procedure_type } = await searchParams;
+  await requireSectionAccess("requests");
   const supabase = await createClient();
 
   const {

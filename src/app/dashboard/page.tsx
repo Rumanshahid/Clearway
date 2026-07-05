@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
+import { requireSectionAccess } from "@/lib/permissions";
 import { PAYERS } from "@/lib/criteria";
 import { getProcedureLabelMap } from "@/lib/criteria-repo";
 import type { RequestStatus } from "@/lib/database.types";
@@ -20,18 +21,12 @@ export default async function DashboardPage({
   searchParams: Promise<{ status?: string; payer?: string; procedure?: string; from?: string; to?: string; drafted?: string }>;
 }) {
   const { status, payer, procedure, from, to, drafted } = await searchParams;
+  // Home doubles as the PA-requests section — staff without it get bounced
+  // to their first permitted section by the guard.
+  const session = await requireSectionAccess("requests");
   const supabase = await createClient();
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("practice_id")
-    .eq("id", user!.id)
-    .single();
-
-  const practiceId = profile!.practice_id!;
+  const practiceId = session.practiceId;
 
   let query = supabase
     .from("pa_requests")

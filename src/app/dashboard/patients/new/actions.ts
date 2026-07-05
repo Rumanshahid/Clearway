@@ -6,6 +6,7 @@ import { parseCsv, normalizeCsvHeader } from "@/lib/csv";
 import { PATIENT_CSV_COLUMNS } from "@/lib/patients";
 import type { PatientStatus } from "@/lib/database.types";
 import { logAccess } from "@/lib/access-log";
+import { requireSectionAccess } from "@/lib/permissions";
 
 function readPatientFields(formData: FormData) {
   const str = (key: string) => String(formData.get(key) || "").trim();
@@ -65,6 +66,7 @@ function readPatientFields(formData: FormData) {
 }
 
 export async function createPatientAction(formData: FormData) {
+  await requireSectionAccess("patients");
   const supabase = await createClient();
   const {
     data: { user },
@@ -96,6 +98,7 @@ export async function createPatientAction(formData: FormData) {
 }
 
 export async function updatePatientAction(patientId: string, formData: FormData) {
+  await requireSectionAccess("patients");
   const supabase = await createClient();
   const {
     data: { user },
@@ -117,6 +120,7 @@ export async function updatePatientAction(patientId: string, formData: FormData)
 }
 
 export async function deletePatientAction(patientId: string) {
+  await requireSectionAccess("patients");
   const supabase = await createClient();
   const {
     data: { user },
@@ -133,6 +137,7 @@ export async function deletePatientAction(patientId: string) {
 }
 
 export async function importPatientsCsvAction(formData: FormData) {
+  await requireSectionAccess("patients");
   const supabase = await createClient();
   const {
     data: { user },

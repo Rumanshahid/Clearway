@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { requireSectionAccess } from "@/lib/permissions";
 import { getProcedureByKey } from "@/lib/criteria-repo";
 import type { RequestStatus } from "@/lib/database.types";
 import { logAccess } from "@/lib/access-log";
@@ -23,6 +24,7 @@ export default async function RequestDetailPage({
 }) {
   const { id } = await params;
   const { error } = await searchParams;
+  await requireSectionAccess("requests");
   const supabase = await createClient();
 
   const { data: request } = await supabase.from("pa_requests").select("*").eq("id", id).single();

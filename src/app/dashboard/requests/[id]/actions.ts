@@ -5,8 +5,10 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import type { RequestStatus } from "@/lib/database.types";
 import { logAccess } from "@/lib/access-log";
+import { requireSectionAccess } from "@/lib/permissions";
 
 export async function updateLetterContentAction(formData: FormData) {
+  await requireSectionAccess("requests");
   const letterId = String(formData.get("letter_id") || "");
   const requestId = String(formData.get("request_id") || "");
   const content = String(formData.get("content") || "");
@@ -23,6 +25,7 @@ export async function updateLetterContentAction(formData: FormData) {
 }
 
 export async function approveLetterAction(formData: FormData) {
+  await requireSectionAccess("requests");
   const letterId = String(formData.get("letter_id") || "");
   const requestId = String(formData.get("request_id") || "");
 
@@ -48,6 +51,7 @@ export async function approveLetterAction(formData: FormData) {
 }
 
 export async function updateStatusAction(formData: FormData) {
+  await requireSectionAccess("requests");
   const requestId = String(formData.get("request_id") || "");
   const status = String(formData.get("status") || "") as RequestStatus;
 
@@ -73,6 +77,7 @@ export async function updateStatusAction(formData: FormData) {
 }
 
 export async function deleteRequestAction(formData: FormData) {
+  await requireSectionAccess("requests");
   const requestId = String(formData.get("request_id") || "");
 
   const supabase = await createClient();
@@ -89,6 +94,7 @@ export async function deleteRequestAction(formData: FormData) {
 }
 
 export async function redraftAction(formData: FormData) {
+  await requireSectionAccess("requests");
   const requestId = String(formData.get("request_id") || "");
 
   const supabase = await createClient();

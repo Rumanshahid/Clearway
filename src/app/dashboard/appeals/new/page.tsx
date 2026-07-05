@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { requireSectionAccess } from "@/lib/permissions";
 import ClaimDenialForm from "./ClaimDenialForm";
 
 export const maxDuration = 60;
@@ -9,6 +10,7 @@ export default async function NewClaimDenialPage({
   searchParams: Promise<{ error?: string }>;
 }) {
   const { error } = await searchParams;
+  await requireSectionAccess("appeals");
   const supabase = await createClient();
   const {
     data: { user },
