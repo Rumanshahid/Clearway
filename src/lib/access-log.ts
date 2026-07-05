@@ -6,7 +6,7 @@ import { createClient } from "@/lib/supabase/server";
 export async function logAccess(params: {
   userId: string | null;
   action: "view" | "create" | "download" | "approve" | "status_change" | "redraft" | "delete";
-  resourceType: "pa_request" | "letter";
+  resourceType: "pa_request" | "letter" | "patient" | "claim_denial";
   resourceId: string;
 }) {
   const supabase = await createClient();

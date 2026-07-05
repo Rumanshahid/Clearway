@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
+import PatientRow from "./PatientRow";
 
 export default async function PatientsPage({
   searchParams,
@@ -55,27 +56,26 @@ export default async function PatientsPage({
               <th className="px-5 py-3 font-semibold">Insurance</th>
               <th className="px-5 py-3 font-semibold">Member ID</th>
               <th className="px-5 py-3 font-semibold">Status</th>
+              <th className="px-5 py-3 font-semibold"></th>
             </tr>
           </thead>
           <tbody>
             {patients && patients.length > 0 ? (
               patients.map((p) => (
-                <tr key={p.id} className="hover:bg-gray-50" style={{ borderBottom: "1px solid var(--gray-100)" }}>
-                  <td className="px-5 py-3">
-                    <Link href={`/dashboard/patients/${p.id}`} className="text-indigo-600 font-medium">{p.patient_ref_id}</Link>
-                  </td>
-                  <td className="px-5 py-3">
-                    <Link href={`/dashboard/patients/${p.id}`}>{p.first_name} {p.last_name}</Link>
-                  </td>
-                  <td className="px-5 py-3 text-gray-600">{p.dob}</td>
-                  <td className="px-5 py-3 text-gray-600">{p.insurance_company || "—"}</td>
-                  <td className="px-5 py-3 text-gray-600">{p.member_id || "—"}</td>
-                  <td className="px-5 py-3 text-gray-600 capitalize">{p.status}</td>
-                </tr>
+                <PatientRow
+                  key={p.id}
+                  patientId={p.id}
+                  patientRefId={p.patient_ref_id}
+                  name={`${p.first_name} ${p.last_name}`}
+                  dob={p.dob}
+                  insuranceCompany={p.insurance_company}
+                  memberId={p.member_id}
+                  status={p.status}
+                />
               ))
             ) : (
               <tr>
-                <td className="px-5 py-10 text-center text-gray-400" colSpan={6}>
+                <td className="px-5 py-10 text-center text-gray-400" colSpan={7}>
                   No patients yet. <Link href="/dashboard/patients/new" className="text-indigo-600">Add your first one →</Link>
                 </td>
               </tr>

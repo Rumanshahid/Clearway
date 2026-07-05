@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { PRACTICE_MONTHLY_PRICE_USD } from "@/lib/billing";
+import AppealRow from "./AppealRow";
 
 export default async function AppealsPage() {
   const supabase = await createClient();
@@ -25,6 +26,22 @@ export default async function AppealsPage() {
     .order("created_at", { ascending: false });
 
   const rows = denials || [];
+  const denialIds = rows.map((r) => r.id);
+
+  const { data: letters } = denialIds.length
+    ? await supabase
+        .from("claim_appeal_letters")
+        .select("id, claim_denial_id, version")
+        .in("claim_denial_id", denialIds)
+        .order("version", { ascending: false })
+    : { data: [] as { id: string; claim_denial_id: string; version: number }[] };
+
+  const latestLetterByDenial = new Map<string, string>();
+  for (const letter of letters || []) {
+    if (!latestLetterByDenial.has(letter.claim_denial_id)) {
+      latestLetterByDenial.set(letter.claim_denial_id, letter.id);
+    }
+  }
 
   const monthStart = new Date();
   monthStart.setDate(1);
@@ -154,26 +171,28 @@ export default async function AppealsPage() {
               <th className="px-5 py-3 font-semibold">Deadline</th>
               <th className="px-5 py-3 font-semibold">Priority</th>
               <th className="px-5 py-3 font-semibold">Status</th>
+              <th className="px-5 py-3 font-semibold"></th>
             </tr>
           </thead>
           <tbody>
             {rows.length > 0 ? (
               rows.map((r) => (
-                <tr key={r.id} className="hover:bg-gray-50" style={{ borderBottom: "1px solid var(--gray-100)" }}>
-                  <td className="px-5 py-3">
-                    <Link href={`/dashboard/appeals/${r.id}`} className="text-indigo-600 font-medium">{r.claim_number || "(none)"}</Link>
-                  </td>
-                  <td className="px-5 py-3 text-gray-600">{r.denial_reason_code}</td>
-                  <td className="px-5 py-3 text-gray-600">{r.payer || "—"}</td>
-                  <td className="px-5 py-3 text-gray-600">{r.amount_denied != null ? `$${r.amount_denied.toLocaleString()}` : "—"}</td>
-                  <td className="px-5 py-3 text-gray-600">{r.appeal_deadline || "—"}</td>
-                  <td className="px-5 py-3 text-gray-600">{r.priority}</td>
-                  <td className="px-5 py-3 text-gray-600 capitalize">{r.status.replace("_", " ")}</td>
-                </tr>
+                <AppealRow
+                  key={r.id}
+                  denialId={r.id}
+                  claimNumber={r.claim_number}
+                  denialReasonCode={r.denial_reason_code}
+                  payer={r.payer}
+                  amountDenied={r.amount_denied}
+                  appealDeadline={r.appeal_deadline}
+                  priority={r.priority}
+                  status={r.status}
+                  letterId={latestLetterByDenial.get(r.id)}
+                />
               ))
             ) : (
               <tr>
-                <td className="px-5 py-10 text-center text-gray-400" colSpan={7}>
+                <td className="px-5 py-10 text-center text-gray-400" colSpan={8}>
                   No claim denials logged yet. <Link href="/dashboard/appeals/new" className="text-indigo-600">Log your first one →</Link>
                 </td>
               </tr>

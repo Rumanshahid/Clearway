@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import { parseCsv, normalizeCsvHeader } from "@/lib/csv";
 import { PATIENT_CSV_COLUMNS } from "@/lib/patients";
 import type { PatientStatus } from "@/lib/database.types";
+import { logAccess } from "@/lib/access-log";
 
 function readPatientFields(formData: FormData) {
   const str = (key: string) => String(formData.get(key) || "").trim();
@@ -126,6 +127,7 @@ export async function deletePatientAction(patientId: string) {
   // "on delete set null" — deleting a patient never cascades into
   // deleting requests or denials, it just unlinks them.
   await supabase.from("patients").delete().eq("id", patientId);
+  await logAccess({ userId: user.id, action: "delete", resourceType: "patient", resourceId: patientId });
 
   redirect("/dashboard/patients");
 }

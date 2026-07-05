@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import type { DenialStatus } from "@/lib/database.types";
+import { logAccess } from "@/lib/access-log";
 
 export async function updateDenialStatusAction(formData: FormData) {
   const denialId = String(formData.get("denial_id") || "");
@@ -48,8 +49,13 @@ export async function deleteDenialAction(formData: FormData) {
   const denialId = String(formData.get("denial_id") || "");
 
   const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
   // claim_appeal_letters cascade-delete via the claim_denial_id foreign key.
   await supabase.from("claim_denials").delete().eq("id", denialId);
+  await logAccess({ userId: user?.id || null, action: "delete", resourceType: "claim_denial", resourceId: denialId });
 
   revalidatePath("/dashboard/appeals");
   redirect("/dashboard/appeals");
