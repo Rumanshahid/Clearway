@@ -75,13 +75,39 @@ export async function inviteMemberAction(formData: FormData) {
     redirect(`/dashboard/team?error=${encodeURIComponent(error.message)}`);
   }
 
-  const joinUrl = `${process.env.NEXT_PUBLIC_SITE_URL || "https://www.asaanbil.com"}/join/${token}`;
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://www.asaanbil.com";
+  const joinUrl = `${siteUrl}/join/${token}`;
   const roleLabel = title || (role === "clinic_admin" ? "a Doctor / Admin" : "Staff");
+
+  // Passwordless: generate a Supabase auth link (invite for a brand-new
+  // email, magiclink if this email already has an account elsewhere) that
+  // signs them in directly, redirected straight to /join/[token] where they
+  // auto-attach to this practice. No "create a password" step for staff —
+  // clicking the link is the entire signup. Falls back to a plain link to
+  // /sign-up (normal password signup) if link generation fails for any
+  // reason, so an invite is never silently lost.
+  const admin = await createAdminClient();
+  const redirectTo = `${siteUrl}/auth/callback?next=${encodeURIComponent(`/join/${token}`)}`;
+
+  const { data: existingUsers } = await admin.auth.admin.listUsers({ perPage: 200 });
+  const userExists = (existingUsers?.users || []).some((u) => u.email?.toLowerCase() === email);
+
+  const { data: linkData, error: linkError } = await admin.auth.admin.generateLink({
+    type: userExists ? "magiclink" : "invite",
+    email,
+    options: { redirectTo },
+  });
+
+  const actionLink = linkData?.properties?.action_link;
+  if (linkError) console.error("generateLink failed, falling back to manual sign-up link", linkError);
+
   try {
     await sendEmail({
       to: email,
       subject: "You've been invited to asaanbil.com",
-      html: `<p>You've been invited to join your practice's asaanbil.com workspace as ${roleLabel}.</p><p>Open your invite link to get started — it'll walk you through creating an account and add you automatically once you confirm your email:</p><p><a href="${joinUrl}">${joinUrl}</a></p><p>This invite expires in 7 days.</p>`,
+      html: actionLink
+        ? `<p>You've been invited to join your practice's asaanbil.com workspace as ${roleLabel}.</p><p>Click below to get started — you'll be signed in and added to the practice automatically, no password needed:</p><p><a href="${actionLink}">Join your practice →</a></p><p>This invite expires in 7 days.</p>`
+        : `<p>You've been invited to join your practice's asaanbil.com workspace as ${roleLabel}.</p><p>Open your invite link to get started — it'll walk you through creating an account and add you automatically once you confirm your email:</p><p><a href="${joinUrl}">${joinUrl}</a></p><p>This invite expires in 7 days.</p>`,
     });
   } catch (err) {
     console.error("invite email failed", err);

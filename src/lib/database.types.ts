@@ -501,6 +501,75 @@ export interface Database {
           }
         ];
       };
+      conversations: {
+        Row: {
+          id: string;
+          practice_id: string;
+          type: string;
+          name: string | null;
+          created_by: string;
+          created_at: string;
+        };
+        Insert: Partial<Database["public"]["Tables"]["conversations"]["Row"]> & {
+          practice_id: string;
+          created_by: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["conversations"]["Row"]>;
+        Relationships: [];
+      };
+      conversation_members: {
+        Row: {
+          conversation_id: string;
+          user_id: string;
+          joined_at: string;
+        };
+        Insert: Partial<Database["public"]["Tables"]["conversation_members"]["Row"]> & {
+          conversation_id: string;
+          user_id: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["conversation_members"]["Row"]>;
+        Relationships: [];
+      };
+      messages: {
+        Row: {
+          id: string;
+          conversation_id: string;
+          sender_id: string;
+          content: string | null;
+          attachment_url: string | null;
+          attachment_type: string | null;
+          attachment_name: string | null;
+          created_at: string;
+        };
+        Insert: Partial<Database["public"]["Tables"]["messages"]["Row"]> & {
+          conversation_id: string;
+          sender_id: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["messages"]["Row"]>;
+        Relationships: [];
+      };
+      tasks: {
+        Row: {
+          id: string;
+          practice_id: string;
+          title: string;
+          description: string | null;
+          assigned_to: string;
+          assigned_by: string;
+          status: string;
+          due_date: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: Partial<Database["public"]["Tables"]["tasks"]["Row"]> & {
+          practice_id: string;
+          title: string;
+          assigned_to: string;
+          assigned_by: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["tasks"]["Row"]>;
+        Relationships: [];
+      };
       notifications: {
         Row: {
           id: string;

@@ -60,9 +60,12 @@ export default async function DashboardLayout({ children }: { children: React.Re
               asaanbil.com
             </Link>
             <div className="flex items-center gap-6 text-[13.5px] text-gray-600">
-              {showSection("requests") && <Link href="/dashboard">Dashboard</Link>}
+              {isAdmin && <Link href="/dashboard/overview">Dashboard</Link>}
+              {showSection("requests") && <Link href="/dashboard">PA</Link>}
               {showSection("patients") && <Link href="/dashboard/patients">Patients</Link>}
               {showSection("appeals") && <Link href="/dashboard/appeals">Appeals</Link>}
+              <Link href="/dashboard/chat">Chat</Link>
+              <Link href="/dashboard/tasks">Tasks</Link>
               <Link href="/dashboard/resources">Resources</Link>
               {isAdmin && <Link href="/dashboard/team">Team</Link>}
               {isAdmin && <Link href="/dashboard/billing">Billing</Link>}
