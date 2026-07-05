@@ -11,27 +11,34 @@ export async function signUpAction(formData: FormData) {
   const email = String(formData.get("email") || "").trim();
   const password = String(formData.get("password") || "");
   const fullName = String(formData.get("full_name") || "").trim();
+  const invite = String(formData.get("invite") || "").trim();
 
   if (!email || !password || password.length < 8) {
     redirect(
       `/sign-up?error=${encodeURIComponent(
         "Enter a valid email and a password of at least 8 characters."
-      )}`
+      )}${invite ? `&invite=${encodeURIComponent(invite)}` : ""}`
     );
   }
 
   const supabase = await createClient();
+  // An invited signup skips onboarding entirely — confirming lands them on
+  // /join/[token], which auto-accepts and attaches them to the inviting
+  // practice instead of them ever seeing the "create a practice" form.
+  const next = invite ? `/join/${invite}` : "/onboarding";
   const { error } = await supabase.auth.signUp({
     email,
     password,
     options: {
-      emailRedirectTo: `${siteUrl()}/auth/callback?next=/onboarding`,
+      emailRedirectTo: `${siteUrl()}/auth/callback?next=${encodeURIComponent(next)}`,
       data: { full_name: fullName },
     },
   });
 
   if (error) {
-    redirect(`/sign-up?error=${encodeURIComponent(error.message)}`);
+    redirect(
+      `/sign-up?error=${encodeURIComponent(error.message)}${invite ? `&invite=${encodeURIComponent(invite)}` : ""}`
+    );
   }
 
   redirect(`/check-email?email=${encodeURIComponent(email)}`);

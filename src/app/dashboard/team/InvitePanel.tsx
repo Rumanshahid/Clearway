@@ -9,6 +9,7 @@ export interface PendingInvite {
   id: string;
   email: string;
   role: string;
+  title: string | null;
   expires_at: string;
   token: string;
 }
@@ -47,6 +48,10 @@ export default function InvitePanel({ invites, siteUrl }: { invites: PendingInvi
             <input className="input" id="invite_email" name="email" type="email" required placeholder="staff@yourpractice.com" />
           </div>
           <div>
+            <label className="label" htmlFor="invite_title">Title (optional)</label>
+            <input className="input" id="invite_title" name="title" placeholder="e.g. Front Desk Coordinator, Nurse, Billing" />
+          </div>
+          <div className="col-span-2">
             <label className="label" htmlFor="invite_role">Role</label>
             <select className="input" id="invite_role" name="role" value={role} onChange={(e) => setRole(e.target.value)}>
               <option value="clinic_user">Staff — only the sections picked below</option>
@@ -77,6 +82,7 @@ export default function InvitePanel({ invites, siteUrl }: { invites: PendingInvi
             <thead>
               <tr className="text-left text-gray-400 text-[11px] uppercase tracking-wide" style={{ borderBottom: "1px solid var(--gray-200)" }}>
                 <th className="py-2 font-semibold">Email</th>
+                <th className="py-2 font-semibold">Title</th>
                 <th className="py-2 font-semibold">Role</th>
                 <th className="py-2 font-semibold">Expires</th>
                 <th className="py-2 font-semibold"></th>
@@ -86,6 +92,7 @@ export default function InvitePanel({ invites, siteUrl }: { invites: PendingInvi
               {invites.map((invite) => (
                 <tr key={invite.id} style={{ borderBottom: "1px solid var(--gray-100)" }}>
                   <td className="py-2 text-gray-600">{invite.email}</td>
+                  <td className="py-2 text-gray-600">{invite.title || "—"}</td>
                   <td className="py-2 text-gray-600">{invite.role === "clinic_admin" ? "Doctor / Admin" : "Staff"}</td>
                   <td className="py-2 text-gray-600">{new Date(invite.expires_at).toLocaleDateString()}</td>
                   <td className="py-2">

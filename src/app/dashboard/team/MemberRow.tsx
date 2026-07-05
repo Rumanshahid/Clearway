@@ -9,6 +9,7 @@ export interface TeamMember {
   name: string;
   email: string;
   role: string;
+  title: string | null;
   sections: string[];
   requestsCount: number;
   denialsCount: number;
@@ -28,10 +29,20 @@ export default function MemberRow({ member, isSelf }: { member: TeamMember; isSe
   if (editing) {
     return (
       <tr style={{ borderBottom: "1px solid var(--gray-100)" }}>
-        <td className="px-5 py-3" colSpan={6}>
+        <td className="px-5 py-3" colSpan={7}>
           <form action={updateMemberAction} className="flex flex-wrap items-end gap-4">
             <input type="hidden" name="member_id" value={member.id} />
-            <div className="text-[13.5px] font-medium min-w-[160px]">{member.name}</div>
+            <div className="text-[13.5px] font-medium min-w-[140px]">{member.name}</div>
+            <div>
+              <label className="label" htmlFor={`title-${member.id}`}>Title</label>
+              <input
+                className="input"
+                id={`title-${member.id}`}
+                name="title"
+                defaultValue={member.title || ""}
+                placeholder="e.g. Front Desk Coordinator"
+              />
+            </div>
             <div>
               <label className="label" htmlFor={`role-${member.id}`}>Role</label>
               <select className="input" id={`role-${member.id}`} name="role" value={role} onChange={(e) => setRole(e.target.value)}>
@@ -74,6 +85,7 @@ export default function MemberRow({ member, isSelf }: { member: TeamMember; isSe
         <div className="font-medium">{member.name}{isSelf && <span className="text-gray-400 font-normal"> (you)</span>}</div>
         <div className="text-[12px] text-gray-400">{member.email}</div>
       </td>
+      <td className="px-5 py-3 text-gray-600">{member.title || "—"}</td>
       <td className="px-5 py-3">
         <span
           className="status-pill"

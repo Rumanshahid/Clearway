@@ -4,14 +4,16 @@ import { signUpAction } from "../actions";
 export default async function SignUpPage({
   searchParams,
 }: {
-  searchParams: Promise<{ error?: string }>;
+  searchParams: Promise<{ error?: string; invite?: string }>;
 }) {
-  const { error } = await searchParams;
+  const { error, invite } = await searchParams;
 
   return (
     <>
-      <h1 className="text-[22px] font-semibold mb-1">Start your free pilot</h1>
-      <p className="text-[14px] text-gray-600 mb-6">10 free letters, no card required.</p>
+      <h1 className="text-[22px] font-semibold mb-1">{invite ? "Create your account" : "Start your free pilot"}</h1>
+      <p className="text-[14px] text-gray-600 mb-6">
+        {invite ? "You'll be added to your practice's workspace automatically once you confirm your email." : "10 free letters, no card required."}
+      </p>
 
       {error && (
         <div className="mb-4 text-[13px] rounded-lg px-3 py-2" style={{ background: "var(--danger-bg)", color: "var(--danger-red)" }}>
@@ -20,6 +22,7 @@ export default async function SignUpPage({
       )}
 
       <form action={signUpAction} className="flex flex-col gap-4">
+        {invite && <input type="hidden" name="invite" value={invite} />}
         <div>
           <label className="label" htmlFor="full_name">Full name</label>
           <input className="input" id="full_name" name="full_name" required />

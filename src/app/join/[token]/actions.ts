@@ -38,6 +38,7 @@ export async function acceptInviteAction(formData: FormData) {
     .update({
       practice_id: invite.practice_id,
       role: invite.role as UserRole,
+      title: invite.title,
       allowed_sections: invite.allowed_sections,
     })
     .eq("id", user.id);

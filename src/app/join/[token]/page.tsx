@@ -15,7 +15,7 @@ export default async function JoinPage({
   const admin = await createAdminClient();
   const { data: invite } = await admin
     .from("invites")
-    .select("practice_id, email, role, accepted_at, expires_at")
+    .select("practice_id, email, role, title, accepted_at, expires_at")
     .eq("token", token)
     .maybeSingle();
 
@@ -36,6 +36,16 @@ export default async function JoinPage({
 
   const alreadyThisPractice = !!user && !!invite && profile?.practice_id === invite.practice_id;
   const inOtherPractice = !!user && !!profile?.practice_id && !alreadyThisPractice;
+
+  // Auto-join: a signed-in user with a valid, unused invite and no practice
+  // of their own gets attached immediately — no extra click. This is what
+  // "join after confirmation, not manually" means in practice: the only
+  // manual step left is opening the invite link at all.
+  if (user && !invalid && !alreadyThisPractice && !inOtherPractice && !error) {
+    const fd = new FormData();
+    fd.set("token", token);
+    await acceptInviteAction(fd);
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center px-5">
@@ -64,27 +74,19 @@ export default async function JoinPage({
             create a separate account for <strong>{practice?.name}</strong>, or ask your admin.
           </p>
         ) : user ? (
-          <>
-            <p className="text-[14px] text-gray-600 mt-3 mb-6">
-              You&apos;ve been invited to join <strong>{practice?.name}</strong> as{" "}
-              <strong>{invite!.role === "clinic_admin" ? "a Doctor / Admin" : "Staff"}</strong>.
-            </p>
-            <form action={acceptInviteAction}>
-              <input type="hidden" name="token" value={token} />
-              <button className="btn btn-primary w-full justify-center" type="submit">
-                Join {practice?.name} →
-              </button>
-            </form>
-          </>
+          <p className="text-[14px] text-gray-600 mt-3">Joining {practice?.name}…</p>
         ) : (
           <>
             <p className="text-[14px] text-gray-600 mt-3 mb-6">
-              You&apos;ve been invited to join <strong>{practice?.name}</strong>. Create an account (or sign in) with{" "}
-              <strong>{invite!.email}</strong>, then open this link again to accept.
+              You&apos;ve been invited to join <strong>{practice?.name}</strong>
+              {invite!.title ? ` as ${invite!.title}` : ""}. Create an account (or sign in) with{" "}
+              <strong>{invite!.email}</strong> and you&apos;ll be added automatically — no separate setup step.
             </p>
             <div className="flex flex-col gap-2">
-              <Link href="/sign-up" className="btn btn-primary w-full justify-center">Create an account</Link>
-              <Link href="/sign-in" className="btn btn-outline w-full justify-center">I already have one — sign in</Link>
+              <Link href={`/sign-up?invite=${token}`} className="btn btn-primary w-full justify-center">Create an account</Link>
+              <Link href={`/sign-in?next=${encodeURIComponent(`/join/${token}`)}`} className="btn btn-outline w-full justify-center">
+                I already have one — sign in
+              </Link>
             </div>
           </>
         )}

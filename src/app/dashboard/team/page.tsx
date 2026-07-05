@@ -15,13 +15,13 @@ export default async function TeamPage({
   const [{ data: profiles }, { data: requests }, { data: denials }, { data: invites }] = await Promise.all([
     supabase
       .from("profiles")
-      .select("id, full_name, role, allowed_sections")
+      .select("id, full_name, role, title, allowed_sections")
       .eq("practice_id", session.practiceId),
     supabase.from("pa_requests").select("created_by").eq("practice_id", session.practiceId),
     supabase.from("claim_denials").select("created_by").eq("practice_id", session.practiceId),
     supabase
       .from("invites")
-      .select("id, email, role, expires_at, token")
+      .select("id, email, role, title, expires_at, token")
       .eq("practice_id", session.practiceId)
       .is("accepted_at", null)
       .order("created_at", { ascending: false }),
@@ -48,6 +48,7 @@ export default async function TeamPage({
       name: p.full_name || emailById.get(p.id) || "(unnamed)",
       email: emailById.get(p.id) || "",
       role: p.role,
+      title: p.title,
       sections: p.allowed_sections || [],
       requestsCount: requestCounts.get(p.id) || 0,
       denialsCount: denialCounts.get(p.id) || 0,
@@ -79,6 +80,7 @@ export default async function TeamPage({
           <thead>
             <tr className="text-left text-gray-400 text-[11px] uppercase tracking-wide" style={{ borderBottom: "1px solid var(--gray-200)" }}>
               <th className="px-5 py-3 font-semibold">Member</th>
+              <th className="px-5 py-3 font-semibold">Title</th>
               <th className="px-5 py-3 font-semibold">Role</th>
               <th className="px-5 py-3 font-semibold">Can Access</th>
               <th className="px-5 py-3 font-semibold">PA Requests</th>

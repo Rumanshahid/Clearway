@@ -45,6 +45,7 @@ export async function inviteMemberAction(formData: FormData) {
 
   const email = String(formData.get("email") || "").trim().toLowerCase();
   const role = String(formData.get("role") || "clinic_user");
+  const title = String(formData.get("title") || "").trim();
   const sections = readSections(formData);
 
   if (!email || !email.includes("@")) {
@@ -63,6 +64,7 @@ export async function inviteMemberAction(formData: FormData) {
     practice_id: practiceId,
     email,
     role,
+    title: title || null,
     allowed_sections: role === "clinic_admin" ? VALID_SECTIONS : sections,
     token,
     created_by: callerId,
@@ -74,13 +76,12 @@ export async function inviteMemberAction(formData: FormData) {
   }
 
   const joinUrl = `${process.env.NEXT_PUBLIC_SITE_URL || "https://www.asaanbil.com"}/join/${token}`;
+  const roleLabel = title || (role === "clinic_admin" ? "a Doctor / Admin" : "Staff");
   try {
     await sendEmail({
       to: email,
       subject: "You've been invited to asaanbil.com",
-      html: `<p>You've been invited to join your practice's asaanbil.com workspace${
-        role === "clinic_admin" ? " as a Doctor / Admin" : ""
-      }.</p><p>1. <a href="${process.env.NEXT_PUBLIC_SITE_URL || "https://www.asaanbil.com"}/sign-up">Create an account</a> with this email address (skip if you already have one).</p><p>2. Then open your invite link: <a href="${joinUrl}">${joinUrl}</a></p><p>This invite expires in 7 days.</p>`,
+      html: `<p>You've been invited to join your practice's asaanbil.com workspace as ${roleLabel}.</p><p>Open your invite link to get started — it'll walk you through creating an account and add you automatically once you confirm your email:</p><p><a href="${joinUrl}">${joinUrl}</a></p><p>This invite expires in 7 days.</p>`,
     });
   } catch (err) {
     console.error("invite email failed", err);
@@ -105,6 +106,7 @@ export async function updateMemberAction(formData: FormData) {
 
   const memberId = String(formData.get("member_id") || "");
   const role = String(formData.get("role") || "clinic_user");
+  const title = String(formData.get("title") || "").trim();
   const sections = readSections(formData);
 
   if (memberId === callerId) {
@@ -122,7 +124,11 @@ export async function updateMemberAction(formData: FormData) {
 
   await admin
     .from("profiles")
-    .update({ role: role as UserRole, allowed_sections: role === "clinic_admin" ? VALID_SECTIONS : sections })
+    .update({
+      role: role as UserRole,
+      title: title || null,
+      allowed_sections: role === "clinic_admin" ? VALID_SECTIONS : sections,
+    })
     .eq("id", memberId);
 
   revalidatePath("/dashboard/team");

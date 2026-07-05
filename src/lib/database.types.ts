@@ -65,6 +65,7 @@ export interface Database {
           full_name: string | null;
           role: UserRole;
           allowed_sections: string[];
+          title: string | null;
           flagged: boolean;
           flagged_reason: string | null;
           created_at: string;
@@ -439,6 +440,7 @@ export interface Database {
           practice_id: string;
           email: string;
           role: string;
+          title: string | null;
           allowed_sections: string[];
           token: string;
           created_by: string;
