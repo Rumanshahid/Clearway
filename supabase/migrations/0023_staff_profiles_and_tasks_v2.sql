@@ -1,9 +1,10 @@
--- Staff profiles (name, avatar, bio, phone) editable by anyone in the
--- practice — not just the owner — since the ask is "staff can fill in
--- everyone's profile," not just their own. Safe to widen because the
--- existing 0015 trigger already strips role/practice_id changes from any
--- non-admin write regardless of whose row it is; extended here to also
--- strip allowed_sections, the other permission-bearing column.
+-- Staff profiles (name, avatar, bio, phone) — self-editable only. Title and
+-- role stay admin-controlled via the existing Team page; the existing
+-- profiles_update_own policy (0001_init.sql) already restricts writes to
+-- your own row, so no new update policy is needed here. The trigger below
+-- is extended to also strip allowed_sections (alongside the role/
+-- practice_id it already protected) as defense in depth on that same
+-- own-row path.
 
 alter table profiles add column if not exists avatar_url text;
 alter table profiles add column if not exists bio text;
@@ -24,8 +25,9 @@ begin
 end;
 $$;
 
-create policy "profiles_update_practice" on profiles
-  for update using (practice_id = public.current_practice_id());
+-- In case an earlier draft of this migration (widened update policy) was
+-- already applied — drop it so editing is own-row only.
+drop policy if exists "profiles_update_practice" on profiles;
 
 -- Public bucket: profile photos aren't PHI and are shown all over the app
 -- (nav, chat, task assignee lists) — signed URLs everywhere would be a lot

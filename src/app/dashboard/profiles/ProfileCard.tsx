@@ -43,10 +43,6 @@ export default function ProfileCard({
           <input className="input" id={`name-${member.id}`} name="full_name" defaultValue={member.full_name || ""} placeholder="Full name" />
         </div>
         <div>
-          <label className="label" htmlFor={`title-${member.id}`}>Title</label>
-          <input className="input" id={`title-${member.id}`} name="title" defaultValue={member.title || ""} placeholder="e.g. Nurse, Front Desk" />
-        </div>
-        <div>
           <label className="label" htmlFor={`phone-${member.id}`}>Phone</label>
           <input className="input" id={`phone-${member.id}`} name="phone" defaultValue={member.phone || ""} placeholder="Optional" />
         </div>
@@ -76,9 +72,11 @@ export default function ProfileCard({
         {email && <span>{email}</span>}
         {member.phone && <span>{member.phone}</span>}
       </div>
-      <button type="button" className="btn btn-outline btn-sm self-start" onClick={() => setEditing(true)}>
-        Edit profile
-      </button>
+      {isSelf && (
+        <button type="button" className="btn btn-outline btn-sm self-start" onClick={() => setEditing(true)}>
+          Edit my profile
+        </button>
+      )}
     </div>
   );
 }

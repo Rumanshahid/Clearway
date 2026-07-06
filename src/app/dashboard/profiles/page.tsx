@@ -21,7 +21,7 @@ export default async function ProfilesPage() {
     <div className="max-w-[1000px] mx-auto py-8 px-5">
       <h1 className="text-[24px] font-semibold mb-1">Profiles</h1>
       <p className="text-[14px] text-gray-600 mb-6">
-        Everyone on the team — add a photo, name, and a few basic details so people recognize each other in chat.
+        Everyone on the team — add your own photo, name, and a few basic details so people recognize you in chat. Title and role are set by an admin on the Team page.
       </p>
 
       <div className="grid gap-4" style={{ gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))" }}>
