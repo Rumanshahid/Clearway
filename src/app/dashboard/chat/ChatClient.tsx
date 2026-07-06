@@ -34,21 +34,22 @@ export default function ChatClient({
   practiceId,
   members,
   initialConversations,
+  initialActiveId,
 }: {
   currentUserId: string;
   currentUserAvatarUrl: string | null;
   practiceId: string;
   members: Member[];
   initialConversations: ConversationSummary[];
+  initialActiveId?: string;
 }) {
   const supabase = createClient();
   const [conversations, setConversations] = useState(initialConversations);
-  const [activeId, setActiveId] = useState<string | null>(initialConversations[0]?.id || null);
+  const [activeId, setActiveId] = useState<string | null>(initialActiveId || initialConversations[0]?.id || null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [signedUrls, setSignedUrls] = useState<Record<string, string>>({});
   const [text, setText] = useState("");
   const [showNew, setShowNew] = useState(false);
-  const [groupMode, setGroupMode] = useState(false);
   const [groupName, setGroupName] = useState("");
   const [selectedMemberIds, setSelectedMemberIds] = useState<string[]>([]);
   const [uploading, setUploading] = useState(false);
@@ -114,39 +115,6 @@ export default function ChatClient({
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  async function handleStartDm(otherId: string) {
-    // Reuse an existing 1:1 conversation with exactly this other person, if
-    // one already exists, instead of creating duplicates every time.
-    const { data: myConvos } = await supabase.from("conversation_members").select("conversation_id").eq("user_id", currentUserId);
-    const { data: theirConvos } = await supabase.from("conversation_members").select("conversation_id").eq("user_id", otherId);
-    const shared = (myConvos || []).map((c) => c.conversation_id).filter((id) => (theirConvos || []).some((t) => t.conversation_id === id));
-
-    for (const id of shared) {
-      const { data: convo } = await supabase.from("conversations").select("id, type").eq("id", id).single();
-      if (convo?.type === "dm") {
-        setActiveId(id);
-        setShowNew(false);
-        return;
-      }
-    }
-
-    const { data: newConvo, error } = await supabase
-      .from("conversations")
-      .insert({ practice_id: practiceId, type: "dm", created_by: currentUserId })
-      .select("id")
-      .single();
-    if (error || !newConvo) return;
-
-    await supabase.from("conversation_members").insert([
-      { conversation_id: newConvo.id, user_id: currentUserId },
-      { conversation_id: newConvo.id, user_id: otherId },
-    ]);
-
-    setConversations((prev) => [{ id: newConvo.id, type: "dm", label: nameById.get(otherId) || "Unknown", otherId }, ...prev]);
-    setActiveId(newConvo.id);
-    setShowNew(false);
-  }
-
   async function handleCreateGroup() {
     if (!groupName.trim() || selectedMemberIds.length === 0) return;
     const { data: newConvo, error } = await supabase
@@ -164,7 +132,6 @@ export default function ChatClient({
     setConversations((prev) => [{ id: newConvo.id, type: "group", label: groupName.trim(), otherId: null }, ...prev]);
     setActiveId(newConvo.id);
     setShowNew(false);
-    setGroupMode(false);
     setGroupName("");
     setSelectedMemberIds([]);
   }
@@ -242,68 +209,31 @@ export default function ChatClient({
         <div className="p-4 flex items-center justify-between" style={{ borderBottom: "1px solid var(--gray-200)" }}>
           <span className="text-[13px] font-semibold">Conversations</span>
           <button type="button" className="btn btn-outline btn-sm" onClick={() => setShowNew((v) => !v)}>
-            + New
+            + New group
           </button>
         </div>
 
         {showNew && (
           <div className="p-4 flex flex-col gap-3" style={{ borderBottom: "1px solid var(--gray-200)" }}>
-            <div className="inline-flex rounded-[8px] border overflow-hidden text-[12px]" style={{ borderColor: "var(--gray-200)" }}>
-              <button
-                type="button"
-                className="px-3 py-1.5 font-medium"
-                style={!groupMode ? { background: "var(--indigo-600)", color: "#fff" } : { background: "#fff", color: "var(--gray-600)" }}
-                onClick={() => setGroupMode(false)}
-              >
-                Direct message
-              </button>
-              <button
-                type="button"
-                className="px-3 py-1.5 font-medium"
-                style={groupMode ? { background: "var(--indigo-600)", color: "#fff" } : { background: "#fff", color: "var(--gray-600)" }}
-                onClick={() => setGroupMode(true)}
-              >
-                Group
-              </button>
+            <input className="input" placeholder="Group name" value={groupName} onChange={(e) => setGroupName(e.target.value)} />
+            <div className="flex flex-col gap-1 max-h-[140px] overflow-y-auto">
+              {members.map((m) => (
+                <label key={m.id} className="flex items-center gap-2 text-[13px] px-2 py-1">
+                  <input
+                    type="checkbox"
+                    checked={selectedMemberIds.includes(m.id)}
+                    onChange={(e) =>
+                      setSelectedMemberIds((prev) => (e.target.checked ? [...prev, m.id] : prev.filter((id) => id !== m.id)))
+                    }
+                  />
+                  <Avatar name={m.name} userId={m.id} avatarUrl={m.avatarUrl} size={22} />
+                  {m.name}
+                </label>
+              ))}
             </div>
-
-            {!groupMode ? (
-              <div className="flex flex-col gap-1 max-h-[160px] overflow-y-auto">
-                {members.map((m) => (
-                  <button
-                    key={m.id}
-                    type="button"
-                    className="flex items-center gap-2 text-left text-[13px] px-2 py-1.5 rounded hover:bg-gray-50"
-                    onClick={() => handleStartDm(m.id)}
-                  >
-                    <Avatar name={m.name} userId={m.id} avatarUrl={m.avatarUrl} size={24} />
-                    <span>{m.name}{m.title ? <span className="text-gray-400"> — {m.title}</span> : null}</span>
-                  </button>
-                ))}
-              </div>
-            ) : (
-              <>
-                <input className="input" placeholder="Group name" value={groupName} onChange={(e) => setGroupName(e.target.value)} />
-                <div className="flex flex-col gap-1 max-h-[140px] overflow-y-auto">
-                  {members.map((m) => (
-                    <label key={m.id} className="flex items-center gap-2 text-[13px] px-2 py-1">
-                      <input
-                        type="checkbox"
-                        checked={selectedMemberIds.includes(m.id)}
-                        onChange={(e) =>
-                          setSelectedMemberIds((prev) => (e.target.checked ? [...prev, m.id] : prev.filter((id) => id !== m.id)))
-                        }
-                      />
-                      <Avatar name={m.name} userId={m.id} avatarUrl={m.avatarUrl} size={22} />
-                      {m.name}
-                    </label>
-                  ))}
-                </div>
-                <button type="button" className="btn btn-primary btn-sm" onClick={handleCreateGroup}>
-                  Create group
-                </button>
-              </>
-            )}
+            <button type="button" className="btn btn-primary btn-sm" onClick={handleCreateGroup}>
+              Create group
+            </button>
           </div>
         )}
 
@@ -322,7 +252,7 @@ export default function ChatClient({
               }}
               onClick={() => setActiveId(c.id)}
             >
-              {c.type === "group" ? (
+              {c.type === "group" || c.type === "team" ? (
                 <span className="text-gray-400">👥</span>
               ) : (
                 c.otherId && <Avatar name={nameById.get(c.otherId)} userId={c.otherId} avatarUrl={avatarById.get(c.otherId)} size={22} />
@@ -337,7 +267,7 @@ export default function ChatClient({
         {activeConversation ? (
           <>
             <div className="p-4 font-semibold text-[14px]" style={{ borderBottom: "1px solid var(--gray-200)" }}>
-              {activeConversation.type === "group" && "👥 "}
+              {(activeConversation.type === "group" || activeConversation.type === "team") && "👥 "}
               {activeConversation.label}
             </div>
             <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-3">

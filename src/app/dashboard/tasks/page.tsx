@@ -6,9 +6,9 @@ import type { TaskRowData } from "./TaskRow";
 export default async function TasksPage({
   searchParams,
 }: {
-  searchParams: Promise<{ error?: string }>;
+  searchParams: Promise<{ error?: string; openAdd?: string }>;
 }) {
-  const { error } = await searchParams;
+  const { error, openAdd } = await searchParams;
   const session = await getSessionProfile();
   const supabase = await createClient();
 
@@ -78,6 +78,7 @@ export default async function TasksPage({
         members={(members || []).filter((m) => m.id !== session.userId).map((m) => ({ id: m.id, name: nameById.get(m.id) || "Unnamed", avatarUrl: m.avatar_url }))}
         todayIso={new Date().toISOString().slice(0, 10)}
         rows={rows}
+        openAddInitially={openAdd === "1"}
       />
     </div>
   );

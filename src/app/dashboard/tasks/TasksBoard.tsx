@@ -12,15 +12,17 @@ export default function TasksBoard({
   members,
   todayIso,
   rows,
+  openAddInitially,
 }: {
   isAdmin: boolean;
   subtitle: string;
   members: { id: string; name: string; avatarUrl: string | null }[];
   todayIso: string;
   rows: TaskRowData[];
+  openAddInitially?: boolean;
 }) {
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
-  const [showAddModal, setShowAddModal] = useState(false);
+  const [showAddModal, setShowAddModal] = useState(!!openAddInitially);
 
   return (
     <div>

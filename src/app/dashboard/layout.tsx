@@ -2,7 +2,11 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { signOutAction } from "@/app/(auth)/actions";
+import { ensureTeamConversation, getConversationSummaries } from "@/lib/chat";
+import { getTaskPreview } from "@/lib/taskPreview";
 import NotificationBell from "./NotificationBell";
+import ChatBell from "./ChatBell";
+import TasksBell from "./TasksBell";
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient();
@@ -46,6 +50,11 @@ export default async function DashboardLayout({ children }: { children: React.Re
     .order("created_at", { ascending: false })
     .limit(30);
 
+  const { data: practiceMembers } = await supabase.from("profiles").select("id").eq("practice_id", profile.practice_id);
+  await ensureTeamConversation(profile.practice_id, user.id, (practiceMembers || []).map((m) => m.id));
+  const conversationPreviews = (await getConversationSummaries(user.id, profile.practice_id)).slice(0, 6);
+  const taskPreviews = await getTaskPreview(user.id, profile.practice_id);
+
   return (
     <div className="min-h-screen flex flex-col">
       <nav className="bg-white border-b" style={{ borderColor: "var(--gray-200)" }}>
@@ -64,8 +73,6 @@ export default async function DashboardLayout({ children }: { children: React.Re
               {showSection("requests") && <Link href="/dashboard">PA</Link>}
               {showSection("patients") && <Link href="/dashboard/patients">Patients</Link>}
               {showSection("appeals") && <Link href="/dashboard/appeals">Appeals</Link>}
-              <Link href="/dashboard/chat">Chat</Link>
-              <Link href="/dashboard/tasks">Tasks</Link>
               <Link href="/dashboard/profiles">Profiles</Link>
               <Link href="/dashboard/resources">Resources</Link>
               {isAdmin && <Link href="/dashboard/team">Team</Link>}
@@ -76,6 +83,8 @@ export default async function DashboardLayout({ children }: { children: React.Re
             <span className="text-[12.5px] text-gray-400">
               {practice?.name} · <span className="capitalize">{practice?.plan}</span> plan
             </span>
+            <ChatBell conversations={conversationPreviews} />
+            <TasksBell tasks={taskPreviews} />
             <NotificationBell notifications={notifications || []} />
             <form action={signOutAction}>
               <button className="btn btn-outline btn-sm" type="submit">Sign out</button>
