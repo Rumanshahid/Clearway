@@ -62,13 +62,6 @@ export default async function TasksPage({
 
   return (
     <div className="max-w-[1200px] mx-auto py-8 px-5">
-      <h1 className="text-[24px] font-semibold mb-1">Tasks</h1>
-      <p className="text-[14px] text-gray-600 mb-6">
-        {session.isAdmin
-          ? "Assign work to anyone on your team, create team-wide tasks, or track your own."
-          : "Your to-do list — add your own, or see what's been assigned to you or the team."}
-      </p>
-
       {error && (
         <div className="mb-5 text-[13px] rounded-lg px-3 py-2" style={{ background: "var(--danger-bg)", color: "var(--danger-red)" }}>
           {error}
@@ -77,6 +70,11 @@ export default async function TasksPage({
 
       <TasksBoard
         isAdmin={session.isAdmin}
+        subtitle={
+          session.isAdmin
+            ? "Assign work to anyone on your team, create team-wide tasks, or track your own."
+            : "Your to-do list — add your own, or see what's been assigned to you or the team."
+        }
         members={(members || []).filter((m) => m.id !== session.userId).map((m) => ({ id: m.id, name: nameById.get(m.id) || "Unnamed", avatarUrl: m.avatar_url }))}
         todayIso={new Date().toISOString().slice(0, 10)}
         rows={rows}
