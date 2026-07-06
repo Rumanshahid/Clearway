@@ -31,9 +31,12 @@ export async function GET(request: Request) {
     }
   }
 
-  return NextResponse.redirect(
-    `${origin}/sign-in?error=${encodeURIComponent(
-      "That link is invalid, expired, or was opened in a different browser than the one you signed up in. Try signing in directly, or request a new link."
-    )}`
-  );
+  // Neither query-param path matched. Admin-generated links (invite /
+  // magiclink, from generateLink()) have no preceding client-side PKCE
+  // step, so Supabase delivers their session as a URL fragment
+  // (#access_token=...) instead — fragments never reach the server, only
+  // the browser. Hand off to a client page that can read location.hash.
+  // No fragment is set on this redirect, so browsers carry over whatever
+  // fragment the original URL had.
+  return NextResponse.redirect(`${origin}/auth/hash-callback?next=${encodeURIComponent(next)}`);
 }
