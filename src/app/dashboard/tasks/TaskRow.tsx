@@ -70,11 +70,37 @@ export default function TaskRow({
           )}
         </div>
         {canManage && (
-          <div className="flex gap-2 flex-shrink-0">
-            <button type="button" className="text-btn text-[12.5px]" onClick={() => setEditing(true)}>Edit</button>
-            <form action={deleteTaskAction}>
+          <div className="flex items-center gap-3 flex-shrink-0">
+            <button
+              type="button"
+              className="text-btn text-gray-400 hover:text-indigo-600"
+              aria-label="Edit task"
+              title="Edit task"
+              onClick={() => setEditing(true)}
+            >
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                <path d="M11 2.5l2.5 2.5L5 13.5H2.5V11L11 2.5z" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </button>
+            <form
+              action={deleteTaskAction}
+              onSubmit={(e) => {
+                if (!confirm("Remove this task? This can't be undone.")) {
+                  e.preventDefault();
+                }
+              }}
+            >
               <input type="hidden" name="task_id" value={task.id} />
-              <button type="submit" className="text-btn text-[12.5px]" style={{ color: "var(--danger-red)" }}>Remove</button>
+              <button
+                type="submit"
+                className="text-btn text-gray-400 hover:text-[var(--danger-red)]"
+                aria-label="Remove task"
+                title="Remove task"
+              >
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                  <path d="M3 4.5h10M6.5 4.5V3a1 1 0 011-1h1a1 1 0 011 1v1.5M4.5 4.5V13a1 1 0 001 1h5a1 1 0 001-1V4.5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </button>
             </form>
           </div>
         )}
