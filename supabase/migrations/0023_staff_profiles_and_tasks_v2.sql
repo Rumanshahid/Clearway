@@ -75,6 +75,13 @@ create policy "avatars_practice_delete" on storage.objects
 -- task_completions is separate from the task row (not a single status
 -- column) so a team/assigned task can track completion per-person — the
 -- doctor needs to see who on the team actually did it.
+-- DROP TABLE ... CASCADE only drops dependent objects like the foreign-key
+-- constraint from task_assignees/task_completions — it does not drop those
+-- referencing tables themselves, so they must be dropped explicitly too
+-- (child tables first, though CASCADE + IF EXISTS makes the order safe
+-- either way).
+drop table if exists task_completions cascade;
+drop table if exists task_assignees cascade;
 drop table if exists tasks cascade;
 
 create table tasks (
