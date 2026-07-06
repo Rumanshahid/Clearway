@@ -6,6 +6,7 @@ import type { FieldDef, PayerKey, ProcedureCriteria } from "@/lib/criteria";
 import type { AuthoringMode } from "@/lib/database.types";
 import { isEligibilityStale } from "@/lib/eligibility";
 import { createRequestAction } from "./actions";
+import DateInput from "@/components/DateInput";
 
 function SubmitButton() {
   const { pending } = useFormStatus();
@@ -361,14 +362,12 @@ export default function NewRequestForm({
           </div>
           <div>
             <label className="label" htmlFor="patient_dob">Date of birth <span style={{ color: "var(--danger-red)" }}>*</span></label>
-            <input
-              className="input"
+            <DateInput
               id="patient_dob"
               name="patient_dob"
-              type="date"
               required
               value={patientFields.dob}
-              onChange={(e) => setPatientFields((prev) => ({ ...prev, dob: e.target.value }))}
+              onChange={(v) => setPatientFields((prev) => ({ ...prev, dob: v }))}
             />
           </div>
           <div>

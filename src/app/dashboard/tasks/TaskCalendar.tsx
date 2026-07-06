@@ -4,9 +4,7 @@ import { useState } from "react";
 
 interface CalendarTask {
   id: string;
-  title: string;
   due_date: string | null;
-  due_time: string | null;
 }
 
 const WEEKDAYS = ["S", "M", "T", "W", "T", "F", "S"];
@@ -20,7 +18,17 @@ const MONTH_NAMES = [
 // server's render and the browser's hydration pass could land on different
 // days/months and produce a hydration mismatch, the same class of bug fixed
 // elsewhere in this app (TipsRotator, the notification timestamp).
-export default function TaskCalendar({ tasks, todayIso }: { tasks: CalendarTask[]; todayIso: string }) {
+export default function TaskCalendar({
+  tasks,
+  todayIso,
+  selectedDate,
+  onSelectDate,
+}: {
+  tasks: CalendarTask[];
+  todayIso: string;
+  selectedDate: string | null;
+  onSelectDate: (iso: string | null) => void;
+}) {
   const [year, todayMonth, todayDate] = todayIso.split("-").map(Number);
   const [monthOffset, setMonthOffset] = useState(0);
 
@@ -31,25 +39,16 @@ export default function TaskCalendar({ tasks, todayIso }: { tasks: CalendarTask[
   const firstDayOfWeek = new Date(Date.UTC(viewYear, viewMonth, 1)).getUTCDay();
   const daysInMonth = new Date(Date.UTC(viewYear, viewMonth + 1, 0)).getUTCDate();
 
-  const tasksByDate = new Map<string, CalendarTask[]>();
-  for (const t of tasks) {
-    if (!t.due_date) continue;
-    const list = tasksByDate.get(t.due_date) || [];
-    list.push(t);
-    tasksByDate.set(t.due_date, list);
-  }
+  const datesWithTasks = new Set(tasks.filter((t) => t.due_date).map((t) => t.due_date as string));
 
   const cells: (number | null)[] = [...Array(firstDayOfWeek).fill(null), ...Array.from({ length: daysInMonth }, (_, i) => i + 1)];
 
-  const [selectedDate, setSelectedDate] = useState<string | null>(null);
-  const selectedTasks = selectedDate ? tasksByDate.get(selectedDate) || [] : [];
-
   return (
-    <div className="card p-4 mb-6">
+    <div className="card p-4">
       <div className="flex items-center justify-between mb-3">
-        <button type="button" className="btn btn-outline btn-sm" onClick={() => { setMonthOffset((v) => v - 1); setSelectedDate(null); }}>←</button>
+        <button type="button" className="btn btn-outline btn-sm" onClick={() => setMonthOffset((v) => v - 1)}>←</button>
         <span className="text-[13.5px] font-semibold">{MONTH_NAMES[viewMonth]} {viewYear}</span>
-        <button type="button" className="btn btn-outline btn-sm" onClick={() => { setMonthOffset((v) => v + 1); setSelectedDate(null); }}>→</button>
+        <button type="button" className="btn btn-outline btn-sm" onClick={() => setMonthOffset((v) => v + 1)}>→</button>
       </div>
       <div className="grid grid-cols-7 gap-1 text-center">
         {WEEKDAYS.map((d, i) => (
@@ -59,7 +58,7 @@ export default function TaskCalendar({ tasks, todayIso }: { tasks: CalendarTask[
           if (day === null) return <div key={i} />;
           const iso = `${viewYear}-${String(viewMonth + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
           const isToday = monthOffset === 0 && day === todayDate;
-          const hasTasks = tasksByDate.has(iso);
+          const hasTasks = datesWithTasks.has(iso);
           const isSelected = selectedDate === iso;
           return (
             <button
@@ -71,7 +70,7 @@ export default function TaskCalendar({ tasks, todayIso }: { tasks: CalendarTask[
                 color: isSelected ? "#fff" : "var(--gray-900)",
                 fontWeight: isToday ? 600 : 400,
               }}
-              onClick={() => setSelectedDate(isSelected ? null : iso)}
+              onClick={() => onSelectDate(isSelected ? null : iso)}
             >
               {day}
               {hasTasks && (
@@ -85,17 +84,9 @@ export default function TaskCalendar({ tasks, todayIso }: { tasks: CalendarTask[
         })}
       </div>
       {selectedDate && (
-        <div className="mt-3 pt-3 flex flex-col gap-1" style={{ borderTop: "1px solid var(--gray-100)" }}>
-          {selectedTasks.length === 0 ? (
-            <span className="text-[12.5px] text-gray-400">Nothing due {selectedDate}.</span>
-          ) : (
-            selectedTasks.map((t) => (
-              <span key={t.id} className="text-[12.5px] text-gray-600">
-                {t.due_time ? `${t.due_time} — ` : ""}{t.title}
-              </span>
-            ))
-          )}
-        </div>
+        <button type="button" className="text-btn text-[12px] text-indigo-600 mt-3" onClick={() => onSelectDate(null)}>
+          Clear selection
+        </button>
       )}
     </div>
   );

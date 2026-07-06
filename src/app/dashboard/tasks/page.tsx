@@ -1,8 +1,7 @@
 import { getSessionProfile } from "@/lib/permissions";
 import { createClient } from "@/lib/supabase/server";
-import TaskForm from "./TaskForm";
-import TaskRow from "./TaskRow";
-import TaskCalendar from "./TaskCalendar";
+import TasksBoard from "./TasksBoard";
+import type { TaskRowData } from "./TaskRow";
 
 export default async function TasksPage({
   searchParams,
@@ -45,8 +44,24 @@ export default async function TasksPage({
 
   const toPerson = (id: string) => ({ id, name: nameById.get(id) || "Unknown", avatarUrl: avatarById.get(id) || null });
 
+  const rows: TaskRowData[] = (tasks || []).map((t) => {
+    const assignees = (assigneeRows || []).filter((a) => a.task_id === t.id).map((a) => toPerson(a.user_id));
+    const completions = (completionRows || []).filter((c) => c.task_id === t.id);
+    const completedBy = completions.map((c) => toPerson(c.user_id));
+    const isDoneByMe = completions.some((c) => c.user_id === session.userId);
+    const canManage = t.created_by === session.userId;
+    return {
+      task: t,
+      canManage,
+      assignees: t.visibility === "assigned" ? assignees : [],
+      completedBy,
+      isDoneByMe,
+      showWhoCompleted: t.visibility !== "personal",
+    };
+  });
+
   return (
-    <div className="max-w-[900px] mx-auto py-8 px-5">
+    <div className="max-w-[1200px] mx-auto py-8 px-5">
       <h1 className="text-[24px] font-semibold mb-1">Tasks</h1>
       <p className="text-[14px] text-gray-600 mb-6">
         {session.isAdmin
@@ -60,38 +75,12 @@ export default async function TasksPage({
         </div>
       )}
 
-      <TaskCalendar
+      <TasksBoard
+        isAdmin={session.isAdmin}
+        members={(members || []).filter((m) => m.id !== session.userId).map((m) => ({ id: m.id, name: nameById.get(m.id) || "Unnamed", avatarUrl: m.avatar_url }))}
         todayIso={new Date().toISOString().slice(0, 10)}
-        tasks={(tasks || []).map((t) => ({ id: t.id, title: t.title, due_date: t.due_date, due_time: t.due_time }))}
+        rows={rows}
       />
-
-      <TaskForm isAdmin={session.isAdmin} members={(members || []).filter((m) => m.id !== session.userId).map((m) => ({ id: m.id, name: nameById.get(m.id) || "Unnamed", avatarUrl: m.avatar_url }))} />
-
-      <div className="flex flex-col gap-3">
-        {tasks && tasks.length > 0 ? (
-          tasks.map((t) => {
-            const assignees = (assigneeRows || []).filter((a) => a.task_id === t.id).map((a) => toPerson(a.user_id));
-            const completions = (completionRows || []).filter((c) => c.task_id === t.id);
-            const completedBy = completions.map((c) => toPerson(c.user_id));
-            const isDoneByMe = completions.some((c) => c.user_id === session.userId);
-            const canManage = t.created_by === session.userId;
-            const relevantAssignees = t.visibility === "assigned" ? assignees : t.visibility === "team" ? [] : [];
-            return (
-              <TaskRow
-                key={t.id}
-                task={t}
-                canManage={canManage}
-                assignees={relevantAssignees}
-                completedBy={completedBy}
-                isDoneByMe={isDoneByMe}
-                showWhoCompleted={t.visibility !== "personal"}
-              />
-            );
-          })
-        ) : (
-          <div className="card p-10 text-center text-gray-400 text-[13.5px]">No tasks yet.</div>
-        )}
-      </div>
     </div>
   );
 }

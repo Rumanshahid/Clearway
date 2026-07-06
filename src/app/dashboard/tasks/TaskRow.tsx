@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import Avatar from "@/components/Avatar";
+import DateInput from "@/components/DateInput";
+import TimeInput from "@/components/TimeInput";
 import TaskCompleteToggle from "./TaskCompleteToggle";
 import { updateTaskAction, deleteTaskAction } from "./actions";
 
@@ -9,6 +11,15 @@ interface Person {
   id: string;
   name: string;
   avatarUrl: string | null;
+}
+
+export interface TaskRowData {
+  task: { id: string; title: string; description: string | null; visibility: string; due_date: string | null; due_time: string | null };
+  canManage: boolean;
+  assignees: Person[];
+  completedBy: Person[];
+  isDoneByMe: boolean;
+  showWhoCompleted: boolean;
 }
 
 const VISIBILITY_LABEL: Record<string, string> = {
@@ -24,28 +35,22 @@ export default function TaskRow({
   completedBy,
   isDoneByMe,
   showWhoCompleted,
-}: {
-  task: { id: string; title: string; description: string | null; visibility: string; due_date: string | null; due_time: string | null };
-  canManage: boolean;
-  assignees: Person[];
-  completedBy: Person[];
-  isDoneByMe: boolean;
-  showWhoCompleted: boolean;
-}) {
+  highlighted,
+}: TaskRowData & { highlighted?: boolean }) {
   const [editing, setEditing] = useState(false);
 
   if (editing) {
     return (
-      <form action={updateTaskAction} className="card p-4 flex flex-col gap-3">
+      <form action={updateTaskAction} className="card p-4 flex flex-col gap-3" onSubmit={() => setEditing(false)}>
         <input type="hidden" name="task_id" value={task.id} />
         <input className="input" name="title" defaultValue={task.title} required />
         <textarea className="input" name="description" defaultValue={task.description || ""} rows={2} />
         <div className="grid grid-cols-2 gap-3">
-          <input className="input" name="due_date" type="date" defaultValue={task.due_date || ""} />
-          <input className="input" name="due_time" type="time" defaultValue={task.due_time || ""} />
+          <DateInput name="due_date" defaultValue={task.due_date || undefined} />
+          <TimeInput name="due_time" defaultValue={task.due_time || undefined} />
         </div>
         <div className="flex gap-2">
-          <button type="submit" className="btn btn-primary btn-sm" onClick={() => setEditing(false)}>Save</button>
+          <button type="submit" className="btn btn-primary btn-sm">Save</button>
           <button type="button" className="btn btn-outline btn-sm" onClick={() => setEditing(false)}>Cancel</button>
         </div>
       </form>
@@ -53,7 +58,10 @@ export default function TaskRow({
   }
 
   return (
-    <div className="card p-4 flex flex-col gap-2">
+    <div
+      className="card p-4 flex flex-col gap-2"
+      style={highlighted ? { borderColor: "var(--indigo-600)", boxShadow: "0 0 0 2px var(--indigo-100, #e0e7ff)" } : undefined}
+    >
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <div className="flex items-center gap-2 flex-wrap">

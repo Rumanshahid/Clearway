@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import DateInput from "@/components/DateInput";
 
 interface FiltersDropdownProps {
   status?: string;
@@ -97,11 +98,11 @@ export default function FiltersDropdown({
               </div>
               <div>
                 <label className="label" htmlFor="filter-from">From</label>
-                <input className="input" type="date" id="filter-from" value={from || ""} onChange={(e) => applyFilter("from", e.target.value)} />
+                <DateInput id="filter-from" value={from || ""} onChange={(v) => applyFilter("from", v)} />
               </div>
               <div>
                 <label className="label" htmlFor="filter-to">To</label>
-                <input className="input" type="date" id="filter-to" value={to || ""} onChange={(e) => applyFilter("to", e.target.value)} />
+                <DateInput id="filter-to" value={to || ""} onChange={(v) => applyFilter("to", v)} />
               </div>
             </div>
           </div>

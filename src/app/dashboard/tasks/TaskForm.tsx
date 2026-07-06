@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import Avatar from "@/components/Avatar";
+import DateInput from "@/components/DateInput";
+import TimeInput from "@/components/TimeInput";
 import { createTaskAction } from "./actions";
 
 interface Member {
@@ -10,12 +12,19 @@ interface Member {
   avatarUrl: string | null;
 }
 
-export default function TaskForm({ isAdmin, members }: { isAdmin: boolean; members: Member[] }) {
+export default function TaskForm({
+  isAdmin,
+  members,
+  onSuccess,
+}: {
+  isAdmin: boolean;
+  members: Member[];
+  onSuccess?: () => void;
+}) {
   const [visibility, setVisibility] = useState<"personal" | "assigned" | "team">("personal");
 
   return (
-    <form action={createTaskAction} className="card p-6 mb-6 flex flex-col gap-4">
-      <h2 className="text-[15px] font-semibold">New task</h2>
+    <form action={createTaskAction} onSubmit={onSuccess} className="flex flex-col gap-4">
       <div className="grid grid-cols-2 gap-4">
         <div className="col-span-2">
           <label className="label" htmlFor="title">Title <span style={{ color: "var(--danger-red)" }}>*</span></label>
@@ -27,11 +36,11 @@ export default function TaskForm({ isAdmin, members }: { isAdmin: boolean; membe
         </div>
         <div>
           <label className="label" htmlFor="due_date">Due date</label>
-          <input className="input" id="due_date" name="due_date" type="date" />
+          <DateInput id="due_date" name="due_date" />
         </div>
         <div>
           <label className="label" htmlFor="due_time">Due time</label>
-          <input className="input" id="due_time" name="due_time" type="time" />
+          <TimeInput id="due_time" name="due_time" />
         </div>
       </div>
 

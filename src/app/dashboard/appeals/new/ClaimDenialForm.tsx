@@ -5,6 +5,7 @@ import { useFormStatus } from "react-dom";
 import { DENIAL_ROUTING, PA_OBTAINED_OPTIONS, APPEAL_TYPES, PRIORITIES, FILING_METHODS } from "@/lib/claims";
 import { INSURANCE_COMPANIES, GENDERS } from "@/lib/patients";
 import { createDenialAction } from "./actions";
+import DateInput from "@/components/DateInput";
 
 interface SimplePatient {
   id: string;
@@ -163,7 +164,7 @@ export default function ClaimDenialForm({
               <div className="grid grid-cols-2 gap-3">
                 <input className="input" name="new_patient_first_name" placeholder="First name" required />
                 <input className="input" name="new_patient_last_name" placeholder="Last name" required />
-                <input className="input" name="new_patient_dob" type="date" required />
+                <DateInput name="new_patient_dob" required />
                 <select className="input" name="new_patient_gender" defaultValue="" required>
                   <option value="" disabled>Gender…</option>
                   {GENDERS.map((g) => <option key={g} value={g}>{g}</option>)}
@@ -173,7 +174,7 @@ export default function ClaimDenialForm({
           </div>
           <div>
             <label className="label" htmlFor="date_of_service">Date of service</label>
-            <input className="input" id="date_of_service" name="date_of_service" type="date" />
+            <DateInput id="date_of_service" name="date_of_service" />
           </div>
           <div>
             <label className="label" htmlFor="claim_number">Claim number (from EOB)</label>
@@ -197,7 +198,7 @@ export default function ClaimDenialForm({
           </div>
           <div>
             <label className="label" htmlFor="date_submitted">Date claim originally submitted</label>
-            <input className="input" id="date_submitted" name="date_submitted" type="date" />
+            <DateInput id="date_submitted" name="date_submitted" />
           </div>
         </div>
       </section>
@@ -207,7 +208,7 @@ export default function ClaimDenialForm({
         <div className="grid grid-cols-2 gap-4">
           <div>
             <label className="label" htmlFor="denial_date">Denial date <span style={{ color: "var(--danger-red)" }}>*</span></label>
-            <input className="input" id="denial_date" name="denial_date" type="date" required value={denialDate} onChange={(e) => setDenialDate(e.target.value)} />
+            <DateInput id="denial_date" name="denial_date" required value={denialDate} onChange={setDenialDate} />
             <p className="text-[12px] text-gray-400 mt-1">The appeal deadline is estimated from this date and the payer below.</p>
           </div>
           <div>

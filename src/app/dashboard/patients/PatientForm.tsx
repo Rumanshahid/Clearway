@@ -16,6 +16,7 @@ import {
   SPECIAL_HANDLING_FLAGS,
 } from "@/lib/patients";
 import type { SavedPhysician } from "@/app/dashboard/requests/new/NewRequestForm";
+import DateInput from "@/components/DateInput";
 
 export interface PatientFormInitial {
   first_name?: string;
@@ -159,7 +160,7 @@ export default function PatientForm({
               </div>
               <div>
                 <label className="label" htmlFor="dob">Date of birth <span style={{ color: "var(--danger-red)" }}>*</span></label>
-                <input className="input" id="dob" name="dob" type="date" defaultValue={initial?.dob} required />
+                <DateInput id="dob" name="dob" defaultValue={initial?.dob} required />
               </div>
               <div>
                 <label className="label" htmlFor="gender">Gender (as on insurance card) <span style={{ color: "var(--danger-red)" }}>*</span></label>
@@ -310,11 +311,11 @@ export default function PatientForm({
               <div className="grid grid-cols-2 gap-4 mt-3">
                 <div>
                   <label className="label" htmlFor="effective_date">Coverage effective date</label>
-                  <input className="input" id="effective_date" name="effective_date" type="date" defaultValue={initial?.effective_date} />
+                  <DateInput id="effective_date" name="effective_date" defaultValue={initial?.effective_date} />
                 </div>
                 <div>
                   <label className="label" htmlFor="coverage_end_date">Coverage end date</label>
-                  <input className="input" id="coverage_end_date" name="coverage_end_date" type="date" defaultValue={initial?.coverage_end_date} />
+                  <DateInput id="coverage_end_date" name="coverage_end_date" defaultValue={initial?.coverage_end_date} />
                 </div>
                 <div>
                   <label className="label" htmlFor="insurance_phone">Insurance company phone</label>
@@ -437,14 +438,7 @@ export default function PatientForm({
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="label" htmlFor="consent_date">Date consent obtained</label>
-                  <input
-                    className="input"
-                    id="consent_date"
-                    name="consent_date"
-                    type="date"
-                    value={consentDate}
-                    onChange={(e) => setConsentDate(e.target.value)}
-                  />
+                  <DateInput id="consent_date" name="consent_date" value={consentDate} onChange={setConsentDate} />
                 </div>
                 <div>
                   <label className="label" htmlFor="consent_method">Consent method</label>
