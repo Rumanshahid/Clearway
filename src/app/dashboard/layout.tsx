@@ -1,12 +1,12 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { signOutAction } from "@/app/(auth)/actions";
 import { ensureTeamConversation, ensureDirectConversations, getConversationSummaries } from "@/lib/chat";
 import { getTaskPreview } from "@/lib/taskPreview";
 import NotificationBell from "./NotificationBell";
 import ChatBell from "./ChatBell";
 import TasksBell from "./TasksBell";
+import UserMenu from "./UserMenu";
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient();
@@ -75,10 +75,8 @@ export default async function DashboardLayout({ children }: { children: React.Re
               {showSection("requests") && <Link href="/dashboard">PA</Link>}
               {showSection("patients") && <Link href="/dashboard/patients">Patients</Link>}
               {showSection("appeals") && <Link href="/dashboard/appeals">Appeals</Link>}
-              <Link href="/dashboard/profiles">Profiles</Link>
               <Link href="/dashboard/resources">Resources</Link>
               {isAdmin && <Link href="/dashboard/team">Team</Link>}
-              {isAdmin && <Link href="/dashboard/billing">Billing</Link>}
             </div>
           </div>
           <div className="flex items-center gap-4">
@@ -88,9 +86,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
             <ChatBell conversations={conversationPreviews} />
             <TasksBell tasks={taskPreviews} />
             <NotificationBell notifications={notifications || []} />
-            <form action={signOutAction}>
-              <button className="btn btn-outline btn-sm" type="submit">Sign out</button>
-            </form>
+            <UserMenu name={profile.full_name || "Account"} isAdmin={isAdmin} />
           </div>
         </div>
       </nav>
