@@ -7,6 +7,7 @@ interface ConversationPreview {
   id: string;
   type: string;
   label: string;
+  lastMessage: string | null;
 }
 
 export default function ChatBell({ conversations }: { conversations: ConversationPreview[] }) {
@@ -50,12 +51,15 @@ export default function ChatBell({ conversations }: { conversations: Conversatio
             <button
               key={c.id}
               type="button"
-              className="w-full flex items-center gap-2 text-left px-4 py-3 text-[13px]"
+              className="w-full flex flex-col items-start gap-0.5 text-left px-4 py-3 text-[13px]"
               style={{ borderBottom: "1px solid var(--gray-200)" }}
               onClick={() => goToChat(c.id)}
             >
-              {(c.type === "group" || c.type === "team") && <span className="text-gray-400">👥</span>}
-              {c.label}
+              <span className="flex items-center gap-1.5">
+                {(c.type === "group" || c.type === "team") && <span className="text-gray-400">👥</span>}
+                {c.label}
+              </span>
+              {c.lastMessage && <span className="text-[12px] text-gray-400 truncate w-full">{c.lastMessage}</span>}
             </button>
           ))}
         </div>

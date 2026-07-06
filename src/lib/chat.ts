@@ -123,6 +123,7 @@ export interface ConversationSummary {
   otherId: string | null;
   createdBy: string;
   memberIds: string[];
+  lastMessage: string | null;
 }
 
 // Conversations the given user belongs to, with a display label computed —
@@ -155,13 +156,32 @@ export async function getConversationSummaries(userId: string, practiceId: strin
     .select("conversation_id, user_id")
     .in("conversation_id", conversationIds);
 
+  // Latest message per conversation, for the "last message" preview shown
+  // under each conversation's name — one query, deduped in JS by keeping
+  // the first (most recent, since ordered desc) row seen per conversation.
+  const { data: recentMessages } = await supabase
+    .from("messages")
+    .select("conversation_id, content, attachment_type")
+    .in("conversation_id", conversationIds)
+    .order("created_at", { ascending: false })
+    .limit(200);
+
+  const lastMessageByConversation = new Map<string, string>();
+  for (const m of recentMessages || []) {
+    if (lastMessageByConversation.has(m.conversation_id)) continue;
+    const preview =
+      m.content ||
+      (m.attachment_type === "image" ? "📷 Photo" : m.attachment_type === "audio" ? "🎤 Voice message" : m.attachment_type === "file" ? "📎 File" : "");
+    lastMessageByConversation.set(m.conversation_id, preview);
+  }
+
   const summaries = (conversations || []).map((c) => {
     const memberIds = (allMembers || []).filter((m) => m.conversation_id === c.id).map((m) => m.user_id);
     const otherIds = memberIds.filter((id) => id !== userId);
     const label =
       c.type === "team" ? c.name || "Team" : c.type === "group" ? c.name || "Group" : otherIds.map((id) => nameById.get(id) || "Unknown").join(", ") || "You";
     const otherId = c.type === "dm" && otherIds.length === 1 ? otherIds[0] : null;
-    return { id: c.id, type: c.type, label, otherId, createdBy: c.created_by, memberIds };
+    return { id: c.id, type: c.type, label, otherId, createdBy: c.created_by, memberIds, lastMessage: lastMessageByConversation.get(c.id) || null };
   });
 
   summaries.sort((a, b) => (a.type === "team" ? -1 : b.type === "team" ? 1 : 0));

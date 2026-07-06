@@ -18,6 +18,7 @@ interface ConversationSummary {
   otherId: string | null;
   createdBy: string;
   memberIds: string[];
+  lastMessage: string | null;
 }
 
 interface Message {
@@ -66,6 +67,7 @@ export default function ChatClient({
   const [selectedMemberIds, setSelectedMemberIds] = useState<string[]>([]);
   const [uploading, setUploading] = useState(false);
   const [recording, setRecording] = useState(false);
+  const [onlineUserIds, setOnlineUserIds] = useState<Set<string>>(new Set());
 
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
@@ -150,6 +152,32 @@ export default function ChatClient({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeId]);
 
+  // Practice-wide presence — tracks who currently has the Chat page open at
+  // all (any conversation), not just the active one. This is what "delivered"
+  // means here: their client is connected and would receive the message via
+  // realtime, whether or not they've opened this specific conversation yet.
+  // Subscribed once on mount, independent of which conversation is active.
+  useEffect(() => {
+    const presenceChannel = supabase.channel(`practice-presence-${practiceId}`, {
+      config: { presence: { key: currentUserId } },
+    });
+
+    presenceChannel
+      .on("presence", { event: "sync" }, () => {
+        setOnlineUserIds(new Set(Object.keys(presenceChannel.presenceState())));
+      })
+      .subscribe(async (status) => {
+        if (status === "SUBSCRIBED") {
+          await presenceChannel.track({ online_at: new Date().toISOString() });
+        }
+      });
+
+    return () => {
+      supabase.removeChannel(presenceChannel);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
@@ -169,7 +197,15 @@ export default function ChatClient({
     ]);
 
     setConversations((prev) => [
-      { id: newConvo.id, type: "group", label: groupName.trim(), otherId: null, createdBy: currentUserId, memberIds: [currentUserId, ...selectedMemberIds] },
+      {
+        id: newConvo.id,
+        type: "group",
+        label: groupName.trim(),
+        otherId: null,
+        createdBy: currentUserId,
+        memberIds: [currentUserId, ...selectedMemberIds],
+        lastMessage: null,
+      },
       ...prev,
     ]);
     setActiveId(newConvo.id);
@@ -269,6 +305,15 @@ export default function ChatClient({
     });
   }
 
+  // Sent: nobody else has this page open right now. Delivered: they do
+  // (their client would receive it via realtime), but haven't opened this
+  // conversation yet. Seen: they've actually opened it since this was sent.
+  function messageStatus(messageCreatedAt: string): "sent" | "delivered" | "seen" {
+    if (isSeenByAll(messageCreatedAt)) return "seen";
+    if (otherMemberIds.length > 0 && otherMemberIds.every((id) => onlineUserIds.has(id))) return "delivered";
+    return "sent";
+  }
+
   return (
     <div className="flex gap-6 items-start" style={{ height: "70vh" }}>
       <aside className="w-[260px] flex-shrink-0 card p-0 overflow-hidden flex flex-col h-full">
@@ -354,7 +399,7 @@ export default function ChatClient({
             <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-3">
               {messages.map((m) => {
                 const mine = m.sender_id === currentUserId;
-                const seen = mine && isSeenByAll(m.created_at);
+                const status = mine ? messageStatus(m.created_at) : null;
                 return (
                   <div key={m.id} className={`flex flex-col ${mine ? "items-end" : "items-start"}`}>
                     <span className="flex items-center gap-1.5 text-[11px] text-gray-400 mb-0.5">
@@ -383,8 +428,10 @@ export default function ChatClient({
                     </div>
                     <span className="flex items-center gap-1 text-[10.5px] text-gray-400 mt-0.5">
                       {formatTime(m.created_at)}
-                      {mine && (
-                        <span style={{ color: seen ? "var(--indigo-600)" : "var(--gray-400)" }}>{seen ? "✓✓" : "✓"}</span>
+                      {status && (
+                        <span style={{ color: status === "seen" ? "var(--indigo-600)" : "var(--gray-400)" }}>
+                          {status === "sent" ? "✓" : "✓✓"}
+                        </span>
                       )}
                     </span>
                   </div>
