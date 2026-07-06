@@ -101,13 +101,20 @@ export async function inviteMemberAction(formData: FormData) {
   const actionLink = linkData?.properties?.action_link;
   if (linkError) console.error("generateLink failed, falling back to manual sign-up link", linkError);
 
+  // Deliberately no bare "asaanbil.com"-style text anywhere in this body —
+  // several mail clients (Gmail included) auto-linkify plain domain-looking
+  // text, and a staff member clicking that instead of the real button below
+  // just lands on the marketing homepage with nothing else happening.
+  const buttonHtml = (href: string, label: string) =>
+    `<p style="margin:24px 0;"><a href="${href}" style="display:inline-block;background:#4F46E5;color:#ffffff;text-decoration:none;padding:12px 24px;border-radius:8px;font-weight:600;">${label}</a></p>`;
+
   try {
     await sendEmail({
       to: email,
-      subject: "You've been invited to asaanbil.com",
+      subject: "You've been invited to join your practice's workspace",
       html: actionLink
-        ? `<p>You've been invited to join your practice's asaanbil.com workspace as ${roleLabel}.</p><p>Click below to get started — you'll be signed in and added to the practice automatically, no password needed:</p><p><a href="${actionLink}">Join your practice →</a></p><p>This invite expires in 7 days.</p>`
-        : `<p>You've been invited to join your practice's asaanbil.com workspace as ${roleLabel}.</p><p>Open your invite link to get started — it'll walk you through creating an account and add you automatically once you confirm your email:</p><p><a href="${joinUrl}">${joinUrl}</a></p><p>This invite expires in 7 days.</p>`,
+        ? `<p>You've been invited to join your practice's workspace as ${roleLabel}.</p><p>Click the button below to get started — you'll be signed in and added to the practice automatically, no password needed:</p>${buttonHtml(actionLink, "Join your practice →")}<p>This invite expires in 7 days.</p>`
+        : `<p>You've been invited to join your practice's workspace as ${roleLabel}.</p><p>Click the button below to get started — it'll walk you through creating an account and add you automatically once you confirm your email:</p>${buttonHtml(joinUrl, "Join your practice →")}<p>This invite expires in 7 days.</p>`,
     });
   } catch (err) {
     console.error("invite email failed", err);
