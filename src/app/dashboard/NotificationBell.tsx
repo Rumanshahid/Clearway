@@ -95,7 +95,12 @@ export default function NotificationBell({ notifications }: { notifications: Not
                   {!read && <span className="w-[6px] h-[6px] rounded-full flex-shrink-0" style={{ background: "var(--indigo-600)" }} />}
                   {n.message}
                 </span>
-                <span className="text-[11px] text-gray-400">{new Date(n.created_at).toLocaleString()}</span>
+                {/* Locale/timezone-dependent formatting differs between the server's
+                    render and the browser's, so this text can't match on hydration —
+                    suppressHydrationWarning is Next.js's documented fix for exactly this. */}
+                <span className="text-[11px] text-gray-400" suppressHydrationWarning>
+                  {new Date(n.created_at).toLocaleString()}
+                </span>
               </Link>
             );
           })}
