@@ -36,19 +36,25 @@ insert into storage.buckets (id, name, public)
 values ('avatars', 'avatars', true)
 on conflict (id) do nothing;
 
+-- Guarded with drop-if-exists since this migration may be re-run after an
+-- earlier draft already created these (CREATE POLICY has no IF NOT EXISTS).
+drop policy if exists "avatars_public_read" on storage.objects;
 create policy "avatars_public_read" on storage.objects
   for select using (bucket_id = 'avatars');
 
+drop policy if exists "avatars_practice_insert" on storage.objects;
 create policy "avatars_practice_insert" on storage.objects
   for insert with check (
     bucket_id = 'avatars' and (storage.foldername(name))[1] = public.current_practice_id()::text
   );
 
+drop policy if exists "avatars_practice_update" on storage.objects;
 create policy "avatars_practice_update" on storage.objects
   for update using (
     bucket_id = 'avatars' and (storage.foldername(name))[1] = public.current_practice_id()::text
   );
 
+drop policy if exists "avatars_practice_delete" on storage.objects;
 create policy "avatars_practice_delete" on storage.objects
   for delete using (
     bucket_id = 'avatars' and (storage.foldername(name))[1] = public.current_practice_id()::text
