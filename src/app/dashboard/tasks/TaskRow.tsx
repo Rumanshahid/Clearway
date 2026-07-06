@@ -69,41 +69,44 @@ export default function TaskRow({
             </div>
           )}
         </div>
-        {canManage && (
-          <div className="flex items-center gap-3 flex-shrink-0">
-            <button
-              type="button"
-              className="text-btn text-gray-400 hover:text-indigo-600"
-              aria-label="Edit task"
-              title="Edit task"
-              onClick={() => setEditing(true)}
-            >
-              <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                <path d="M11 2.5l2.5 2.5L5 13.5H2.5V11L11 2.5z" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-            </button>
-            <form
-              action={deleteTaskAction}
-              onSubmit={(e) => {
-                if (!confirm("Remove this task? This can't be undone.")) {
-                  e.preventDefault();
-                }
-              }}
-            >
-              <input type="hidden" name="task_id" value={task.id} />
+        <div className="flex items-center gap-3 flex-shrink-0">
+          <TaskCompleteToggle taskId={task.id} done={isDoneByMe} />
+          {canManage && (
+            <>
               <button
-                type="submit"
-                className="text-btn text-gray-400 hover:text-[var(--danger-red)]"
-                aria-label="Remove task"
-                title="Remove task"
+                type="button"
+                className="text-btn text-gray-400 hover:text-indigo-600"
+                aria-label="Edit task"
+                title="Edit task"
+                onClick={() => setEditing(true)}
               >
                 <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                  <path d="M3 4.5h10M6.5 4.5V3a1 1 0 011-1h1a1 1 0 011 1v1.5M4.5 4.5V13a1 1 0 001 1h5a1 1 0 001-1V4.5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+                  <path d="M11 2.5l2.5 2.5L5 13.5H2.5V11L11 2.5z" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
               </button>
-            </form>
-          </div>
-        )}
+              <form
+                action={deleteTaskAction}
+                onSubmit={(e) => {
+                  if (!confirm("Remove this task? This can't be undone.")) {
+                    e.preventDefault();
+                  }
+                }}
+              >
+                <input type="hidden" name="task_id" value={task.id} />
+                <button
+                  type="submit"
+                  className="text-btn text-gray-400 hover:text-[var(--danger-red)]"
+                  aria-label="Remove task"
+                  title="Remove task"
+                >
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                    <path d="M3 4.5h10M6.5 4.5V3a1 1 0 011-1h1a1 1 0 011 1v1.5M4.5 4.5V13a1 1 0 001 1h5a1 1 0 001-1V4.5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                </button>
+              </form>
+            </>
+          )}
+        </div>
       </div>
 
       {assignees.length > 0 && (
@@ -117,18 +120,18 @@ export default function TaskRow({
         </div>
       )}
 
-      <div className="flex items-center justify-between gap-3 pt-1">
-        <TaskCompleteToggle taskId={task.id} done={isDoneByMe} />
-        {showWhoCompleted && (
-          <div className="flex items-center gap-1">
-            {completedBy.length === 0 ? (
-              <span className="text-[11.5px] text-gray-400">Nobody yet</span>
-            ) : (
-              completedBy.map((p) => <Avatar key={p.id} name={p.name} userId={p.id} avatarUrl={p.avatarUrl} size={18} />)
-            )}
-          </div>
-        )}
-      </div>
+      {showWhoCompleted && (
+        <div className="flex items-center gap-2 pt-1">
+          <span className="text-[11.5px] text-gray-400">Completed:</span>
+          {completedBy.length === 0 ? (
+            <span className="text-[11.5px] text-gray-400">Nobody yet</span>
+          ) : (
+            <div className="flex items-center gap-1">
+              {completedBy.map((p) => <Avatar key={p.id} name={p.name} userId={p.id} avatarUrl={p.avatarUrl} size={18} />)}
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
