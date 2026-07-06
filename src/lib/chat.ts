@@ -12,6 +12,7 @@ export async function ensureTeamConversation(practiceId: string, currentUserId: 
     .select("id")
     .eq("practice_id", practiceId)
     .eq("type", "team")
+    .order("created_at", { ascending: true })
     .limit(1)
     .maybeSingle();
   if (selectError) console.error("ensureTeamConversation: select existing failed", selectError);
@@ -24,8 +25,28 @@ export async function ensureTeamConversation(practiceId: string, currentUserId: 
       .insert({ practice_id: practiceId, type: "team", name: "Team", created_by: currentUserId })
       .select("id")
       .single();
-    if (insertError) console.error("ensureTeamConversation: insert conversation failed", insertError);
-    teamId = created?.id;
+    if (insertError) {
+      // Unique violation (23505) means another concurrent request (layout.tsx
+      // and chat/page.tsx both call this in the same request) already
+      // created it a moment earlier — the unique partial index on
+      // (practice_id) where type='team' is what makes this race safe
+      // instead of producing a duplicate. Just look up what won.
+      if (insertError.code === "23505") {
+        const { data: winner } = await supabase
+          .from("conversations")
+          .select("id")
+          .eq("practice_id", practiceId)
+          .eq("type", "team")
+          .order("created_at", { ascending: true })
+          .limit(1)
+          .maybeSingle();
+        teamId = winner?.id;
+      } else {
+        console.error("ensureTeamConversation: insert conversation failed", insertError);
+      }
+    } else {
+      teamId = created?.id;
+    }
   }
 
   if (!teamId) return null;
