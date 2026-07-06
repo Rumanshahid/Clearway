@@ -7,36 +7,42 @@ import { createClient } from "@/lib/supabase/server";
 export async function ensureTeamConversation(practiceId: string, currentUserId: string, memberIds: string[]) {
   const supabase = await createClient();
 
-  const { data: existing } = await supabase
+  const { data: existing, error: selectError } = await supabase
     .from("conversations")
     .select("id")
     .eq("practice_id", practiceId)
     .eq("type", "team")
     .limit(1)
     .maybeSingle();
+  if (selectError) console.error("ensureTeamConversation: select existing failed", selectError);
 
   let teamId = existing?.id as string | undefined;
 
   if (!teamId) {
-    const { data: created } = await supabase
+    const { data: created, error: insertError } = await supabase
       .from("conversations")
       .insert({ practice_id: practiceId, type: "team", name: "Team", created_by: currentUserId })
       .select("id")
       .single();
+    if (insertError) console.error("ensureTeamConversation: insert conversation failed", insertError);
     teamId = created?.id;
   }
 
   if (!teamId) return null;
 
-  const { data: existingMembers } = await supabase
+  const { data: existingMembers, error: membersSelectError } = await supabase
     .from("conversation_members")
     .select("user_id")
     .eq("conversation_id", teamId);
+  if (membersSelectError) console.error("ensureTeamConversation: select members failed", membersSelectError);
 
   const existingIds = new Set((existingMembers || []).map((m) => m.user_id));
   const missing = memberIds.filter((id) => !existingIds.has(id));
   if (missing.length > 0) {
-    await supabase.from("conversation_members").insert(missing.map((id) => ({ conversation_id: teamId, user_id: id })));
+    const { error: membersInsertError } = await supabase
+      .from("conversation_members")
+      .insert(missing.map((id) => ({ conversation_id: teamId, user_id: id })));
+    if (membersInsertError) console.error("ensureTeamConversation: insert members failed", membersInsertError);
   }
 
   return teamId;
