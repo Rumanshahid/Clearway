@@ -66,6 +66,9 @@ export interface Database {
           role: UserRole;
           allowed_sections: string[];
           title: string | null;
+          avatar_url: string | null;
+          bio: string | null;
+          phone: string | null;
           flagged: boolean;
           flagged_reason: string | null;
           created_at: string;
@@ -554,20 +557,44 @@ export interface Database {
           practice_id: string;
           title: string;
           description: string | null;
-          assigned_to: string;
-          assigned_by: string;
-          status: string;
+          created_by: string;
+          visibility: "personal" | "assigned" | "team";
           due_date: string | null;
+          due_time: string | null;
           created_at: string;
           updated_at: string;
         };
         Insert: Partial<Database["public"]["Tables"]["tasks"]["Row"]> & {
           practice_id: string;
           title: string;
-          assigned_to: string;
-          assigned_by: string;
+          created_by: string;
         };
         Update: Partial<Database["public"]["Tables"]["tasks"]["Row"]>;
+        Relationships: [];
+      };
+      task_assignees: {
+        Row: {
+          task_id: string;
+          user_id: string;
+        };
+        Insert: {
+          task_id: string;
+          user_id: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["task_assignees"]["Row"]>;
+        Relationships: [];
+      };
+      task_completions: {
+        Row: {
+          task_id: string;
+          user_id: string;
+          completed_at: string;
+        };
+        Insert: Partial<Database["public"]["Tables"]["task_completions"]["Row"]> & {
+          task_id: string;
+          user_id: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["task_completions"]["Row"]>;
         Relationships: [];
       };
       notifications: {

@@ -16,7 +16,7 @@ export default async function OverviewPage() {
     { data: denials },
     { count: membersCount },
     { data: profiles },
-    { count: openTasksCount },
+    { data: visibleTasks },
   ] = await Promise.all([
     supabase.from("pa_requests").select("status").eq("practice_id", session.practiceId).gte("created_at", monthStart.toISOString()),
     supabase.from("patients").select("id", { count: "exact", head: true }).eq("practice_id", session.practiceId),
@@ -26,12 +26,18 @@ export default async function OverviewPage() {
       .eq("practice_id", session.practiceId),
     supabase.from("profiles").select("id", { count: "exact", head: true }).eq("practice_id", session.practiceId),
     supabase.from("profiles").select("id, full_name, role, title").eq("practice_id", session.practiceId),
-    supabase
-      .from("tasks")
-      .select("id", { count: "exact", head: true })
-      .eq("practice_id", session.practiceId)
-      .neq("status", "done"),
+    // RLS already limits this to team-wide tasks plus whatever the admin
+    // created themselves — a doctor's overview never surfaces a staff
+    // member's personal to-dos.
+    supabase.from("tasks").select("id").eq("practice_id", session.practiceId),
   ]);
+
+  const taskIds = (visibleTasks || []).map((t) => t.id);
+  const { data: taskCompletions } = taskIds.length
+    ? await supabase.from("task_completions").select("task_id").in("task_id", taskIds)
+    : { data: [] as { task_id: string }[] };
+  const completedTaskIds = new Set((taskCompletions || []).map((c) => c.task_id));
+  const openTasksCount = (visibleTasks || []).filter((t) => !completedTaskIds.has(t.id)).length;
 
   const paStats = {
     total: monthRequests?.length ?? 0,

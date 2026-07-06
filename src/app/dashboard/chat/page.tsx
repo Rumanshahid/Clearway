@@ -8,10 +8,16 @@ export default async function ChatPage() {
 
   const { data: members } = await supabase
     .from("profiles")
-    .select("id, full_name, title, role")
+    .select("id, full_name, title, role, avatar_url")
     .eq("practice_id", session.practiceId)
     .neq("id", session.userId)
     .order("full_name");
+
+  const { data: ownProfile } = await supabase
+    .from("profiles")
+    .select("avatar_url")
+    .eq("id", session.userId)
+    .single();
 
   // Conversations this user belongs to, newest activity first isn't tracked
   // separately — ordering by the conversation's own created_at is close
@@ -45,7 +51,8 @@ export default async function ChatPage() {
     const memberIds = (allMembers || []).filter((m) => m.conversation_id === c.id).map((m) => m.user_id);
     const otherIds = memberIds.filter((id) => id !== session.userId);
     const label = c.type === "group" ? c.name || "Group" : otherIds.map((id) => nameById.get(id) || "Unknown").join(", ") || "You";
-    return { id: c.id, type: c.type, label };
+    const otherId = c.type === "dm" && otherIds.length === 1 ? otherIds[0] : null;
+    return { id: c.id, type: c.type, label, otherId };
   });
 
   return (
@@ -55,8 +62,9 @@ export default async function ChatPage() {
 
       <ChatClient
         currentUserId={session.userId}
+        currentUserAvatarUrl={ownProfile?.avatar_url || null}
         practiceId={session.practiceId}
-        members={(members || []).map((m) => ({ id: m.id, name: m.full_name || "Unnamed", title: m.title }))}
+        members={(members || []).map((m) => ({ id: m.id, name: m.full_name || "Unnamed", title: m.title, avatarUrl: m.avatar_url }))}
         initialConversations={conversationsWithLabel}
       />
     </div>

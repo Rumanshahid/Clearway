@@ -66,6 +66,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
               {showSection("appeals") && <Link href="/dashboard/appeals">Appeals</Link>}
               <Link href="/dashboard/chat">Chat</Link>
               <Link href="/dashboard/tasks">Tasks</Link>
+              <Link href="/dashboard/profiles">Profiles</Link>
               <Link href="/dashboard/resources">Resources</Link>
               {isAdmin && <Link href="/dashboard/team">Team</Link>}
               {isAdmin && <Link href="/dashboard/billing">Billing</Link>}

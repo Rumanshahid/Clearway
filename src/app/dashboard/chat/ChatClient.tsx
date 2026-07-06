@@ -2,17 +2,20 @@
 
 import { useEffect, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
+import Avatar from "@/components/Avatar";
 
 interface Member {
   id: string;
   name: string;
   title: string | null;
+  avatarUrl: string | null;
 }
 
 interface ConversationSummary {
   id: string;
   type: string;
   label: string;
+  otherId: string | null;
 }
 
 interface Message {
@@ -27,11 +30,13 @@ interface Message {
 
 export default function ChatClient({
   currentUserId,
+  currentUserAvatarUrl,
   practiceId,
   members,
   initialConversations,
 }: {
   currentUserId: string;
+  currentUserAvatarUrl: string | null;
   practiceId: string;
   members: Member[];
   initialConversations: ConversationSummary[];
@@ -56,6 +61,9 @@ export default function ChatClient({
 
   const nameById = new Map(members.map((m) => [m.id, m.name]));
   nameById.set(currentUserId, "You");
+
+  const avatarById = new Map(members.map((m) => [m.id, m.avatarUrl]));
+  avatarById.set(currentUserId, currentUserAvatarUrl);
 
   async function resolveSignedUrl(path: string) {
     if (signedUrls[path]) return;
@@ -134,7 +142,7 @@ export default function ChatClient({
       { conversation_id: newConvo.id, user_id: otherId },
     ]);
 
-    setConversations((prev) => [{ id: newConvo.id, type: "dm", label: nameById.get(otherId) || "Unknown" }, ...prev]);
+    setConversations((prev) => [{ id: newConvo.id, type: "dm", label: nameById.get(otherId) || "Unknown", otherId }, ...prev]);
     setActiveId(newConvo.id);
     setShowNew(false);
   }
@@ -153,7 +161,7 @@ export default function ChatClient({
       ...selectedMemberIds.map((id) => ({ conversation_id: newConvo.id, user_id: id })),
     ]);
 
-    setConversations((prev) => [{ id: newConvo.id, type: "group", label: groupName.trim() }, ...prev]);
+    setConversations((prev) => [{ id: newConvo.id, type: "group", label: groupName.trim(), otherId: null }, ...prev]);
     setActiveId(newConvo.id);
     setShowNew(false);
     setGroupMode(false);
@@ -265,10 +273,11 @@ export default function ChatClient({
                   <button
                     key={m.id}
                     type="button"
-                    className="text-left text-[13px] px-2 py-1.5 rounded hover:bg-gray-50"
+                    className="flex items-center gap-2 text-left text-[13px] px-2 py-1.5 rounded hover:bg-gray-50"
                     onClick={() => handleStartDm(m.id)}
                   >
-                    {m.name}{m.title ? <span className="text-gray-400"> — {m.title}</span> : null}
+                    <Avatar name={m.name} userId={m.id} avatarUrl={m.avatarUrl} size={24} />
+                    <span>{m.name}{m.title ? <span className="text-gray-400"> — {m.title}</span> : null}</span>
                   </button>
                 ))}
               </div>
@@ -285,6 +294,7 @@ export default function ChatClient({
                           setSelectedMemberIds((prev) => (e.target.checked ? [...prev, m.id] : prev.filter((id) => id !== m.id)))
                         }
                       />
+                      <Avatar name={m.name} userId={m.id} avatarUrl={m.avatarUrl} size={22} />
                       {m.name}
                     </label>
                   ))}
@@ -305,14 +315,18 @@ export default function ChatClient({
             <button
               key={c.id}
               type="button"
-              className="w-full text-left px-4 py-3 text-[13.5px]"
+              className="w-full flex items-center gap-2 text-left px-4 py-3 text-[13.5px]"
               style={{
                 background: c.id === activeId ? "var(--gray-50)" : "transparent",
                 borderBottom: "1px solid var(--gray-100)",
               }}
               onClick={() => setActiveId(c.id)}
             >
-              {c.type === "group" && <span className="text-gray-400 mr-1">👥</span>}
+              {c.type === "group" ? (
+                <span className="text-gray-400">👥</span>
+              ) : (
+                c.otherId && <Avatar name={nameById.get(c.otherId)} userId={c.otherId} avatarUrl={avatarById.get(c.otherId)} size={22} />
+              )}
               {c.label}
             </button>
           ))}
@@ -331,7 +345,10 @@ export default function ChatClient({
                 const mine = m.sender_id === currentUserId;
                 return (
                   <div key={m.id} className={`flex flex-col ${mine ? "items-end" : "items-start"}`}>
-                    <span className="text-[11px] text-gray-400 mb-0.5">{nameById.get(m.sender_id) || "Unknown"}</span>
+                    <span className="flex items-center gap-1.5 text-[11px] text-gray-400 mb-0.5">
+                      {!mine && <Avatar name={nameById.get(m.sender_id)} userId={m.sender_id} avatarUrl={avatarById.get(m.sender_id)} size={16} />}
+                      {nameById.get(m.sender_id) || "Unknown"}
+                    </span>
                     <div
                       className="rounded-2xl px-3 py-2 max-w-[70%] text-[13.5px]"
                       style={mine ? { background: "var(--indigo-600)", color: "#fff" } : { background: "var(--gray-100)", color: "var(--gray-900)" }}
