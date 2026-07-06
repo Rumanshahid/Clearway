@@ -429,9 +429,12 @@ export default function ChatClient({
                     <span className="flex items-center gap-1 text-[10.5px] text-gray-400 mt-0.5">
                       {formatTime(m.created_at)}
                       {status && (
-                        <span style={{ color: status === "seen" ? "var(--indigo-600)" : "var(--gray-400)" }}>
-                          {status === "sent" ? "✓" : "✓✓"}
-                        </span>
+                        <>
+                          <span>·</span>
+                          <span style={{ color: status === "seen" ? "var(--indigo-600)" : "var(--gray-400)" }}>
+                            {status === "sent" ? "Sent" : status === "delivered" ? "Delivered" : "Read"}
+                          </span>
+                        </>
                       )}
                     </span>
                   </div>
