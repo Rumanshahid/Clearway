@@ -512,6 +512,8 @@ export interface Database {
           name: string | null;
           created_by: string;
           created_at: string;
+          dm_user_a: string | null;
+          dm_user_b: string | null;
         };
         Insert: Partial<Database["public"]["Tables"]["conversations"]["Row"]> & {
           practice_id: string;
