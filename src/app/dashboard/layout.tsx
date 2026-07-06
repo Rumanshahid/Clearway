@@ -2,7 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { signOutAction } from "@/app/(auth)/actions";
-import { ensureTeamConversation, getConversationSummaries } from "@/lib/chat";
+import { ensureTeamConversation, ensureDirectConversations, getConversationSummaries } from "@/lib/chat";
 import { getTaskPreview } from "@/lib/taskPreview";
 import NotificationBell from "./NotificationBell";
 import ChatBell from "./ChatBell";
@@ -51,7 +51,9 @@ export default async function DashboardLayout({ children }: { children: React.Re
     .limit(30);
 
   const { data: practiceMembers } = await supabase.from("profiles").select("id").eq("practice_id", profile.practice_id);
+  const otherMemberIds = (practiceMembers || []).map((m) => m.id).filter((id) => id !== user.id);
   await ensureTeamConversation(profile.practice_id, user.id, (practiceMembers || []).map((m) => m.id));
+  await ensureDirectConversations(profile.practice_id, user.id, otherMemberIds);
   const conversationPreviews = (await getConversationSummaries(user.id, profile.practice_id)).slice(0, 6);
   const taskPreviews = await getTaskPreview(user.id, profile.practice_id);
 

@@ -69,6 +69,54 @@ export async function ensureTeamConversation(practiceId: string, currentUserId: 
   return teamId;
 }
 
+// Every user gets a 1:1 conversation with every other current teammate,
+// auto-created the same way the Team conversation is — no "start a chat
+// with this person" step needed. Only the lexicographically-smaller user id
+// in a pair ever attempts to create it (arbitrary but stable ordering), so
+// two people loading a page at the same moment can't both try to create the
+// same pair — whichever id is "larger" just waits to see it show up once
+// the other side's next page load creates it.
+export async function ensureDirectConversations(practiceId: string, currentUserId: string, otherMemberIds: string[]) {
+  const toCreate = otherMemberIds.filter((id) => currentUserId < id);
+  if (toCreate.length === 0) return;
+
+  const supabase = await createClient();
+
+  const { data: myMemberRows } = await supabase.from("conversation_members").select("conversation_id").eq("user_id", currentUserId);
+  const myConversationIds = (myMemberRows || []).map((r) => r.conversation_id);
+
+  const { data: myDms } = myConversationIds.length
+    ? await supabase.from("conversations").select("id").in("id", myConversationIds).eq("type", "dm")
+    : { data: [] as { id: string }[] };
+  const myDmIds = (myDms || []).map((c) => c.id);
+
+  const { data: dmMembers } = myDmIds.length
+    ? await supabase.from("conversation_members").select("conversation_id, user_id").in("conversation_id", myDmIds)
+    : { data: [] as { conversation_id: string; user_id: string }[] };
+
+  const existingPartners = new Set((dmMembers || []).filter((m) => m.user_id !== currentUserId).map((m) => m.user_id));
+
+  for (const otherId of toCreate) {
+    if (existingPartners.has(otherId)) continue;
+
+    const { data: newConvo, error } = await supabase
+      .from("conversations")
+      .insert({ practice_id: practiceId, type: "dm", created_by: currentUserId })
+      .select("id")
+      .single();
+    if (error || !newConvo) {
+      console.error("ensureDirectConversations: create conversation failed", error);
+      continue;
+    }
+
+    const { error: membersError } = await supabase.from("conversation_members").insert([
+      { conversation_id: newConvo.id, user_id: currentUserId },
+      { conversation_id: newConvo.id, user_id: otherId },
+    ]);
+    if (membersError) console.error("ensureDirectConversations: add members failed", membersError);
+  }
+}
+
 export interface ConversationSummary {
   id: string;
   type: string;

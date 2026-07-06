@@ -1,6 +1,6 @@
 import { getSessionProfile } from "@/lib/permissions";
 import { createClient } from "@/lib/supabase/server";
-import { ensureTeamConversation, getConversationSummaries } from "@/lib/chat";
+import { ensureTeamConversation, ensureDirectConversations, getConversationSummaries } from "@/lib/chat";
 import ChatClient from "./ChatClient";
 
 export default async function ChatPage({
@@ -24,15 +24,16 @@ export default async function ChatPage({
     .eq("id", session.userId)
     .single();
 
-  await ensureTeamConversation(session.practiceId, session.userId, (allMembers || []).map((m) => m.id));
-  const conversationsWithLabel = await getConversationSummaries(session.userId, session.practiceId);
-
   const otherMembers = (allMembers || []).filter((m) => m.id !== session.userId);
+
+  await ensureTeamConversation(session.practiceId, session.userId, (allMembers || []).map((m) => m.id));
+  await ensureDirectConversations(session.practiceId, session.userId, otherMembers.map((m) => m.id));
+  const conversationsWithLabel = await getConversationSummaries(session.userId, session.practiceId);
 
   return (
     <div className="max-w-[1300px] mx-auto py-8 px-5">
       <h1 className="text-[24px] font-semibold mb-1">Chat</h1>
-      <p className="text-[14px] text-gray-600 mb-6">Everyone&apos;s in the Team conversation by default — start a group for anything more specific.</p>
+      <p className="text-[14px] text-gray-600 mb-6">Everyone&apos;s in the Team conversation by default, plus a direct chat with each teammate — start a group for anything more specific.</p>
 
       <ChatClient
         currentUserId={session.userId}
