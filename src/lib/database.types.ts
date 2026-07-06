@@ -535,6 +535,19 @@ export interface Database {
         Update: Partial<Database["public"]["Tables"]["conversation_members"]["Row"]>;
         Relationships: [];
       };
+      conversation_reads: {
+        Row: {
+          conversation_id: string;
+          user_id: string;
+          last_read_at: string;
+        };
+        Insert: Partial<Database["public"]["Tables"]["conversation_reads"]["Row"]> & {
+          conversation_id: string;
+          user_id: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["conversation_reads"]["Row"]>;
+        Relationships: [];
+      };
       messages: {
         Row: {
           id: string;

@@ -121,6 +121,8 @@ export interface ConversationSummary {
   type: string;
   label: string;
   otherId: string | null;
+  createdBy: string;
+  memberIds: string[];
 }
 
 // Conversations the given user belongs to, with a display label computed —
@@ -144,7 +146,7 @@ export async function getConversationSummaries(userId: string, practiceId: strin
 
   const { data: conversations } = await supabase
     .from("conversations")
-    .select("id, type, name, created_at")
+    .select("id, type, name, created_at, created_by")
     .in("id", conversationIds)
     .order("created_at", { ascending: false });
 
@@ -159,7 +161,7 @@ export async function getConversationSummaries(userId: string, practiceId: strin
     const label =
       c.type === "team" ? c.name || "Team" : c.type === "group" ? c.name || "Group" : otherIds.map((id) => nameById.get(id) || "Unknown").join(", ") || "You";
     const otherId = c.type === "dm" && otherIds.length === 1 ? otherIds[0] : null;
-    return { id: c.id, type: c.type, label, otherId };
+    return { id: c.id, type: c.type, label, otherId, createdBy: c.created_by, memberIds };
   });
 
   summaries.sort((a, b) => (a.type === "team" ? -1 : b.type === "team" ? 1 : 0));

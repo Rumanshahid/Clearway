@@ -16,6 +16,8 @@ interface ConversationSummary {
   type: string;
   label: string;
   otherId: string | null;
+  createdBy: string;
+  memberIds: string[];
 }
 
 interface Message {
@@ -26,6 +28,15 @@ interface Message {
   attachment_type: string | null;
   attachment_name: string | null;
   created_at: string;
+}
+
+interface ReadReceipt {
+  user_id: string;
+  last_read_at: string;
+}
+
+function formatTime(iso: string): string {
+  return new Date(iso).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
 }
 
 export default function ChatClient({
@@ -47,6 +58,7 @@ export default function ChatClient({
   const [conversations, setConversations] = useState(initialConversations);
   const [activeId, setActiveId] = useState<string | null>(initialActiveId || initialConversations[0]?.id || null);
   const [messages, setMessages] = useState<Message[]>([]);
+  const [reads, setReads] = useState<ReadReceipt[]>([]);
   const [signedUrls, setSignedUrls] = useState<Record<string, string>>({});
   const [text, setText] = useState("");
   const [showNew, setShowNew] = useState(false);
@@ -84,15 +96,27 @@ export default function ChatClient({
     }
   }
 
+  async function loadReads(conversationId: string) {
+    const { data } = await supabase.from("conversation_reads").select("user_id, last_read_at").eq("conversation_id", conversationId);
+    setReads(data || []);
+  }
+
+  async function markRead(conversationId: string) {
+    await supabase.from("conversation_reads").upsert({ conversation_id: conversationId, user_id: currentUserId, last_read_at: new Date().toISOString() });
+  }
+
   useEffect(() => {
     if (!activeId) return;
-    // Fetching the newly-selected conversation's messages is exactly what
-    // this effect is for — the resulting setState happens asynchronously
-    // after the network round trip, not synchronously in the effect body.
+    // Fetching the newly-selected conversation's messages/reads, and
+    // recording that we've now read it, is exactly what this effect is
+    // for — every setState here happens asynchronously after a network
+    // round trip, not synchronously in the effect body.
     // eslint-disable-next-line react-hooks/set-state-in-effect
     loadMessages(activeId);
+    loadReads(activeId);
+    markRead(activeId);
 
-    const channel = supabase
+    const messagesChannel = supabase
       .channel(`messages-${activeId}`)
       .on(
         "postgres_changes",
@@ -101,12 +125,27 @@ export default function ChatClient({
           const m = payload.new as Message;
           setMessages((prev) => (prev.some((existing) => existing.id === m.id) ? prev : [...prev, m]));
           if (m.attachment_url) resolveSignedUrl(m.attachment_url);
+          if (m.sender_id !== currentUserId) markRead(activeId);
+        }
+      )
+      .subscribe();
+
+    const readsChannel = supabase
+      .channel(`reads-${activeId}`)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "conversation_reads", filter: `conversation_id=eq.${activeId}` },
+        (payload) => {
+          if (payload.eventType === "DELETE") return;
+          const r = payload.new as ReadReceipt;
+          setReads((prev) => [...prev.filter((x) => x.user_id !== r.user_id), r]);
         }
       )
       .subscribe();
 
     return () => {
-      supabase.removeChannel(channel);
+      supabase.removeChannel(messagesChannel);
+      supabase.removeChannel(readsChannel);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeId]);
@@ -129,11 +168,29 @@ export default function ChatClient({
       ...selectedMemberIds.map((id) => ({ conversation_id: newConvo.id, user_id: id })),
     ]);
 
-    setConversations((prev) => [{ id: newConvo.id, type: "group", label: groupName.trim(), otherId: null }, ...prev]);
+    setConversations((prev) => [
+      { id: newConvo.id, type: "group", label: groupName.trim(), otherId: null, createdBy: currentUserId, memberIds: [currentUserId, ...selectedMemberIds] },
+      ...prev,
+    ]);
     setActiveId(newConvo.id);
     setShowNew(false);
     setGroupName("");
     setSelectedMemberIds([]);
+  }
+
+  async function handleDeleteGroup() {
+    if (!activeId) return;
+    if (!confirm("Delete this group for everyone? This can't be undone.")) return;
+    const { error } = await supabase.from("conversations").delete().eq("id", activeId);
+    if (error) {
+      alert(`Couldn't delete the group: ${error.message}`);
+      return;
+    }
+    setConversations((prev) => {
+      const next = prev.filter((c) => c.id !== activeId);
+      setActiveId(next[0]?.id || null);
+      return next;
+    });
   }
 
   async function handleSendText() {
@@ -202,6 +259,15 @@ export default function ChatClient({
   }
 
   const activeConversation = conversations.find((c) => c.id === activeId);
+  const otherMemberIds = activeConversation ? activeConversation.memberIds.filter((id) => id !== currentUserId) : [];
+
+  function isSeenByAll(messageCreatedAt: string): boolean {
+    if (otherMemberIds.length === 0) return false;
+    return otherMemberIds.every((id) => {
+      const r = reads.find((x) => x.user_id === id);
+      return !!r && new Date(r.last_read_at) >= new Date(messageCreatedAt);
+    });
+  }
 
   return (
     <div className="flex gap-6 items-start" style={{ height: "70vh" }}>
@@ -266,13 +332,29 @@ export default function ChatClient({
       <div className="flex-1 min-w-0 h-full card p-0 flex flex-col">
         {activeConversation ? (
           <>
-            <div className="p-4 font-semibold text-[14px]" style={{ borderBottom: "1px solid var(--gray-200)" }}>
-              {(activeConversation.type === "group" || activeConversation.type === "team") && "👥 "}
-              {activeConversation.label}
+            <div className="p-4 flex items-center justify-between" style={{ borderBottom: "1px solid var(--gray-200)" }}>
+              <span className="font-semibold text-[14px]">
+                {(activeConversation.type === "group" || activeConversation.type === "team") && "👥 "}
+                {activeConversation.label}
+              </span>
+              {activeConversation.type === "group" && activeConversation.createdBy === currentUserId && (
+                <button
+                  type="button"
+                  className="text-btn text-gray-400 hover:text-[var(--danger-red)]"
+                  aria-label="Delete group"
+                  title="Delete group"
+                  onClick={handleDeleteGroup}
+                >
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                    <path d="M3 4.5h10M6.5 4.5V3a1 1 0 011-1h1a1 1 0 011 1v1.5M4.5 4.5V13a1 1 0 001 1h5a1 1 0 001-1V4.5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                </button>
+              )}
             </div>
             <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-3">
               {messages.map((m) => {
                 const mine = m.sender_id === currentUserId;
+                const seen = mine && isSeenByAll(m.created_at);
                 return (
                   <div key={m.id} className={`flex flex-col ${mine ? "items-end" : "items-start"}`}>
                     <span className="flex items-center gap-1.5 text-[11px] text-gray-400 mb-0.5">
@@ -299,6 +381,12 @@ export default function ChatClient({
                         </a>
                       )}
                     </div>
+                    <span className="flex items-center gap-1 text-[10.5px] text-gray-400 mt-0.5">
+                      {formatTime(m.created_at)}
+                      {mine && (
+                        <span style={{ color: seen ? "var(--indigo-600)" : "var(--gray-400)" }}>{seen ? "✓✓" : "✓"}</span>
+                      )}
+                    </span>
                   </div>
                 );
               })}
