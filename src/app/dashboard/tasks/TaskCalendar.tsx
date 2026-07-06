@@ -75,7 +75,7 @@ export default function TaskCalendar({
               {day}
               {hasTasks && (
                 <span
-                  className="absolute bottom-0.5 left-1/2 -translate-x-1/2 w-[4px] h-[4px] rounded-full"
+                  className="absolute bottom-0.5 left-1/2 -translate-x-1/2 w-[4px] h-[1.5px] rounded-full"
                   style={{ background: isSelected ? "#fff" : "var(--indigo-600)" }}
                 />
               )}

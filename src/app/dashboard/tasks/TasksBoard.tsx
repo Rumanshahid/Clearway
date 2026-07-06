@@ -32,8 +32,7 @@ export default function TasksBoard({
       </div>
 
       <div className="min-w-0">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-[17px] font-semibold">Tasks</h2>
+        <div className="flex items-center justify-end mb-4">
           <button type="button" className="btn btn-primary btn-sm" onClick={() => setShowAddModal(true)}>
             + Add task
           </button>

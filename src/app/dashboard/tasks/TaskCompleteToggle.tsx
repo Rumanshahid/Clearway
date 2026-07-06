@@ -11,7 +11,7 @@ export default function TaskCompleteToggle({ taskId, done }: { taskId: string; d
         type="submit"
         className="w-[20px] h-[20px] rounded-full flex items-center justify-center flex-shrink-0"
         style={{
-          border: done ? "none" : "1.5px solid var(--gray-300)",
+          border: done ? "none" : "1.5px solid var(--gray-400)",
           background: done ? "var(--success-green)" : "transparent",
         }}
         aria-label={done ? "Mark not done" : "Mark done"}
