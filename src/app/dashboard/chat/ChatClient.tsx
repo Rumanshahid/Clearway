@@ -72,7 +72,10 @@ export default function ChatClient({
   const [uploading, setUploading] = useState(false);
   const [recording, setRecording] = useState(false);
   const [onlineUserIds, setOnlineUserIds] = useState<Set<string>>(new Set());
-  const [collapsed, setCollapsed] = useState(false);
+  // Rests as a narrow avatar-only rail; hovering it expands to full width as
+  // an overlay (doesn't push the message thread), collapsing back the
+  // moment the mouse leaves — same hover-reveal pattern as the nav bells.
+  const [collapsed, setCollapsed] = useState(true);
   const [pendingAttachment, setPendingAttachment] = useState<{ file: File; type: "image" | "audio" | "file"; previewUrl: string } | null>(null);
   const [lightbox, setLightbox] = useState<{ url: string; name: string } | null>(null);
 
@@ -360,28 +363,18 @@ export default function ChatClient({
 
   return (
     <div className="h-full bg-white overflow-hidden flex items-stretch">
-      <aside
-        className={`${collapsed ? "w-16" : "w-[260px]"} flex-shrink-0 overflow-hidden flex flex-col transition-all duration-200`}
-        style={{ borderRight: "1px solid var(--gray-200)" }}
-      >
-        <div className="p-3 flex items-center justify-between" style={{ borderBottom: "1px solid var(--gray-200)" }}>
+      <div className="relative flex-shrink-0" style={{ width: 64 }}>
+        <aside
+          className={`absolute inset-y-0 left-0 ${collapsed ? "w-16" : "w-[260px]"} overflow-hidden flex flex-col bg-white transition-all duration-200 z-30`}
+          style={{
+            borderRight: "1px solid var(--gray-200)",
+            boxShadow: collapsed ? "none" : "8px 0 24px rgba(0,0,0,0.08)",
+          }}
+          onMouseEnter={() => setCollapsed(false)}
+          onMouseLeave={() => setCollapsed(true)}
+        >
+        <div className="p-3 flex items-center" style={{ borderBottom: "1px solid var(--gray-200)" }}>
           {!collapsed && <span className="text-[13px] font-semibold">Conversations</span>}
-          <button
-            type="button"
-            className="w-7 h-7 rounded-md flex items-center justify-center flex-shrink-0 hover:bg-gray-100"
-            style={{ marginLeft: collapsed ? "auto" : 0, marginRight: collapsed ? "auto" : 0 }}
-            aria-label={collapsed ? "Expand conversations" : "Collapse conversations"}
-            title={collapsed ? "Expand" : "Collapse"}
-            onClick={() => setCollapsed((v) => !v)}
-          >
-            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-              {collapsed ? (
-                <path d="M4.5 2.5L9.5 7l-5 4.5" stroke="var(--gray-600)" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
-              ) : (
-                <path d="M9.5 2.5L4.5 7l5 4.5" stroke="var(--gray-600)" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
-              )}
-            </svg>
-          </button>
         </div>
 
         <div className="p-2" style={{ borderBottom: "1px solid var(--gray-200)" }}>
@@ -391,10 +384,7 @@ export default function ChatClient({
               className="w-full h-8 rounded-md flex items-center justify-center hover:bg-gray-100"
               aria-label="New group"
               title="New group"
-              onClick={() => {
-                setCollapsed(false);
-                setShowNew((v) => !v);
-              }}
+              onClick={() => setShowNew((v) => !v)}
             >
               +
             </button>
@@ -454,7 +444,8 @@ export default function ChatClient({
             </button>
           ))}
         </div>
-      </aside>
+        </aside>
+      </div>
 
       <div className="flex-1 min-w-0 flex flex-col">
         {activeConversation ? (
