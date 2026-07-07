@@ -6,6 +6,12 @@ import { getPageBySlug, makeFieldGetter } from "@/lib/content-schema";
 
 const DASHBOARD_PAGE = getPageBySlug("dashboard")!;
 
+// Practices vary a lot in headcount — this keeps the staff list from ever
+// forcing the page to scroll or grow past one screen. Past this many, the
+// rest collapse into a single "+N more" pill linking to the full Team page
+// instead of being listed out.
+const MAX_STAFF_PILLS = 14;
+
 export default async function OverviewPage() {
   const session = await requireAdmin();
   const supabase = await createClient();
@@ -64,13 +70,18 @@ export default async function OverviewPage() {
 
   const admins = (profiles || []).filter((p) => p.role === "clinic_admin" || p.role === "super_admin");
   const staff = (profiles || []).filter((p) => p.role === "clinic_user");
+  const allMembers = profiles || [];
+  const visibleMembers = allMembers.slice(0, MAX_STAFF_PILLS);
+  const hiddenCount = allMembers.length - visibleMembers.length;
 
   return (
-    <div className="max-w-[1300px] mx-auto py-8 px-5">
-      <h1 className="text-[24px] font-semibold mb-1">{c("dashboard_h1")}</h1>
-      <p className="text-[14px] text-gray-600 mb-6">{c("dashboard_subtitle")}</p>
+    <div className="max-w-[1300px] mx-auto px-5 py-4 flex flex-col gap-3 overflow-hidden" style={{ height: "calc(100vh - 57px)" }}>
+      <div className="flex items-baseline justify-between gap-4 flex-shrink-0">
+        <h1 className="text-[19px] font-semibold">{c("dashboard_h1")}</h1>
+        <p className="text-[12.5px] text-gray-400">{c("dashboard_subtitle")}</p>
+      </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+      <div className="grid grid-cols-4 gap-3 flex-shrink-0">
         <SectionCard title="PA Requests" href="/dashboard">
           <StatRow label="This month" value={paStats.total} />
           <StatRow label="Approved" value={paStats.approved} accent="var(--success-green)" />
@@ -94,25 +105,41 @@ export default async function OverviewPage() {
         </SectionCard>
       </div>
 
-      <div className="card p-6">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-[15px] font-semibold">Staff</h2>
-          <Link href="/dashboard/team" className="text-[12.5px] text-indigo-600 font-medium">Manage team →</Link>
+      <div className="card p-4 flex-1 min-h-0 flex flex-col">
+        <div className="flex items-center justify-between mb-3 flex-shrink-0">
+          <div className="flex items-center gap-4">
+            <h2 className="text-[14px] font-semibold">Staff</h2>
+            <span className="text-[12px] text-gray-400">
+              {membersCount ?? 0} total · <span style={{ color: "var(--indigo-600)" }}>{admins.length} Doctors/Admins</span> ·{" "}
+              <span className="text-gray-600">{staff.length} Staff</span>
+            </span>
+          </div>
+          <Link href="/dashboard/team" className="text-[12.5px] text-indigo-600 font-medium flex-shrink-0">Manage team →</Link>
         </div>
-        <div className="grid grid-cols-3 gap-4 mb-5">
-          <StatCard label="Total members" value={membersCount ?? 0} />
-          <StatCard label="Doctors / Admins" value={admins.length} accent="var(--indigo-600)" />
-          <StatCard label="Staff" value={staff.length} accent="var(--gray-600)" />
-        </div>
-        <div className="flex flex-col gap-2">
-          {(profiles || []).map((p) => (
-            <div key={p.id} className="flex items-center justify-between text-[13.5px] py-1" style={{ borderBottom: "1px solid var(--gray-100)" }}>
-              <span>{p.full_name || "(unnamed)"}{p.title ? <span className="text-gray-400"> — {p.title}</span> : null}</span>
-              <span className="status-pill" style={{ background: "var(--gray-100)", color: "var(--gray-600)" }}>
-                {p.role === "clinic_admin" ? "Doctor / Admin" : p.role === "super_admin" ? "Super Admin" : "Staff"}
-              </span>
+        <div className="flex flex-wrap gap-2 content-start overflow-hidden">
+          {visibleMembers.map((p) => (
+            <div
+              key={p.id}
+              className="flex items-center gap-1.5 text-[12.5px] rounded-full pl-1 pr-2.5 py-1"
+              style={{ background: "var(--gray-50)", border: "1px solid var(--gray-200)" }}
+            >
+              <span
+                className="w-[6px] h-[6px] rounded-full flex-shrink-0 ml-1"
+                style={{ background: p.role === "clinic_user" ? "var(--gray-400)" : "var(--indigo-600)" }}
+              />
+              <span className="text-gray-900">{p.full_name || "(unnamed)"}</span>
+              {p.title && <span className="text-gray-400">— {p.title}</span>}
             </div>
           ))}
+          {hiddenCount > 0 && (
+            <Link
+              href="/dashboard/team"
+              className="flex items-center text-[12.5px] rounded-full px-2.5 py-1 text-indigo-600 font-medium"
+              style={{ background: "var(--gray-50)", border: "1px solid var(--gray-200)" }}
+            >
+              +{hiddenCount} more →
+            </Link>
+          )}
         </div>
       </div>
     </div>
@@ -121,30 +148,21 @@ export default async function OverviewPage() {
 
 function SectionCard({ title, href, children }: { title: string; href: string; children: React.ReactNode }) {
   return (
-    <div className="card p-6">
-      <div className="flex items-center justify-between mb-3">
-        <h2 className="text-[15px] font-semibold">{title}</h2>
-        <Link href={href} className="text-[12.5px] text-indigo-600 font-medium">Open →</Link>
+    <div className="card p-3">
+      <div className="flex items-center justify-between mb-2">
+        <h2 className="text-[13px] font-semibold">{title}</h2>
+        <Link href={href} className="text-[11.5px] text-indigo-600 font-medium">Open →</Link>
       </div>
-      <div className="flex flex-col gap-2">{children}</div>
+      <div className="flex flex-col gap-1">{children}</div>
     </div>
   );
 }
 
 function StatRow({ label, value, accent }: { label: string; value: string | number; accent?: string }) {
   return (
-    <div className="flex items-center justify-between text-[13.5px]">
+    <div className="flex items-center justify-between text-[12.5px]">
       <span className="text-gray-600">{label}</span>
       <span className="font-semibold" style={accent ? { color: accent } : undefined}>{value}</span>
-    </div>
-  );
-}
-
-function StatCard({ label, value, accent }: { label: string; value: number; accent?: string }) {
-  return (
-    <div>
-      <div className="text-[11px] uppercase tracking-wide text-gray-400 font-semibold mb-1">{label}</div>
-      <div className="text-[24px] font-light" style={accent ? { color: accent } : undefined}>{value}</div>
     </div>
   );
 }
