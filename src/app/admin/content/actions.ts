@@ -23,5 +23,6 @@ export async function saveSiteContentAction(formData: FormData) {
   await Promise.all(writes);
 
   revalidatePath(`/admin/content/${slug}`);
-  revalidatePath(slug === "home" ? "/" : `/${slug}`);
+  const paths = page.revalidatePaths ?? [slug === "home" ? "/" : `/${slug}`];
+  for (const p of paths) revalidatePath(p);
 }

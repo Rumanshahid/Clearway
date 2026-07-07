@@ -21,10 +21,38 @@ export interface ContentSectionDef {
 export interface ContentPageDef {
   slug: string;
   label: string;
+  // Public paths to revalidate after a save. Defaults to `/${slug}` (or "/"
+  // for "home") when omitted — only needs to be set explicitly for content
+  // that appears on more than one route, like the shared nav bar.
+  revalidatePaths?: string[];
   sections: ContentSectionDef[];
 }
 
 export const CONTENT_PAGES: ContentPageDef[] = [
+  {
+    slug: "nav",
+    label: "Navigation",
+    revalidatePaths: ["/", "/about"],
+    sections: [
+      {
+        title: "Logo & links",
+        fields: [
+          { key: "nav_logo_text", label: "Logo text", default: "asaanbil.com" },
+          { key: "nav_link_how", label: "\"How It Works\" link label", default: "How It Works" },
+          { key: "nav_link_coverage", label: "\"Coverage\" link label", default: "Coverage" },
+          { key: "nav_link_pricing", label: "\"Pricing\" link label", default: "Pricing" },
+          { key: "nav_link_about", label: "\"About\" link label", default: "About" },
+        ],
+      },
+      {
+        title: "Auth buttons",
+        fields: [
+          { key: "nav_signin_label", label: "Sign In button text", default: "Sign In" },
+          { key: "nav_signup_label", label: "Sign Up button text", default: "Sign Up" },
+        ],
+      },
+    ],
+  },
   {
     slug: "home",
     label: "Home",
