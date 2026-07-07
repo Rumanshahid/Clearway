@@ -10,6 +10,24 @@ import type { UserRole } from "@/lib/database.types";
 const VALID_ROLES = ["clinic_admin", "clinic_user"];
 const VALID_SECTIONS = ["requests", "patients", "appeals"];
 
+// Build our own confirmation URL from generateLink()'s hashed_token +
+// verification_type, instead of using its action_link (which points
+// straight at Supabase's hosted /auth/v1/verify — a one-time-use token that
+// a GET request consumes with no user interaction required). Link-preview
+// crawlers (WhatsApp, Telegram, corporate email "Safe Links" scanners) fetch
+// URLs to build previews, silently burning that token before the real
+// recipient ever taps it. /auth/confirm renders a button and only verifies
+// on an explicit click, so a crawler's inert page load doesn't consume it.
+function confirmUrlFrom(
+  siteUrl: string,
+  linkData: { properties: { hashed_token: string; verification_type: string } | null } | null,
+  next: string
+): string | null {
+  const props = linkData?.properties;
+  if (!props?.hashed_token) return null;
+  return `${siteUrl}/auth/confirm?token_hash=${encodeURIComponent(props.hashed_token)}&type=${encodeURIComponent(props.verification_type)}&next=${encodeURIComponent(next)}`;
+}
+
 // Every action here re-verifies the caller server-side — the Team page being
 // admin-only in the UI is not enforcement, and several of these writes go
 // through the service-role client (RLS lets a user update only their own
@@ -98,7 +116,7 @@ export async function inviteMemberAction(formData: FormData) {
     options: { redirectTo },
   });
 
-  const actionLink = linkData?.properties?.action_link;
+  const actionLink = confirmUrlFrom(siteUrl, linkData, `/join/${token}`);
   if (linkError) console.error("generateLink failed, falling back to manual sign-up link", linkError);
 
   // Deliberately no bare "asaanbil.com"-style text anywhere in this body —
@@ -163,11 +181,12 @@ export async function generateInviteLinkAction(inviteId: string): Promise<{ link
     options: { redirectTo },
   });
 
-  if (linkError || !linkData?.properties?.action_link) {
+  const link = confirmUrlFrom(siteUrl, linkData, `/join/${invite.token}`);
+  if (linkError || !link) {
     return { error: "Couldn't generate a link right now — try again in a moment." };
   }
 
-  return { link: linkData.properties.action_link };
+  return { link };
 }
 
 export async function revokeInviteAction(formData: FormData) {
