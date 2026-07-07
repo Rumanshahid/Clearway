@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useHoverDelay } from "./useHoverDelay";
 
 interface ConversationPreview {
   id: string;
@@ -11,7 +11,7 @@ interface ConversationPreview {
 }
 
 export default function ChatBell({ conversations }: { conversations: ConversationPreview[] }) {
-  const [open, setOpen] = useState(false);
+  const { open, setOpen, onMouseEnter, onMouseLeave } = useHoverDelay();
   const router = useRouter();
 
   function goToChat(conversationId?: string) {
@@ -20,7 +20,7 @@ export default function ChatBell({ conversations }: { conversations: Conversatio
   }
 
   return (
-    <div className="relative" onMouseEnter={() => setOpen(true)} onMouseLeave={() => setOpen(false)}>
+    <div className="relative" onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave}>
       <button
         type="button"
         className="relative w-9 h-9 rounded-md flex items-center justify-center flex-shrink-0 hover:bg-gray-100 active:scale-95"
@@ -50,7 +50,7 @@ export default function ChatBell({ conversations }: { conversations: Conversatio
             <button
               key={c.id}
               type="button"
-              className="w-full flex flex-col items-start gap-0.5 text-left px-4 py-3 text-[13px]"
+              className="w-full flex flex-col items-start gap-0.5 text-left px-4 py-3 text-[13px] hover:bg-gray-50 transition-colors"
               style={{ borderBottom: "1px solid var(--gray-200)" }}
               onClick={() => goToChat(c.id)}
             >

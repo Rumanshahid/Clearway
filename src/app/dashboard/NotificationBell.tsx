@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useTransition, useState } from "react";
 import Link from "next/link";
 import { markAllNotificationsReadAction, markNotificationReadAction } from "./notification-actions";
+import { useHoverDelay } from "./useHoverDelay";
 
 interface NotificationRow {
   id: string;
@@ -14,7 +15,7 @@ interface NotificationRow {
 }
 
 export default function NotificationBell({ notifications }: { notifications: NotificationRow[] }) {
-  const [open, setOpen] = useState(false);
+  const { open, setOpen, onMouseEnter, onMouseLeave } = useHoverDelay();
   // Optimistic overlay on top of the server-provided prop so read-state
   // updates feel instant instead of waiting on a full server round trip.
   const [locallyRead, setLocallyRead] = useState<Set<string>>(new Set());
@@ -40,7 +41,7 @@ export default function NotificationBell({ notifications }: { notifications: Not
   }
 
   return (
-    <div className="relative" onMouseEnter={() => setOpen(true)} onMouseLeave={() => setOpen(false)}>
+    <div className="relative" onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave}>
       <button
         type="button"
         className="relative w-9 h-9 rounded-md flex items-center justify-center flex-shrink-0 hover:bg-gray-100 active:scale-95"
@@ -83,8 +84,14 @@ export default function NotificationBell({ notifications }: { notifications: Not
               <Link
                 key={n.id}
                 href={n.link || "/dashboard"}
-                className="px-4 py-3 flex flex-col gap-1 transition-colors"
-                style={{ borderBottom: "1px solid var(--gray-200)", background: read ? "transparent" : "var(--gray-50)" }}
+                // Only set an inline background for the unread case — an
+                // inline "transparent" for read notifications would
+                // permanently win over a hover:bg-gray-50 class (inline
+                // styles beat class-based :hover regardless of state),
+                // silently killing the hover feedback (same bug fixed
+                // earlier in NavLink).
+                className={`px-4 py-3 flex flex-col gap-1 transition-colors ${read ? "hover:bg-gray-50" : ""}`}
+                style={{ borderBottom: "1px solid var(--gray-200)", ...(read ? {} : { background: "var(--gray-50)" }) }}
                 onClick={() => {
                   if (!read) markOneRead(n.id);
                   setOpen(false);

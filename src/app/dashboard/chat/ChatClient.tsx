@@ -431,10 +431,10 @@ export default function ChatClient({
             <button
               key={c.id}
               type="button"
-              className={`w-full flex items-center text-left text-[13.5px] ${collapsed ? "justify-center px-2 py-3" : "gap-2 px-4 py-3"}`}
+              className={`w-full flex items-center text-left text-[13.5px] transition-colors ${collapsed ? "justify-center px-2 py-3" : "gap-2 px-4 py-3"} ${c.id === activeId ? "" : "hover:bg-gray-50"}`}
               style={{
-                background: c.id === activeId ? "var(--gray-50)" : "transparent",
                 borderBottom: "1px solid var(--gray-100)",
+                ...(c.id === activeId ? { background: "var(--gray-50)" } : {}),
               }}
               title={collapsed ? c.label : undefined}
               onClick={() => setActiveId(c.id)}

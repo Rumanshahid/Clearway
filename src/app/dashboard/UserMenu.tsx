@@ -1,14 +1,14 @@
 "use client";
 
-import { useState } from "react";
 import Link from "next/link";
 import { signOutAction } from "@/app/(auth)/actions";
+import { useHoverDelay } from "./useHoverDelay";
 
 export default function UserMenu({ name, isAdmin, plan }: { name: string; isAdmin: boolean; plan: string | null }) {
-  const [open, setOpen] = useState(false);
+  const { open, setOpen, onMouseEnter, onMouseLeave } = useHoverDelay();
 
   return (
-    <div className="relative" onMouseEnter={() => setOpen(true)} onMouseLeave={() => setOpen(false)}>
+    <div className="relative" onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave}>
       <button
         type="button"
         className="flex items-center gap-1.5 text-[13.5px] text-gray-700 font-medium px-2 py-1.5 rounded-md hover:bg-gray-100 active:scale-95"

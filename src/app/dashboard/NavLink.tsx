@@ -30,15 +30,13 @@ export default function NavLink({
     <Link
       href={href}
       className="relative px-2.5 py-1.5 rounded-md text-[13.5px] transition-colors hover:bg-gray-100"
-      // Only set an inline background for the active case — an inline
-      // "transparent" here would permanently win over the hover:bg-gray-100
-      // class (inline styles beat class-based :hover regardless of state),
-      // silently killing the hover highlight for every non-active link.
-      style={
-        active
-          ? { color: "var(--gray-900)", fontWeight: 600, background: "var(--gray-100)" }
-          : { color: "var(--gray-600)", fontWeight: 400 }
-      }
+      // Never set an inline background here — the active page is marked by
+      // the underline bar below, not a persistent fill, so the only
+      // background this link ever shows is the hover:bg-gray-100 class on
+      // mouseover (an inline background of any value, including
+      // "transparent", would permanently block that class since inline
+      // styles beat class-based :hover regardless of state).
+      style={active ? { color: "var(--gray-900)", fontWeight: 600 } : { color: "var(--gray-600)", fontWeight: 400 }}
     >
       {children}
       {active && (
