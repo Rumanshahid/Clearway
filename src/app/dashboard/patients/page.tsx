@@ -1,7 +1,11 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { requireSectionAccess } from "@/lib/permissions";
+import { getSiteContent } from "@/lib/criteria-repo";
+import { getPageBySlug, makeFieldGetter } from "@/lib/content-schema";
 import PatientRow from "./PatientRow";
+
+const PATIENTS_PAGE = getPageBySlug("patients")!;
 
 export default async function PatientsPage({
   searchParams,
@@ -11,6 +15,7 @@ export default async function PatientsPage({
   const { imported, skipped, errors } = await searchParams;
   await requireSectionAccess("patients");
   const supabase = await createClient();
+  const c = makeFieldGetter(PATIENTS_PAGE, await getSiteContent());
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -29,8 +34,8 @@ export default async function PatientsPage({
   return (
     <div className="max-w-[1300px] mx-auto py-8 px-5">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
-        <h1 className="text-[20px] sm:text-[24px] font-semibold">Patients</h1>
-        <Link href="/dashboard/patients/new" className="btn btn-primary self-start sm:self-auto">Add Patient →</Link>
+        <h1 className="text-[20px] sm:text-[24px] font-semibold">{c("patients_h1")}</h1>
+        <Link href="/dashboard/patients/new" className="btn btn-primary self-start sm:self-auto">{c("patients_add_button")} →</Link>
       </div>
 
       {imported !== undefined && (
@@ -78,7 +83,7 @@ export default async function PatientsPage({
             ) : (
               <tr>
                 <td className="px-5 py-10 text-center text-gray-400" colSpan={7}>
-                  No patients yet. <Link href="/dashboard/patients/new" className="text-indigo-600">Add your first one →</Link>
+                  {c("patients_empty_state")} <Link href="/dashboard/patients/new" className="text-indigo-600">{c("patients_empty_cta")} →</Link>
                 </td>
               </tr>
             )}

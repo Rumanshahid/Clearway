@@ -1,10 +1,15 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { requireAdmin } from "@/lib/permissions";
+import { getSiteContent } from "@/lib/criteria-repo";
+import { getPageBySlug, makeFieldGetter } from "@/lib/content-schema";
+
+const DASHBOARD_PAGE = getPageBySlug("dashboard")!;
 
 export default async function OverviewPage() {
   const session = await requireAdmin();
   const supabase = await createClient();
+  const c = makeFieldGetter(DASHBOARD_PAGE, await getSiteContent());
 
   const monthStart = new Date();
   monthStart.setDate(1);
@@ -62,8 +67,8 @@ export default async function OverviewPage() {
 
   return (
     <div className="max-w-[1300px] mx-auto py-8 px-5">
-      <h1 className="text-[24px] font-semibold mb-1">Practice overview</h1>
-      <p className="text-[14px] text-gray-600 mb-6">Everything happening across your practice, in one place.</p>
+      <h1 className="text-[24px] font-semibold mb-1">{c("dashboard_h1")}</h1>
+      <p className="text-[14px] text-gray-600 mb-6">{c("dashboard_subtitle")}</p>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
         <SectionCard title="PA Requests" href="/dashboard">

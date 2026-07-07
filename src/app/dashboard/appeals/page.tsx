@@ -2,11 +2,16 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { requireSectionAccess } from "@/lib/permissions";
 import { PRACTICE_MONTHLY_PRICE_USD } from "@/lib/billing";
+import { getSiteContent } from "@/lib/criteria-repo";
+import { getPageBySlug, makeFieldGetter } from "@/lib/content-schema";
 import AppealRow from "./AppealRow";
+
+const APPEALS_PAGE = getPageBySlug("appeals")!;
 
 export default async function AppealsPage() {
   await requireSectionAccess("appeals");
   const supabase = await createClient();
+  const c = makeFieldGetter(APPEALS_PAGE, await getSiteContent());
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -90,8 +95,8 @@ export default async function AppealsPage() {
   return (
     <div className="max-w-[1300px] mx-auto py-8 px-5">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
-        <h1 className="text-[20px] sm:text-[24px] font-semibold">Claims denials &amp; appeals</h1>
-        <Link href="/dashboard/appeals/new" className="btn btn-primary self-start sm:self-auto">Log Denial →</Link>
+        <h1 className="text-[20px] sm:text-[24px] font-semibold">{c("appeals_h1")}</h1>
+        <Link href="/dashboard/appeals/new" className="btn btn-primary self-start sm:self-auto">{c("appeals_log_button")} →</Link>
       </div>
 
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
@@ -195,7 +200,7 @@ export default async function AppealsPage() {
             ) : (
               <tr>
                 <td className="px-5 py-10 text-center text-gray-400" colSpan={8}>
-                  No claim denials logged yet. <Link href="/dashboard/appeals/new" className="text-indigo-600">Log your first one →</Link>
+                  {c("appeals_empty_state")} <Link href="/dashboard/appeals/new" className="text-indigo-600">{c("appeals_empty_cta")} →</Link>
                 </td>
               </tr>
             )}

@@ -2,10 +2,13 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { requireSectionAccess } from "@/lib/permissions";
 import { PAYERS } from "@/lib/criteria";
-import { getProcedureLabelMap } from "@/lib/criteria-repo";
+import { getProcedureLabelMap, getSiteContent } from "@/lib/criteria-repo";
+import { getPageBySlug, makeFieldGetter } from "@/lib/content-schema";
 import type { RequestStatus } from "@/lib/database.types";
 import RequestRow from "./RequestRow";
 import FiltersDropdown from "./FiltersDropdown";
+
+const PA_PAGE = getPageBySlug("pa")!;
 
 const STATUS_STYLES: Record<RequestStatus, { label: string }> = {
   draft: { label: "Draft" },
@@ -40,7 +43,8 @@ export default async function DashboardPage({
   if (from) query = query.gte("created_at", from);
   if (to) query = query.lte("created_at", `${to}T23:59:59`);
 
-  const [{ data: requests }, procedureLabels] = await Promise.all([query, getProcedureLabelMap()]);
+  const [{ data: requests }, procedureLabels, siteContent] = await Promise.all([query, getProcedureLabelMap(), getSiteContent()]);
+  const c = makeFieldGetter(PA_PAGE, siteContent);
 
   const requestIds = (requests || []).map((r) => r.id);
   const { data: letters } = requestIds.length
@@ -78,8 +82,8 @@ export default async function DashboardPage({
   return (
     <div className="max-w-[1300px] mx-auto py-8 px-5">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
-        <h1 className="text-[20px] sm:text-[24px] font-semibold">Prior authorization requests</h1>
-        <Link href="/dashboard/requests/new" className="btn btn-primary self-start sm:self-auto">New Request →</Link>
+        <h1 className="text-[20px] sm:text-[24px] font-semibold">{c("pa_h1")}</h1>
+        <Link href="/dashboard/requests/new" className="btn btn-primary self-start sm:self-auto">{c("pa_new_button")} →</Link>
       </div>
 
       {drafted && (
@@ -140,7 +144,7 @@ export default async function DashboardPage({
                 ) : (
                   <tr>
                     <td className="px-5 py-10 text-center text-gray-400" colSpan={6}>
-                      No requests yet. <Link href="/dashboard/requests/new" className="text-indigo-600">Create your first one →</Link>
+                      {c("pa_empty_state")} <Link href="/dashboard/requests/new" className="text-indigo-600">{c("pa_empty_cta")} →</Link>
                     </td>
                   </tr>
                 )}

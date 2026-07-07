@@ -1,15 +1,19 @@
 import { DEADLINE_REFERENCE, DENIAL_GUIDE, SOURCE_HONESTY_NOTE, SOURCE_NOTES } from "@/lib/resources-data";
+import { getSiteContent } from "@/lib/criteria-repo";
+import { getPageBySlug, makeFieldGetter } from "@/lib/content-schema";
 
-export default function ResourcesPage() {
+const RESOURCES_PAGE = getPageBySlug("resources")!;
+
+export default async function ResourcesPage() {
+  const c = makeFieldGetter(RESOURCES_PAGE, await getSiteContent());
+
   return (
     <div className="max-w-[1000px] mx-auto py-8 px-5">
-      <h1 className="text-[24px] font-semibold mb-1">Denial guide &amp; deadlines</h1>
-      <p className="text-[14px] text-gray-600 mb-8">
-        What each denial reason actually means, how long you have to respond, and where these numbers come from.
-      </p>
+      <h1 className="text-[24px] font-semibold mb-1">{c("resources_h1")}</h1>
+      <p className="text-[14px] text-gray-600 mb-8">{c("resources_subtitle")}</p>
 
       <section className="card p-6 mb-6">
-        <h2 className="text-[15px] font-semibold mb-4">Denial reason → what to do</h2>
+        <h2 className="text-[15px] font-semibold mb-4">{c("resources_section1_title")}</h2>
         <div className="overflow-x-auto">
           <table className="w-full text-[13.5px]">
             <thead>
@@ -35,7 +39,7 @@ export default function ResourcesPage() {
       </section>
 
       <section className="card p-6 mb-6">
-        <h2 className="text-[15px] font-semibold mb-4">Appeal deadlines by payer</h2>
+        <h2 className="text-[15px] font-semibold mb-4">{c("resources_section2_title")}</h2>
         <div className="overflow-x-auto">
           <table className="w-full text-[13.5px]">
             <thead>
@@ -63,7 +67,7 @@ export default function ResourcesPage() {
       </section>
 
       <section className="card p-6">
-        <h2 className="text-[15px] font-semibold mb-4">Sources &amp; verification</h2>
+        <h2 className="text-[15px] font-semibold mb-4">{c("resources_section3_title")}</h2>
         <ul className="flex flex-col gap-3 text-[13px] text-gray-600 leading-relaxed">
           {SOURCE_NOTES.map((note, i) => (
             <li key={i} className="flex gap-2">

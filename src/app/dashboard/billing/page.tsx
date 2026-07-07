@@ -1,8 +1,12 @@
 import { createClient } from "@/lib/supabase/server";
 import { requireAdmin } from "@/lib/permissions";
 import { PRACTICE_MONTHLY_PRICE_USD } from "@/lib/billing";
+import { getSiteContent } from "@/lib/criteria-repo";
+import { getPageBySlug, makeFieldGetter } from "@/lib/content-schema";
 import UpgradeButton from "./UpgradeButton";
 import { cancelSubscriptionAction } from "./actions";
+
+const BILLING_PAGE = getPageBySlug("billing")!;
 
 export default async function BillingPage({
   searchParams,
@@ -14,6 +18,7 @@ export default async function BillingPage({
   // details.
   await requireAdmin();
   const supabase = await createClient();
+  const c = makeFieldGetter(BILLING_PAGE, await getSiteContent());
 
   const {
     data: { user },
@@ -44,7 +49,7 @@ export default async function BillingPage({
 
   return (
     <div className="max-w-[760px] mx-auto py-8 px-5">
-      <h1 className="text-[24px] font-semibold mb-6">Billing</h1>
+      <h1 className="text-[24px] font-semibold mb-6">{c("billing_h1")}</h1>
 
       {upgraded && (
         <div className="mb-5 text-[13px] rounded-lg px-3 py-2" style={{ background: "var(--success-bg)", color: "var(--success-green)" }}>
@@ -102,12 +107,12 @@ export default async function BillingPage({
         )}
 
         {practice.plan === "multi_site" && (
-          <p className="text-[13px] text-gray-400">Multi-Site plans are managed directly — contact hello@asaanbil.com.</p>
+          <p className="text-[13px] text-gray-400">{c("billing_multisite_note")}</p>
         )}
       </section>
 
       <section className="card p-6">
-        <h2 className="text-[15px] font-semibold mb-4">Billing history</h2>
+        <h2 className="text-[15px] font-semibold mb-4">{c("billing_history_title")}</h2>
         <table className="w-full text-[13px]">
           <thead>
             <tr className="text-left text-gray-400 text-[11px] uppercase tracking-wide">
@@ -129,7 +134,7 @@ export default async function BillingPage({
         </table>
       </section>
 
-      <p className="text-[12px] text-gray-400 mt-4">Practice plan: ${PRACTICE_MONTHLY_PRICE_USD}/mo, billed monthly via Paddle. Invoices are emailed by Paddle after each charge.</p>
+      <p className="text-[12px] text-gray-400 mt-4">Practice plan: ${PRACTICE_MONTHLY_PRICE_USD}/mo, {c("billing_footer_note")}</p>
     </div>
   );
 }

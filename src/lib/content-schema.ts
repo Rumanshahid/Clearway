@@ -263,6 +263,131 @@ export const CONTENT_PAGES: ContentPageDef[] = [
       },
     ],
   },
+  // The six pages below are logged-in app screens, not marketing pages —
+  // they're built around live data (real patients, real claims, real
+  // billing state), so only their framing text is exposed here: heading,
+  // subtitle, primary button label, empty-state message. Column headers,
+  // stat labels, and section titles stay hardcoded since they're tied to
+  // real navigation/structure, not copy a marketer would tweak — renaming
+  // a stat card without also changing what it measures would just be
+  // confusing. Resources' actual denial-reason/deadline reference tables
+  // stay data-file-driven on purpose: that's factual payer/regulatory
+  // information, not something to expose to a plain-text-box edit.
+  {
+    slug: "dashboard",
+    label: "Dashboard",
+    revalidatePaths: ["/dashboard/overview"],
+    sections: [
+      {
+        title: "Heading",
+        fields: [
+          { key: "dashboard_h1", label: "Page title", default: "Practice overview" },
+          { key: "dashboard_subtitle", label: "Subtitle", default: "Everything happening across your practice, in one place." },
+        ],
+      },
+    ],
+  },
+  {
+    slug: "pa",
+    label: "PA",
+    revalidatePaths: ["/dashboard"],
+    sections: [
+      {
+        title: "Heading",
+        fields: [
+          { key: "pa_h1", label: "Page title", default: "Prior authorization requests" },
+          { key: "pa_new_button", label: "\"New Request\" button text", default: "New Request" },
+          { key: "pa_empty_state", label: "Empty-state message", default: "No requests yet." },
+          { key: "pa_empty_cta", label: "Empty-state link text", default: "Create your first one" },
+        ],
+      },
+    ],
+  },
+  {
+    slug: "patients",
+    label: "Patients",
+    revalidatePaths: ["/dashboard/patients"],
+    sections: [
+      {
+        title: "Heading",
+        fields: [
+          { key: "patients_h1", label: "Page title", default: "Patients" },
+          { key: "patients_add_button", label: "\"Add Patient\" button text", default: "Add Patient" },
+          { key: "patients_empty_state", label: "Empty-state message", default: "No patients yet." },
+          { key: "patients_empty_cta", label: "Empty-state link text", default: "Add your first one" },
+        ],
+      },
+    ],
+  },
+  {
+    slug: "appeals",
+    label: "Appeals",
+    revalidatePaths: ["/dashboard/appeals"],
+    sections: [
+      {
+        title: "Heading",
+        fields: [
+          { key: "appeals_h1", label: "Page title", default: "Claims denials & appeals" },
+          { key: "appeals_log_button", label: "\"Log Denial\" button text", default: "Log Denial" },
+          { key: "appeals_empty_state", label: "Empty-state message", default: "No claim denials logged yet." },
+          { key: "appeals_empty_cta", label: "Empty-state link text", default: "Log your first one" },
+        ],
+      },
+    ],
+  },
+  {
+    slug: "resources",
+    label: "Resources",
+    revalidatePaths: ["/dashboard/resources"],
+    sections: [
+      {
+        title: "Heading",
+        fields: [
+          { key: "resources_h1", label: "Page title", default: "Denial guide & deadlines" },
+          {
+            key: "resources_subtitle",
+            label: "Subtitle",
+            type: "textarea",
+            default: "What each denial reason actually means, how long you have to respond, and where these numbers come from.",
+          },
+        ],
+      },
+      {
+        title: "Section titles",
+        fields: [
+          { key: "resources_section1_title", label: "Section 1 title", default: "Denial reason → what to do" },
+          { key: "resources_section2_title", label: "Section 2 title", default: "Appeal deadlines by payer" },
+          { key: "resources_section3_title", label: "Section 3 title", default: "Sources & verification" },
+        ],
+      },
+    ],
+  },
+  {
+    slug: "billing",
+    label: "Billing",
+    revalidatePaths: ["/dashboard/billing"],
+    sections: [
+      {
+        title: "Heading",
+        fields: [
+          { key: "billing_h1", label: "Page title", default: "Billing" },
+          { key: "billing_history_title", label: "\"Billing history\" section title", default: "Billing history" },
+          {
+            key: "billing_multisite_note",
+            label: "Multi-Site plan note",
+            type: "textarea",
+            default: "Multi-Site plans are managed directly — contact hello@asaanbil.com.",
+          },
+          {
+            key: "billing_footer_note",
+            label: "Footer disclaimer (shown after the live Practice plan price)",
+            type: "textarea",
+            default: "billed monthly via Paddle. Invoices are emailed by Paddle after each charge.",
+          },
+        ],
+      },
+    ],
+  },
 ];
 
 export function getPageBySlug(slug: string): ContentPageDef | undefined {
