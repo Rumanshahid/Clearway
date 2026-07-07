@@ -8,7 +8,7 @@ export default function UserMenu({ name, isAdmin, plan }: { name: string; isAdmi
   const [open, setOpen] = useState(false);
 
   return (
-    <div className="relative">
+    <div className="relative" onMouseEnter={() => setOpen(true)} onMouseLeave={() => setOpen(false)}>
       <button
         type="button"
         className="flex items-center gap-1.5 text-[13.5px] text-gray-700 font-medium px-2 py-1.5 rounded-md hover:bg-gray-100 active:scale-95"
@@ -22,7 +22,6 @@ export default function UserMenu({ name, isAdmin, plan }: { name: string; isAdmi
         </svg>
       </button>
 
-      {open && <div className="fixed inset-0 z-10" onClick={() => setOpen(false)} />}
       <div
         className={`dropdown-panel fixed sm:absolute right-3 sm:right-0 left-3 sm:left-auto top-16 sm:top-11 sm:w-[200px] card z-20 overflow-hidden${open ? " open" : ""}`}
       >

@@ -29,14 +29,24 @@ export default function NavLink({
   return (
     <Link
       href={href}
-      className="px-2.5 py-1.5 rounded-md text-[13.5px] transition-colors hover:bg-gray-100"
-      style={{
-        color: active ? "var(--gray-900)" : "var(--gray-600)",
-        fontWeight: active ? 600 : 400,
-        background: active ? "var(--gray-100)" : "transparent",
-      }}
+      className="relative px-2.5 py-1.5 rounded-md text-[13.5px] transition-colors hover:bg-gray-100"
+      // Only set an inline background for the active case — an inline
+      // "transparent" here would permanently win over the hover:bg-gray-100
+      // class (inline styles beat class-based :hover regardless of state),
+      // silently killing the hover highlight for every non-active link.
+      style={
+        active
+          ? { color: "var(--gray-900)", fontWeight: 600, background: "var(--gray-100)" }
+          : { color: "var(--gray-600)", fontWeight: 400 }
+      }
     >
       {children}
+      {active && (
+        <span
+          className="absolute left-2 right-2 rounded-full"
+          style={{ bottom: 2, height: 2, background: "var(--indigo-600)" }}
+        />
+      )}
     </Link>
   );
 }

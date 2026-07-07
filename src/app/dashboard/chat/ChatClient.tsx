@@ -389,7 +389,11 @@ export default function ChatClient({
               +
             </button>
           ) : (
-            <button type="button" className="btn btn-outline btn-sm w-full" onClick={() => setShowNew((v) => !v)}>
+            <button
+              type="button"
+              className="w-full h-8 rounded-md flex items-center justify-center gap-1.5 text-[13px] font-medium text-gray-700 hover:bg-gray-100"
+              onClick={() => setShowNew((v) => !v)}
+            >
               + New group
             </button>
           )}
@@ -583,16 +587,15 @@ export default function ChatClient({
                 />
                 <button
                   type="button"
-                  className="btn btn-primary"
-                  style={{ padding: "10px 14px" }}
+                  className="w-9 h-9 rounded-md flex items-center justify-center flex-shrink-0 hover:bg-gray-100 disabled:opacity-50"
                   disabled={uploading}
                   onClick={sendMessage}
                   aria-label="Send message"
                   title="Send"
                 >
-                  <svg width="15" height="15" viewBox="0 0 16 16" fill="none">
-                    <path d="M14 2L2 7.5l4.5 1.8L8.5 14 14 2z" stroke="#fff" strokeWidth="1.3" strokeLinejoin="round" strokeLinecap="round" />
-                    <path d="M14 2L6.5 9.3" stroke="#fff" strokeWidth="1.3" strokeLinecap="round" />
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                    <path d="M14 2L2 7.5l4.5 1.8L8.5 14 14 2z" stroke="var(--indigo-600)" strokeWidth="1.3" strokeLinejoin="round" strokeLinecap="round" />
+                    <path d="M14 2L6.5 9.3" stroke="var(--indigo-600)" strokeWidth="1.3" strokeLinecap="round" />
                   </svg>
                 </button>
               </div>
