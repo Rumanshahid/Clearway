@@ -32,9 +32,6 @@ export default async function ChatPage({
 
   return (
     <div className="max-w-[1300px] mx-auto py-8 px-5">
-      <h1 className="text-[24px] font-semibold mb-1">Chat</h1>
-      <p className="text-[14px] text-gray-600 mb-6">Everyone&apos;s in the Team conversation by default, plus a direct chat with each teammate — start a group for anything more specific.</p>
-
       <ChatClient
         currentUserId={session.userId}
         currentUserAvatarUrl={ownProfile?.avatar_url || null}

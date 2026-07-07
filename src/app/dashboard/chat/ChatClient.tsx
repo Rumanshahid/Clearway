@@ -68,6 +68,9 @@ export default function ChatClient({
   const [uploading, setUploading] = useState(false);
   const [recording, setRecording] = useState(false);
   const [onlineUserIds, setOnlineUserIds] = useState<Set<string>>(new Set());
+  const [collapsed, setCollapsed] = useState(false);
+  const [pendingAttachment, setPendingAttachment] = useState<{ file: File; type: "image" | "audio" | "file"; previewUrl: string } | null>(null);
+  const [lightbox, setLightbox] = useState<{ url: string; name: string } | null>(null);
 
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
@@ -229,45 +232,31 @@ export default function ChatClient({
     });
   }
 
-  async function handleSendText() {
-    if (!text.trim() || !activeId) return;
-    const content = text.trim();
-    setText("");
-    await supabase.from("messages").insert({ conversation_id: activeId, sender_id: currentUserId, content });
+  // Attachments are staged in pendingAttachment rather than uploaded
+  // immediately — attaching a file or recording a voice message just fills
+  // the compose box's preview, so the sender can still remove it, add text
+  // alongside it, or send, all in one message row (content + attachment
+  // together).
+  function stageAttachment(file: File, type: "image" | "audio" | "file", previewUrl: string) {
+    if (pendingAttachment?.previewUrl) URL.revokeObjectURL(pendingAttachment.previewUrl);
+    setPendingAttachment({ file, type, previewUrl });
   }
 
-  async function uploadAttachment(file: File, attachmentType: "image" | "audio" | "file") {
-    if (!activeId) return;
-    if (file.size > 15 * 1024 * 1024) {
-      alert("File is too large (max 15MB).");
-      return;
-    }
-    setUploading(true);
-    try {
-      const path = `${practiceId}/${activeId}/${crypto.randomUUID()}-${file.name}`;
-      const { error: uploadError } = await supabase.storage.from("chat-attachments").upload(path, file);
-      if (uploadError) {
-        alert(`Upload failed: ${uploadError.message}`);
-        return;
-      }
-      await supabase.from("messages").insert({
-        conversation_id: activeId,
-        sender_id: currentUserId,
-        attachment_url: path,
-        attachment_type: attachmentType,
-        attachment_name: file.name,
-      });
-    } finally {
-      setUploading(false);
-    }
+  function clearPendingAttachment() {
+    if (pendingAttachment?.previewUrl) URL.revokeObjectURL(pendingAttachment.previewUrl);
+    setPendingAttachment(null);
   }
 
   function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
-    if (!file) return;
-    const type = file.type.startsWith("image/") ? "image" : "file";
-    uploadAttachment(file, type);
     e.target.value = "";
+    if (!file) return;
+    if (file.size > 15 * 1024 * 1024) {
+      alert("File is too large (max 15MB).");
+      return;
+    }
+    const type = file.type.startsWith("image/") ? "image" : "file";
+    stageAttachment(file, type, type === "image" ? URL.createObjectURL(file) : "");
   }
 
   async function toggleVoiceRecording() {
@@ -284,13 +273,64 @@ export default function ChatClient({
       recorder.onstop = () => {
         const blob = new Blob(audioChunksRef.current, { type: "audio/webm" });
         stream.getTracks().forEach((t) => t.stop());
-        uploadAttachment(new File([blob], `voice-message-${Date.now()}.webm`, { type: "audio/webm" }), "audio");
+        const file = new File([blob], `voice-message-${Date.now()}.webm`, { type: "audio/webm" });
+        stageAttachment(file, "audio", URL.createObjectURL(blob));
       };
       mediaRecorderRef.current = recorder;
       recorder.start();
       setRecording(true);
     } catch {
       alert("Couldn't access your microphone — check your browser's permission settings.");
+    }
+  }
+
+  async function sendMessage() {
+    if (!activeId || (!text.trim() && !pendingAttachment)) return;
+    const content = text.trim() || null;
+    const attachment = pendingAttachment;
+    setText("");
+    clearPendingAttachment();
+
+    if (!attachment) {
+      await supabase.from("messages").insert({ conversation_id: activeId, sender_id: currentUserId, content });
+      return;
+    }
+
+    setUploading(true);
+    try {
+      const path = `${practiceId}/${activeId}/${crypto.randomUUID()}-${attachment.file.name}`;
+      const { error: uploadError } = await supabase.storage.from("chat-attachments").upload(path, attachment.file);
+      if (uploadError) {
+        alert(`Upload failed: ${uploadError.message}`);
+        return;
+      }
+      await supabase.from("messages").insert({
+        conversation_id: activeId,
+        sender_id: currentUserId,
+        content,
+        attachment_url: path,
+        attachment_type: attachment.type,
+        attachment_name: attachment.file.name,
+      });
+    } finally {
+      setUploading(false);
+    }
+  }
+
+  async function handleDownloadAttachment(url: string, name: string) {
+    try {
+      const res = await fetch(url);
+      const blob = await res.blob();
+      const blobUrl = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = blobUrl;
+      a.download = name;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(blobUrl);
+    } catch {
+      window.open(url, "_blank");
     }
   }
 
@@ -316,15 +356,51 @@ export default function ChatClient({
 
   return (
     <div className="flex gap-6 items-start" style={{ height: "70vh" }}>
-      <aside className="w-[260px] flex-shrink-0 card p-0 overflow-hidden flex flex-col h-full">
-        <div className="p-4 flex items-center justify-between" style={{ borderBottom: "1px solid var(--gray-200)" }}>
-          <span className="text-[13px] font-semibold">Conversations</span>
-          <button type="button" className="btn btn-outline btn-sm" onClick={() => setShowNew((v) => !v)}>
-            + New group
+      <aside
+        className={`${collapsed ? "w-16" : "w-[260px]"} flex-shrink-0 card p-0 overflow-hidden flex flex-col h-full transition-all duration-200`}
+      >
+        <div className="p-3 flex items-center justify-between" style={{ borderBottom: "1px solid var(--gray-200)" }}>
+          {!collapsed && <span className="text-[13px] font-semibold">Conversations</span>}
+          <button
+            type="button"
+            className="w-7 h-7 rounded-md flex items-center justify-center flex-shrink-0 hover:bg-gray-100"
+            style={{ marginLeft: collapsed ? "auto" : 0, marginRight: collapsed ? "auto" : 0 }}
+            aria-label={collapsed ? "Expand conversations" : "Collapse conversations"}
+            title={collapsed ? "Expand" : "Collapse"}
+            onClick={() => setCollapsed((v) => !v)}
+          >
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+              {collapsed ? (
+                <path d="M4.5 2.5L9.5 7l-5 4.5" stroke="var(--gray-600)" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+              ) : (
+                <path d="M9.5 2.5L4.5 7l5 4.5" stroke="var(--gray-600)" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+              )}
+            </svg>
           </button>
         </div>
 
-        {showNew && (
+        <div className="p-2" style={{ borderBottom: "1px solid var(--gray-200)" }}>
+          {collapsed ? (
+            <button
+              type="button"
+              className="w-full h-8 rounded-md flex items-center justify-center hover:bg-gray-100"
+              aria-label="New group"
+              title="New group"
+              onClick={() => {
+                setCollapsed(false);
+                setShowNew((v) => !v);
+              }}
+            >
+              +
+            </button>
+          ) : (
+            <button type="button" className="btn btn-outline btn-sm w-full" onClick={() => setShowNew((v) => !v)}>
+              + New group
+            </button>
+          )}
+        </div>
+
+        {showNew && !collapsed && (
           <div className="p-4 flex flex-col gap-3" style={{ borderBottom: "1px solid var(--gray-200)" }}>
             <input className="input" placeholder="Group name" value={groupName} onChange={(e) => setGroupName(e.target.value)} />
             <div className="flex flex-col gap-1 max-h-[140px] overflow-y-auto">
@@ -349,18 +425,19 @@ export default function ChatClient({
         )}
 
         <div className="flex-1 overflow-y-auto">
-          {conversations.length === 0 && !showNew && (
+          {conversations.length === 0 && !showNew && !collapsed && (
             <p className="text-[12.5px] text-gray-400 p-4">No conversations yet — start one above.</p>
           )}
           {conversations.map((c) => (
             <button
               key={c.id}
               type="button"
-              className="w-full flex items-center gap-2 text-left px-4 py-3 text-[13.5px]"
+              className={`w-full flex items-center text-left text-[13.5px] ${collapsed ? "justify-center px-2 py-3" : "gap-2 px-4 py-3"}`}
               style={{
                 background: c.id === activeId ? "var(--gray-50)" : "transparent",
                 borderBottom: "1px solid var(--gray-100)",
               }}
+              title={collapsed ? c.label : undefined}
               onClick={() => setActiveId(c.id)}
             >
               {c.type === "group" || c.type === "team" ? (
@@ -368,7 +445,7 @@ export default function ChatClient({
               ) : (
                 c.otherId && <Avatar name={nameById.get(c.otherId)} userId={c.otherId} avatarUrl={avatarById.get(c.otherId)} size={22} />
               )}
-              {c.label}
+              {!collapsed && c.label}
             </button>
           ))}
         </div>
@@ -415,14 +492,18 @@ export default function ChatClient({
                       </div>
                     )}
                     {m.attachment_url && m.attachment_type === "image" && signedUrls[m.attachment_url] && (
-                      <a href={signedUrls[m.attachment_url]} target="_blank" rel="noopener noreferrer">
+                      <button
+                        type="button"
+                        className="p-0 border-0 bg-transparent cursor-pointer"
+                        onClick={() => setLightbox({ url: signedUrls[m.attachment_url!], name: m.attachment_name || "Photo" })}
+                      >
                         {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img
                           src={signedUrls[m.attachment_url]}
                           alt={m.attachment_name || "Photo"}
                           className="rounded-lg max-w-[220px]"
                         />
-                      </a>
+                      </button>
                     )}
                     {m.attachment_url && m.attachment_type === "audio" && signedUrls[m.attachment_url] && (
                       <audio controls src={signedUrls[m.attachment_url]} style={{ maxWidth: "220px" }} />
@@ -454,31 +535,58 @@ export default function ChatClient({
               })}
               <div ref={messagesEndRef} />
             </div>
-            <div className="p-3 flex items-center gap-2" style={{ borderTop: "1px solid var(--gray-200)" }}>
-              <input type="file" ref={fileInputRef} className="hidden" onChange={handleFileChange} />
-              <button type="button" className="btn btn-outline btn-sm" disabled={uploading} onClick={() => fileInputRef.current?.click()}>
-                📎
-              </button>
-              <button
-                type="button"
-                className="btn btn-outline btn-sm"
-                style={recording ? { background: "var(--danger-bg)", color: "var(--danger-red)" } : undefined}
-                onClick={toggleVoiceRecording}
-              >
-                {recording ? "■ Stop" : "🎤"}
-              </button>
-              <input
-                className="input flex-1"
-                placeholder="Type a message…"
-                value={text}
-                onChange={(e) => setText(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") handleSendText();
-                }}
-              />
-              <button type="button" className="btn btn-primary btn-sm" onClick={handleSendText}>
-                Send
-              </button>
+            <div style={{ borderTop: "1px solid var(--gray-200)" }}>
+              {pendingAttachment && (
+                <div className="px-3 pt-3 flex items-center">
+                  <div className="flex items-center gap-2 rounded-lg px-2 py-1.5" style={{ background: "var(--gray-100)" }}>
+                    {pendingAttachment.type === "image" && (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={pendingAttachment.previewUrl} alt="Attachment preview" className="w-10 h-10 rounded object-cover" />
+                    )}
+                    {pendingAttachment.type === "audio" && (
+                      <audio controls src={pendingAttachment.previewUrl} style={{ maxWidth: 200 }} />
+                    )}
+                    {pendingAttachment.type === "file" && (
+                      <span className="text-[13px] text-gray-700">📎 {pendingAttachment.file.name}</span>
+                    )}
+                    <button
+                      type="button"
+                      className="text-gray-400 hover:text-[var(--danger-red)]"
+                      aria-label="Remove attachment"
+                      title="Remove attachment"
+                      onClick={clearPendingAttachment}
+                    >
+                      ✕
+                    </button>
+                  </div>
+                </div>
+              )}
+              <div className="p-3 flex items-center gap-2">
+                <input type="file" ref={fileInputRef} className="hidden" onChange={handleFileChange} />
+                <button type="button" className="btn btn-outline btn-sm" disabled={uploading} onClick={() => fileInputRef.current?.click()}>
+                  📎
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-outline btn-sm"
+                  style={recording ? { background: "var(--danger-bg)", color: "var(--danger-red)" } : undefined}
+                  onClick={toggleVoiceRecording}
+                >
+                  {recording ? "■ Stop" : "🎤"}
+                </button>
+                <input
+                  className="input flex-1"
+                  placeholder="Type a message…"
+                  value={text}
+                  onChange={(e) => setText(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") sendMessage();
+                  }}
+                />
+                <button type="button" className="btn btn-primary btn-sm" disabled={uploading} onClick={sendMessage}>
+                  {uploading ? "Sending…" : "Send"}
+                </button>
+              </div>
             </div>
           </>
         ) : (
@@ -487,6 +595,47 @@ export default function ChatClient({
           </div>
         )}
       </div>
+
+      {lightbox && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center px-6"
+          style={{ background: "rgba(0,0,0,0.85)" }}
+          onClick={() => setLightbox(null)}
+        >
+          <div className="absolute top-4 right-4 flex items-center gap-2">
+            <button
+              type="button"
+              className="btn btn-outline btn-sm"
+              style={{ background: "#fff" }}
+              onClick={(e) => {
+                e.stopPropagation();
+                handleDownloadAttachment(lightbox.url, lightbox.name);
+              }}
+            >
+              Download
+            </button>
+            <button
+              type="button"
+              className="btn btn-outline btn-sm"
+              style={{ background: "#fff" }}
+              aria-label="Close"
+              onClick={(e) => {
+                e.stopPropagation();
+                setLightbox(null);
+              }}
+            >
+              ✕
+            </button>
+          </div>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={lightbox.url}
+            alt={lightbox.name}
+            className="max-w-[90vw] max-h-[85vh] rounded-lg"
+            onClick={(e) => e.stopPropagation()}
+          />
+        </div>
+      )}
     </div>
   );
 }
