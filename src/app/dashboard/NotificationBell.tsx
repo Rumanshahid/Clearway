@@ -40,7 +40,7 @@ export default function NotificationBell({ notifications }: { notifications: Not
   }
 
   return (
-    <div className="relative">
+    <div className="relative" onMouseEnter={() => setOpen(true)} onMouseLeave={() => setOpen(false)}>
       <button
         type="button"
         className="relative w-9 h-9 rounded-md flex items-center justify-center flex-shrink-0 hover:bg-gray-100 active:scale-95"

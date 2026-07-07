@@ -20,12 +20,12 @@ export default function ChatBell({ conversations }: { conversations: Conversatio
   }
 
   return (
-    <div className="relative">
+    <div className="relative" onMouseEnter={() => setOpen(true)} onMouseLeave={() => setOpen(false)}>
       <button
         type="button"
         className="relative w-9 h-9 rounded-md flex items-center justify-center flex-shrink-0 hover:bg-gray-100 active:scale-95"
         style={{ transition: "background-color 0.2s ease, transform 0.1s ease" }}
-        onClick={() => setOpen((v) => !v)}
+        onClick={() => goToChat()}
         aria-label="Chat"
       >
         <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
@@ -33,14 +33,13 @@ export default function ChatBell({ conversations }: { conversations: Conversatio
         </svg>
       </button>
 
-      {open && <div className="fixed inset-0 z-10" onClick={() => setOpen(false)} />}
       <div
         className={`dropdown-panel fixed sm:absolute right-3 sm:right-0 left-3 sm:left-auto top-16 sm:top-11 sm:w-[320px] card z-20 overflow-hidden${open ? " open" : ""}`}
       >
         <div className="flex items-center justify-between px-4 py-3" style={{ borderBottom: "1px solid var(--gray-200)" }}>
           <span className="text-[13.5px] font-semibold">Chat</span>
           <button type="button" className="text-btn text-[12px] text-indigo-600" onClick={() => goToChat()}>
-            Expand
+            View more
           </button>
         </div>
         <div className="max-h-[360px] overflow-y-auto">

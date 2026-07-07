@@ -36,8 +36,12 @@ interface ReadReceipt {
   last_read_at: string;
 }
 
-function formatTime(iso: string): string {
-  return new Date(iso).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+// Full date + time, shown only on hover (see the per-message timestamp span
+// below) — by default no timestamp is visible at all, keeping the thread
+// minimal.
+function formatDateTime(iso: string): string {
+  const d = new Date(iso);
+  return `${d.toLocaleDateString([], { month: "short", day: "numeric" })} · ${d.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}`;
 }
 
 export default function ChatClient({
@@ -355,9 +359,10 @@ export default function ChatClient({
   }
 
   return (
-    <div className="flex gap-6 items-start" style={{ height: "70vh" }}>
+    <div className="card p-0 overflow-hidden flex items-stretch" style={{ height: "70vh" }}>
       <aside
-        className={`${collapsed ? "w-16" : "w-[260px]"} flex-shrink-0 card p-0 overflow-hidden flex flex-col h-full transition-all duration-200`}
+        className={`${collapsed ? "w-16" : "w-[260px]"} flex-shrink-0 overflow-hidden flex flex-col transition-all duration-200`}
+        style={{ borderRight: "1px solid var(--gray-200)" }}
       >
         <div className="p-3 flex items-center justify-between" style={{ borderBottom: "1px solid var(--gray-200)" }}>
           {!collapsed && <span className="text-[13px] font-semibold">Conversations</span>}
@@ -451,7 +456,7 @@ export default function ChatClient({
         </div>
       </aside>
 
-      <div className="flex-1 min-w-0 h-full card p-0 flex flex-col">
+      <div className="flex-1 min-w-0 flex flex-col">
         {activeConversation ? (
           <>
             <div className="p-4 flex items-center justify-between" style={{ borderBottom: "1px solid var(--gray-200)" }}>
@@ -477,12 +482,14 @@ export default function ChatClient({
               {messages.map((m) => {
                 const mine = m.sender_id === currentUserId;
                 const status = mine ? messageStatus(m.created_at) : null;
+                const showIdentity = !mine && (activeConversation.type === "group" || activeConversation.type === "team");
                 return (
-                  <div key={m.id} className={`flex flex-col gap-1 ${mine ? "items-end" : "items-start"}`}>
-                    <span className="flex items-center gap-1.5 text-[11px] text-gray-400">
-                      {!mine && <Avatar name={nameById.get(m.sender_id)} userId={m.sender_id} avatarUrl={avatarById.get(m.sender_id)} size={16} />}
-                      {nameById.get(m.sender_id) || "Unknown"}
-                    </span>
+                  <div key={m.id} className={`group flex flex-col gap-1 ${mine ? "items-end" : "items-start"}`}>
+                    {showIdentity && (
+                      <span title={nameById.get(m.sender_id) || "Unknown"}>
+                        <Avatar name={nameById.get(m.sender_id)} userId={m.sender_id} avatarUrl={avatarById.get(m.sender_id)} size={20} />
+                      </span>
+                    )}
                     {m.content && (
                       <div
                         className="rounded-2xl px-3 py-2 max-w-[70%] text-[13.5px]"
@@ -519,8 +526,8 @@ export default function ChatClient({
                         📎 {m.attachment_name || "File"}
                       </a>
                     )}
-                    <span className="flex items-center gap-1 text-[10.5px] text-gray-400">
-                      {formatTime(m.created_at)}
+                    <span className="flex items-center gap-1 text-[10.5px] text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity">
+                      {formatDateTime(m.created_at)}
                       {status && (
                         <>
                           <span>·</span>
@@ -583,8 +590,19 @@ export default function ChatClient({
                     if (e.key === "Enter") sendMessage();
                   }}
                 />
-                <button type="button" className="btn btn-primary btn-sm" disabled={uploading} onClick={sendMessage}>
-                  {uploading ? "Sending…" : "Send"}
+                <button
+                  type="button"
+                  className="btn btn-primary"
+                  style={{ padding: "10px 14px" }}
+                  disabled={uploading}
+                  onClick={sendMessage}
+                  aria-label="Send message"
+                  title="Send"
+                >
+                  <svg width="15" height="15" viewBox="0 0 16 16" fill="none">
+                    <path d="M14 2L2 7.5l4.5 1.8L8.5 14 14 2z" stroke="#fff" strokeWidth="1.3" strokeLinejoin="round" strokeLinecap="round" />
+                    <path d="M14 2L6.5 9.3" stroke="#fff" strokeWidth="1.3" strokeLinecap="round" />
+                  </svg>
                 </button>
               </div>
             </div>
