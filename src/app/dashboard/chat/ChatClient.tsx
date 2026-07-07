@@ -401,32 +401,47 @@ export default function ChatClient({
                 const mine = m.sender_id === currentUserId;
                 const status = mine ? messageStatus(m.created_at) : null;
                 return (
-                  <div key={m.id} className={`flex flex-col ${mine ? "items-end" : "items-start"}`}>
-                    <span className="flex items-center gap-1.5 text-[11px] text-gray-400 mb-0.5">
+                  <div key={m.id} className={`flex flex-col gap-1 ${mine ? "items-end" : "items-start"}`}>
+                    <span className="flex items-center gap-1.5 text-[11px] text-gray-400">
                       {!mine && <Avatar name={nameById.get(m.sender_id)} userId={m.sender_id} avatarUrl={avatarById.get(m.sender_id)} size={16} />}
                       {nameById.get(m.sender_id) || "Unknown"}
                     </span>
-                    <div
-                      className="rounded-2xl px-3 py-2 max-w-[70%] text-[13.5px]"
-                      style={mine ? { background: "var(--indigo-600)", color: "#fff" } : { background: "var(--gray-100)", color: "var(--gray-900)" }}
-                    >
-                      {m.content && <p className="whitespace-pre-wrap">{m.content}</p>}
-                      {m.attachment_url && m.attachment_type === "image" && signedUrls[m.attachment_url] && (
-                        <a href={signedUrls[m.attachment_url]} target="_blank" rel="noopener noreferrer">
-                          {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img src={signedUrls[m.attachment_url]} alt={m.attachment_name || "Photo"} className="rounded-lg mt-1 max-w-[220px]" />
-                        </a>
-                      )}
-                      {m.attachment_url && m.attachment_type === "audio" && signedUrls[m.attachment_url] && (
-                        <audio controls src={signedUrls[m.attachment_url]} className="mt-1" style={{ maxWidth: "220px" }} />
-                      )}
-                      {m.attachment_url && m.attachment_type === "file" && signedUrls[m.attachment_url] && (
-                        <a href={signedUrls[m.attachment_url]} target="_blank" rel="noopener noreferrer" className="underline text-[13px] mt-1 inline-block">
-                          📎 {m.attachment_name || "File"}
-                        </a>
-                      )}
-                    </div>
-                    <span className="flex items-center gap-1 text-[10.5px] text-gray-400 mt-0.5">
+                    {m.content && (
+                      <div
+                        className="rounded-2xl px-3 py-2 max-w-[70%] text-[13.5px]"
+                        style={mine ? { background: "var(--indigo-600)", color: "#fff" } : { background: "var(--gray-100)", color: "var(--gray-900)" }}
+                      >
+                        <p className="whitespace-pre-wrap">{m.content}</p>
+                      </div>
+                    )}
+                    {m.attachment_url && m.attachment_type === "image" && signedUrls[m.attachment_url] && (
+                      <a href={signedUrls[m.attachment_url]} target="_blank" rel="noopener noreferrer">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={signedUrls[m.attachment_url]}
+                          alt={m.attachment_name || "Photo"}
+                          className="rounded-lg max-w-[220px] border"
+                          style={{ borderColor: "var(--gray-200)" }}
+                        />
+                      </a>
+                    )}
+                    {m.attachment_url && m.attachment_type === "audio" && signedUrls[m.attachment_url] && (
+                      <div className="rounded-lg border p-1.5" style={{ borderColor: "var(--gray-200)" }}>
+                        <audio controls src={signedUrls[m.attachment_url]} style={{ maxWidth: "220px" }} />
+                      </div>
+                    )}
+                    {m.attachment_url && m.attachment_type === "file" && signedUrls[m.attachment_url] && (
+                      <a
+                        href={signedUrls[m.attachment_url]}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="underline text-[13px] rounded-lg px-3 py-2 border"
+                        style={{ borderColor: "var(--gray-200)", color: "var(--indigo-600)" }}
+                      >
+                        📎 {m.attachment_name || "File"}
+                      </a>
+                    )}
+                    <span className="flex items-center gap-1 text-[10.5px] text-gray-400">
                       {formatTime(m.created_at)}
                       {status && (
                         <>
