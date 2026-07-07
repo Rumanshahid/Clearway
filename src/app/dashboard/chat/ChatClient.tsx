@@ -425,9 +425,7 @@ export default function ChatClient({
                       </a>
                     )}
                     {m.attachment_url && m.attachment_type === "audio" && signedUrls[m.attachment_url] && (
-                      <div className="rounded-lg p-1.5" style={{ background: mine ? "#EEF0FF" : "var(--gray-100)" }}>
-                        <audio controls src={signedUrls[m.attachment_url]} style={{ maxWidth: "220px" }} />
-                      </div>
+                      <audio controls src={signedUrls[m.attachment_url]} style={{ maxWidth: "220px" }} />
                     )}
                     {m.attachment_url && m.attachment_type === "file" && signedUrls[m.attachment_url] && (
                       <a
