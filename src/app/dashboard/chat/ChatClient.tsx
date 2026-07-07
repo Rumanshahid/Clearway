@@ -359,7 +359,7 @@ export default function ChatClient({
   }
 
   return (
-    <div className="card p-0 overflow-hidden flex items-stretch" style={{ height: "70vh" }}>
+    <div className="h-full bg-white overflow-hidden flex items-stretch">
       <aside
         className={`${collapsed ? "w-16" : "w-[260px]"} flex-shrink-0 overflow-hidden flex flex-col transition-all duration-200`}
         style={{ borderRight: "1px solid var(--gray-200)" }}

@@ -31,7 +31,7 @@ export default async function ChatPage({
   const conversationsWithLabel = await getConversationSummaries(session.userId, session.practiceId);
 
   return (
-    <div className="max-w-[1300px] mx-auto py-8 px-5">
+    <div style={{ height: "calc(100vh - 57px)" }}>
       <ChatClient
         currentUserId={session.userId}
         currentUserAvatarUrl={ownProfile?.avatar_url || null}
