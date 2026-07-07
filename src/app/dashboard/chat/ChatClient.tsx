@@ -420,13 +420,12 @@ export default function ChatClient({
                         <img
                           src={signedUrls[m.attachment_url]}
                           alt={m.attachment_name || "Photo"}
-                          className="rounded-lg max-w-[220px] border"
-                          style={{ borderColor: "var(--gray-200)" }}
+                          className="rounded-lg max-w-[220px]"
                         />
                       </a>
                     )}
                     {m.attachment_url && m.attachment_type === "audio" && signedUrls[m.attachment_url] && (
-                      <div className="rounded-lg border p-1.5" style={{ borderColor: "var(--gray-200)" }}>
+                      <div className="rounded-lg p-1.5" style={{ background: mine ? "#EEF0FF" : "var(--gray-100)" }}>
                         <audio controls src={signedUrls[m.attachment_url]} style={{ maxWidth: "220px" }} />
                       </div>
                     )}
@@ -435,8 +434,8 @@ export default function ChatClient({
                         href={signedUrls[m.attachment_url]}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="underline text-[13px] rounded-lg px-3 py-2 border"
-                        style={{ borderColor: "var(--gray-200)", color: "var(--indigo-600)" }}
+                        className="underline text-[13px] rounded-lg px-3 py-2"
+                        style={{ background: mine ? "#EEF0FF" : "var(--gray-100)", color: "var(--indigo-600)" }}
                       >
                         📎 {m.attachment_name || "File"}
                       </a>
