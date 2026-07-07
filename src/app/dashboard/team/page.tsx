@@ -55,8 +55,6 @@ export default async function TeamPage({
     }))
     .sort((a, b) => a.name.localeCompare(b.name));
 
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://www.asaanbil.com";
-
   return (
     <div className="max-w-[1100px] mx-auto py-8 px-5">
       <h1 className="text-[24px] font-semibold mb-1">Team</h1>
@@ -96,7 +94,7 @@ export default async function TeamPage({
         </table>
       </div>
 
-      <InvitePanel invites={invites || []} siteUrl={siteUrl} />
+      <InvitePanel invites={invites || []} />
     </div>
   );
 }

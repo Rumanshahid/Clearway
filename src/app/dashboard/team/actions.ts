@@ -124,6 +124,52 @@ export async function inviteMemberAction(formData: FormData) {
   redirect(`/dashboard/team?invited=${encodeURIComponent(email)}`);
 }
 
+// Powers the "Copy link" button for a pending invite. The email an invite
+// sends already contains a passwordless Supabase link, but that link isn't
+// stored anywhere — it only exists in the outgoing email. So "Copy link" used
+// to fall back to the plain /join/[token] URL, which forces whoever opens it
+// through a manual create-account flow if they aren't already signed in.
+// Generating a fresh passwordless link here on demand gives "Copy link" the
+// exact same click-and-join experience as the email.
+export async function generateInviteLinkAction(inviteId: string): Promise<{ link?: string; error?: string }> {
+  const { practiceId } = await requireCallerIsPracticeAdmin();
+
+  const admin = await createAdminClient();
+  const { data: invite } = await admin
+    .from("invites")
+    .select("token, email, practice_id, accepted_at, expires_at")
+    .eq("id", inviteId)
+    .single();
+
+  if (!invite || invite.practice_id !== practiceId) {
+    return { error: "Invite not found." };
+  }
+  if (invite.accepted_at || new Date(invite.expires_at) < new Date()) {
+    return { error: "This invite has expired or was already used." };
+  }
+
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://www.asaanbil.com";
+  const redirectTo = `${siteUrl}/auth/callback?next=${encodeURIComponent(`/join/${invite.token}`)}`;
+
+  // Re-check every time: the first "invite"-type link already creates the
+  // (unconfirmed) auth user, so a second click for the same invite must
+  // switch to "magiclink" or generateLink errors with "user already exists".
+  const { data: existingUsers } = await admin.auth.admin.listUsers({ perPage: 200 });
+  const userExists = (existingUsers?.users || []).some((u) => u.email?.toLowerCase() === invite.email);
+
+  const { data: linkData, error: linkError } = await admin.auth.admin.generateLink({
+    type: userExists ? "magiclink" : "invite",
+    email: invite.email,
+    options: { redirectTo },
+  });
+
+  if (linkError || !linkData?.properties?.action_link) {
+    return { error: "Couldn't generate a link right now — try again in a moment." };
+  }
+
+  return { link: linkData.properties.action_link };
+}
+
 export async function revokeInviteAction(formData: FormData) {
   await requireCallerIsPracticeAdmin();
   const inviteId = String(formData.get("invite_id") || "");

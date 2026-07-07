@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useFormStatus } from "react-dom";
 import { DASHBOARD_SECTIONS } from "@/lib/sections";
-import { inviteMemberAction, revokeInviteAction } from "./actions";
+import { inviteMemberAction, revokeInviteAction, generateInviteLinkAction } from "./actions";
 
 export interface PendingInvite {
   id: string;
@@ -23,12 +23,25 @@ function SubmitButton() {
   );
 }
 
-export default function InvitePanel({ invites, siteUrl }: { invites: PendingInvite[]; siteUrl: string }) {
+export default function InvitePanel({ invites }: { invites: PendingInvite[] }) {
   const [role, setRole] = useState("clinic_user");
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [errorId, setErrorId] = useState<string | null>(null);
+  const [loadingId, setLoadingId] = useState<string | null>(null);
 
   async function copyLink(invite: PendingInvite) {
-    await navigator.clipboard.writeText(`${siteUrl}/join/${invite.token}`);
+    setLoadingId(invite.id);
+    setErrorId(null);
+    const result = await generateInviteLinkAction(invite.id);
+    setLoadingId(null);
+
+    if (!result.link) {
+      setErrorId(invite.id);
+      setTimeout(() => setErrorId(null), 3000);
+      return;
+    }
+
+    await navigator.clipboard.writeText(result.link);
     setCopiedId(invite.id);
     setTimeout(() => setCopiedId(null), 1800);
   }
@@ -38,7 +51,7 @@ export default function InvitePanel({ invites, siteUrl }: { invites: PendingInvi
       <h2 className="text-[15px] font-semibold mb-1">Invite someone</h2>
       <p className="text-[12.5px] text-gray-400 mb-4">
         They&apos;ll get an email with a join link. If it doesn&apos;t arrive, copy the link from the pending list
-        below and send it yourself — anyone who opens it after signing up joins your practice with the role you set here.
+        below and send it yourself — it signs them in and joins them automatically, no password needed.
       </p>
 
       <form action={inviteMemberAction} className="flex flex-col gap-4 mb-6">
@@ -97,8 +110,19 @@ export default function InvitePanel({ invites, siteUrl }: { invites: PendingInvi
                   <td className="py-2 text-gray-600">{new Date(invite.expires_at).toLocaleDateString()}</td>
                   <td className="py-2">
                     <div className="flex items-center gap-3">
-                      <button type="button" className="text-btn text-[12.5px] text-indigo-600" onClick={() => copyLink(invite)}>
-                        {copiedId === invite.id ? "Copied ✓" : "Copy link"}
+                      <button
+                        type="button"
+                        className="text-btn text-[12.5px] text-indigo-600"
+                        onClick={() => copyLink(invite)}
+                        disabled={loadingId === invite.id}
+                      >
+                        {copiedId === invite.id
+                          ? "Copied ✓"
+                          : errorId === invite.id
+                            ? "Failed — retry"
+                            : loadingId === invite.id
+                              ? "Generating…"
+                              : "Copy link"}
                       </button>
                       <form action={revokeInviteAction}>
                         <input type="hidden" name="invite_id" value={invite.id} />
