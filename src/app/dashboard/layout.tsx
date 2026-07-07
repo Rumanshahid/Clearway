@@ -7,6 +7,7 @@ import NotificationBell from "./NotificationBell";
 import ChatBell from "./ChatBell";
 import TasksBell from "./TasksBell";
 import UserMenu from "./UserMenu";
+import NavLink from "./NavLink";
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient();
@@ -70,23 +71,20 @@ export default async function DashboardLayout({ children }: { children: React.Re
               </span>
               asaanbil.com
             </Link>
-            <div className="flex items-center gap-6 text-[13.5px] text-gray-600">
-              {isAdmin && <Link href="/dashboard/overview">Dashboard</Link>}
-              {showSection("requests") && <Link href="/dashboard">PA</Link>}
-              {showSection("patients") && <Link href="/dashboard/patients">Patients</Link>}
-              {showSection("appeals") && <Link href="/dashboard/appeals">Appeals</Link>}
-              <Link href="/dashboard/resources">Resources</Link>
-              {isAdmin && <Link href="/dashboard/team">Team</Link>}
+            <div className="flex items-center gap-1">
+              {isAdmin && <NavLink href="/dashboard/overview">Dashboard</NavLink>}
+              {showSection("requests") && <NavLink href="/dashboard" extraPrefixes={["/dashboard/requests"]}>PA</NavLink>}
+              {showSection("patients") && <NavLink href="/dashboard/patients">Patients</NavLink>}
+              {showSection("appeals") && <NavLink href="/dashboard/appeals">Appeals</NavLink>}
+              <NavLink href="/dashboard/resources">Resources</NavLink>
+              {isAdmin && <NavLink href="/dashboard/team">Team</NavLink>}
             </div>
           </div>
-          <div className="flex items-center gap-4">
-            <span className="text-[12.5px] text-gray-400">
-              {practice?.name} · <span className="capitalize">{practice?.plan}</span> plan
-            </span>
+          <div className="flex items-center gap-1">
             <ChatBell conversations={conversationPreviews} />
             <TasksBell tasks={taskPreviews} />
             <NotificationBell notifications={notifications || []} />
-            <UserMenu name={profile.full_name || "Account"} isAdmin={isAdmin} />
+            <UserMenu name={profile.full_name || "Account"} isAdmin={isAdmin} plan={practice?.plan || null} />
           </div>
         </div>
       </nav>

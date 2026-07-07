@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { signOutAction } from "@/app/(auth)/actions";
 
-export default function UserMenu({ name, isAdmin }: { name: string; isAdmin: boolean }) {
+export default function UserMenu({ name, isAdmin, plan }: { name: string; isAdmin: boolean; plan: string | null }) {
   const [open, setOpen] = useState(false);
 
   return (
@@ -26,6 +26,11 @@ export default function UserMenu({ name, isAdmin }: { name: string; isAdmin: boo
       <div
         className={`dropdown-panel fixed sm:absolute right-3 sm:right-0 left-3 sm:left-auto top-16 sm:top-11 sm:w-[200px] card z-20 overflow-hidden${open ? " open" : ""}`}
       >
+        {plan && (
+          <div className="px-4 py-2.5 text-[12px] text-gray-400 capitalize" style={{ borderBottom: "1px solid var(--gray-200)" }}>
+            {plan} plan
+          </div>
+        )}
         <Link
           href="/dashboard/profiles"
           className="block px-4 py-2.5 text-[13.5px] text-gray-700 hover:bg-gray-50"
