@@ -1,39 +1,27 @@
 "use server";
 
+import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { upsertSiteContent } from "@/lib/criteria-repo";
+import { allFieldKeys, allVisibilityKeys, getPageBySlug } from "@/lib/content-schema";
 
-const CONTENT_KEYS = [
-  "hero_headline",
-  "hero_subheadline",
-  "hero_cta_primary",
-  "stat1_number",
-  "stat1_label",
-  "stat1_copy",
-  "stat2_number",
-  "stat2_label",
-  "stat2_copy",
-  "stat3_number",
-  "stat3_label",
-  "stat3_copy",
-  "pricing_pilot_price",
-  "pricing_practice_price",
-  "pricing_multisite_price",
-  "cta_final_headline",
-  "cta_final_copy",
-];
-
-const SECTION_KEYS = ["section_stats", "section_insurers", "section_compare", "section_pricing"];
-
+// Generic across every page in the schema — the allowed field/visibility
+// keys for a save are looked up from the page the form says it's for, so a
+// request can never write a key that page's schema doesn't declare.
 export async function saveSiteContentAction(formData: FormData) {
+  const slug = String(formData.get("_page") || "");
+  const page = getPageBySlug(slug);
+  if (!page) redirect("/admin/content");
+
+  const fieldKeys = allFieldKeys(page);
+  const visibilityKeys = allVisibilityKeys(page);
+
   const writes = [
-    ...CONTENT_KEYS.filter((key) => formData.get(key) !== null).map((key) =>
-      upsertSiteContent(key, String(formData.get(key)), true)
-    ),
-    ...SECTION_KEYS.map((key) => upsertSiteContent(key, "", formData.get(`visible_${key}`) === "on")),
+    ...fieldKeys.filter((key) => formData.get(key) !== null).map((key) => upsertSiteContent(key, String(formData.get(key)), true)),
+    ...visibilityKeys.map((key) => upsertSiteContent(key, "", formData.get(`visible_${key}`) === "on")),
   ];
   await Promise.all(writes);
 
-  revalidatePath("/admin/content");
-  revalidatePath("/");
+  revalidatePath(`/admin/content/${slug}`);
+  revalidatePath(slug === "home" ? "/" : `/${slug}`);
 }

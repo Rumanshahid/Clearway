@@ -4,39 +4,21 @@ import LandingScripts from "./LandingScripts";
 import SiteNav from "./SiteNav";
 import SiteFooter from "./SiteFooter";
 import { getSiteContent } from "@/lib/criteria-repo";
+import { getPageBySlug, makeFieldGetter, sectionVisible } from "@/lib/content-schema";
 
-const CMP_SLIDES = [
-  { before: "Letters took 30–45 minutes, written from scratch every time — asaanbil.com now drafts one in ", em: "under 10 minutes", after: "." },
-  { before: "Staff used to guess which clause a payer wanted — asaanbil.com now ", em: "cites the exact one", after: " automatically." },
-  { before: "Denials surfaced weeks later, after care was delayed — asaanbil.com now ", em: "flags the risk before you submit", after: "." },
-  { before: "Missing docs were found after rejection — asaanbil.com now ", em: "tracks every request", after: " end to end." },
-];
-
-const DEFAULTS: Record<string, string> = {
-  hero_headline: "Stop writing the same letter forty times a week.",
-  hero_subheadline:
-    "asaanbil.com drafts prior authorization letters from your chart notes — citing the exact medical necessity criteria each payer requires — in minutes, not hours.",
-  hero_cta_primary: "Start Free Pilot",
-  stat1_number: "13",
-  stat1_label: "Hours Lost Weekly",
-  stat1_copy: "Per physician, per week, spent on prior authorizations. (AMA, 2024)",
-  stat2_number: "89%",
-  stat2_label: "Rising Denials",
-  stat2_copy: "Of hospital systems report rising claim denials, driven mainly by prior auth.",
-  stat3_number: "82%",
-  stat3_label: "Approval Rate",
-  stat3_copy: "When letters explicitly cite CPB criteria, versus unstructured submissions.",
-  pricing_pilot_price: "Free",
-  pricing_practice_price: "$249",
-  pricing_multisite_price: "Custom",
-  cta_final_headline: "Bring us your next 10 prior authorizations.",
-  cta_final_copy: "We'll show you what changes before you commit to anything.",
-};
+const HOME_PAGE = getPageBySlug("home")!;
+const sectionByTitle = (title: string) => HOME_PAGE.sections.find((s) => s.title === title)!;
 
 export default async function LandingPage() {
   const content = await getSiteContent();
-  const c = (key: string) => content[key]?.value ?? DEFAULTS[key] ?? "";
-  const visible = (key: string) => content[key]?.visible !== false;
+  const c = makeFieldGetter(HOME_PAGE, content);
+  const visible = (title: string) => sectionVisible(content, sectionByTitle(title));
+
+  const cmpSlides = [1, 2, 3, 4].map((n) => ({
+    before: c(`cmp${n}_before`),
+    em: c(`cmp${n}_em`),
+    after: c(`cmp${n}_after`),
+  }));
 
   return (
     <div className="landing-root">
@@ -46,24 +28,24 @@ export default async function LandingPage() {
         <div className="wrap">
           <div className="hero-grid">
             <div>
-              <div className="hero-tag"><span className="tag-dot"></span>AI-Powered Prior Authorization</div>
+              <div className="hero-tag"><span className="tag-dot"></span>{c("hero_tag")}</div>
               <h1>{c("hero_headline")}</h1>
               <p className="hero-p">{c("hero_subheadline")}</p>
               <div className="hero-btns">
                 <Link className="btn btn-primary" href="/sign-up">{c("hero_cta_primary")} →</Link>
-                <a className="btn btn-outline" href="#how">See How It Works</a>
+                <a className="btn btn-outline" href="#how">{c("hero_cta_secondary")}</a>
               </div>
               <div className="hero-meta">
-                <span>No EHR migration</span><span className="meta-sep"></span>
-                <span>Human reviews every letter</span><span className="meta-sep"></span>
-                <span>HIPAA-ready</span>
+                <span>{c("hero_meta_1")}</span><span className="meta-sep"></span>
+                <span>{c("hero_meta_2")}</span><span className="meta-sep"></span>
+                <span>{c("hero_meta_3")}</span>
               </div>
             </div>
           </div>
         </div>
       </section>
 
-      {visible("section_stats") && (
+      {visible("Stats section") && (
         <section className="stats">
           <div className="wrap">
             <div className="stats-grid">
@@ -89,31 +71,31 @@ export default async function LandingPage() {
 
       <section className="block center" id="how">
         <div className="wrap">
-          <div className="section-eyebrow">How It Works</div>
-          <h2 className="section-h">From chart note to letter, in three steps.</h2>
-          <p className="section-p">No new system to learn. No EHR migration. Your staff works the same way — just without the blank page and the guesswork.</p>
+          <div className="section-eyebrow">{c("how_eyebrow")}</div>
+          <h2 className="section-h">{c("how_h2")}</h2>
+          <p className="section-p">{c("how_intro")}</p>
 
           <div className="how-layout">
             <div className="steps-list">
               <div className="step-item">
                 <div className="step-bullet">01</div>
                 <div>
-                  <div className="step-title">Intake — enter the case</div>
-                  <div className="step-desc">Staff fills a short intake form — diagnosis, exam findings, conservative treatment already tried. Under three minutes.</div>
+                  <div className="step-title">{c("how_step1_title")}</div>
+                  <div className="step-desc">{c("how_step1_desc")}</div>
                 </div>
               </div>
               <div className="step-item">
                 <div className="step-bullet">02</div>
                 <div>
-                  <div className="step-title">Draft — asaanbil.com writes it</div>
-                  <div className="step-desc">Matched against the payer&apos;s exact published medical necessity criteria. Missing fields are flagged before submission, not after a denial.</div>
+                  <div className="step-title">{c("how_step2_title")}</div>
+                  <div className="step-desc">{c("how_step2_desc")}</div>
                 </div>
               </div>
               <div className="step-item">
                 <div className="step-bullet">03</div>
                 <div>
-                  <div className="step-title">Review — sign and send</div>
-                  <div className="step-desc">A physician reads the draft, edits as needed, and submits as usual. asaanbil.com drafts — your clinic decides.</div>
+                  <div className="step-title">{c("how_step3_title")}</div>
+                  <div className="step-desc">{c("how_step3_desc")}</div>
                 </div>
               </div>
             </div>
@@ -168,39 +150,39 @@ export default async function LandingPage() {
         </div>
       </section>
 
-      {visible("section_insurers") && (
+      {visible("Payer coverage section") && (
       <section className="block alt center" id="insurers">
         <div className="wrap">
-          <div className="section-eyebrow">Payer Coverage</div>
-          <h2 className="section-h">We only cover what we can get right.</h2>
-          <p className="section-p">Two insurers with real public criteria now. More — once a pilot gives us genuine denial data to work from, not guesswork.</p>
+          <div className="section-eyebrow">{c("insurers_eyebrow")}</div>
+          <h2 className="section-h">{c("insurers_h2")}</h2>
+          <p className="section-p">{c("insurers_intro")}</p>
           <div className="ins-grid">
             <div className="ins-card">
-              <div className="ins-head"><div className="ins-name">Aetna</div><div className="status-pill" style={{ background: "var(--success-bg)", color: "var(--success-green)" }}>LIVE</div></div>
-              <div className="ins-desc">800+ Clinical Policy Bulletins, publicly available and mapped into asaanbil.com. Imaging criteria all reference the exact CPB clause reviewers check for.</div>
+              <div className="ins-head"><div className="ins-name">{c("insurer1_name")}</div><div className="status-pill" style={{ background: "var(--success-bg)", color: "var(--success-green)" }}>LIVE</div></div>
+              <div className="ins-desc">{c("insurer1_desc")}</div>
             </div>
             <div className="ins-card">
-              <div className="ins-head"><div className="ins-name">Cigna / eviCore</div><div className="status-pill" style={{ background: "var(--success-bg)", color: "var(--success-green)" }}>LIVE</div></div>
-              <div className="ins-desc">eviCore manages imaging PA for Cigna and several delegated plans. Public clinical guidelines mapped into asaanbil.com — one criteria set, multiple insurers.</div>
+              <div className="ins-head"><div className="ins-name">{c("insurer2_name")}</div><div className="status-pill" style={{ background: "var(--success-bg)", color: "var(--success-green)" }}>LIVE</div></div>
+              <div className="ins-desc">{c("insurer2_desc")}</div>
             </div>
             <div className="ins-card">
-              <div className="ins-head"><div className="ins-name">UnitedHealthcare</div><div className="status-pill" style={{ background: "var(--amber-bg)", color: "var(--amber)" }}>SOON</div></div>
-              <div className="ins-desc">UHC&apos;s criteria (InterQual) are proprietary. Coverage is being built from real client submission data — priority access if UHC is your top payer.</div>
+              <div className="ins-head"><div className="ins-name">{c("insurer3_name")}</div><div className="status-pill" style={{ background: "var(--amber-bg)", color: "var(--amber)" }}>SOON</div></div>
+              <div className="ins-desc">{c("insurer3_desc")}</div>
             </div>
             <div className="ins-card">
-              <div className="ins-head"><div className="ins-name">BCBS / Humana</div><div className="status-pill" style={{ background: "var(--amber-bg)", color: "var(--amber)" }}>SOON</div></div>
-              <div className="ins-desc">BCBS runs 34 independent state plans; Humana relies on MCG criteria. Tell us your state and payer mix — we&apos;ll scope the right one first.</div>
+              <div className="ins-head"><div className="ins-name">{c("insurer4_name")}</div><div className="status-pill" style={{ background: "var(--amber-bg)", color: "var(--amber)" }}>SOON</div></div>
+              <div className="ins-desc">{c("insurer4_desc")}</div>
             </div>
           </div>
         </div>
       </section>
       )}
 
-      {visible("section_compare") && (
+      {visible("Comparison carousel") && (
       <section className="block center">
         <div className="wrap">
-          <div className="section-eyebrow">The Difference</div>
-          <h2 className="section-h">What changes for your front desk.</h2>
+          <div className="section-eyebrow">{c("compare_eyebrow")}</div>
+          <h2 className="section-h">{c("compare_h2")}</h2>
 
           <div className="carousel" id="cmpCarousel">
             <button className="carousel-arrow left" id="cmpPrev" aria-label="Previous">
@@ -212,14 +194,14 @@ export default async function LandingPage() {
 
             <div className="carousel-track">
               <div className="carousel-slides" id="cmpSlides">
-                {CMP_SLIDES.map((slide, i) => (
+                {cmpSlides.map((slide, i) => (
                   <div className="cmp-slide" key={i}>
                     <div className="cmp-slide-desc">{slide.before}<em>{slide.em}</em>{slide.after}</div>
                   </div>
                 ))}
                 {/* clone of slide 1, used to fake an infinite forward loop */}
                 <div className="cmp-slide" aria-hidden="true">
-                  <div className="cmp-slide-desc">{CMP_SLIDES[0].before}<em>{CMP_SLIDES[0].em}</em>{CMP_SLIDES[0].after}</div>
+                  <div className="cmp-slide-desc">{cmpSlides[0].before}<em>{cmpSlides[0].em}</em>{cmpSlides[0].after}</div>
                 </div>
               </div>
             </div>
@@ -230,44 +212,44 @@ export default async function LandingPage() {
       </section>
       )}
 
-      {visible("section_pricing") && (
+      {visible("Pricing section") && (
       <section className="block alt center" id="pricing">
         <div className="wrap">
-          <div className="section-eyebrow">Pricing</div>
-          <h2 className="section-h">Earn a place before charging for it.</h2>
-          <p className="section-p">Start with a free pilot. No setup fees, no contracts, no salespeople chasing you down.</p>
+          <div className="section-eyebrow">{c("pricing_eyebrow")}</div>
+          <h2 className="section-h">{c("pricing_h2")}</h2>
+          <p className="section-p">{c("pricing_intro")}</p>
           <div className="price-grid">
             <div className="price-card">
               <div className="price-tier">Pilot</div>
               <div className="price-num">{c("pricing_pilot_price")}</div>
-              <div className="price-sub">First 10 letters, no card required</div>
+              <div className="price-sub">{c("pricing_pilot_sub")}</div>
               <div className="price-divider"></div>
               <div className="price-feat"><span className="chk">✓</span>10 prior auth drafts included</div>
               <div className="price-feat"><span className="chk">✓</span>De-identified test cases</div>
               <div className="price-feat"><span className="chk">✓</span>Direct line to the founder</div>
-              <div className="price-btn"><Link href="/sign-up">Start Pilot</Link></div>
+              <div className="price-btn"><Link href="/sign-up">{c("pricing_pilot_cta")}</Link></div>
             </div>
             <div className="price-card pop">
               <div className="pop-badge">Most Popular</div>
               <div className="price-tier">Practice</div>
               <div className="price-num">{c("pricing_practice_price")}<span style={{ fontSize: "16px", color: "var(--gray-400)", fontWeight: 400 }}>/mo</span></div>
-              <div className="price-sub">Single-location practice</div>
+              <div className="price-sub">{c("pricing_practice_sub")}</div>
               <div className="price-divider"></div>
               <div className="price-feat"><span className="chk">✓</span>Unlimited letter drafts</div>
               <div className="price-feat"><span className="chk">✓</span>Aetna + Cigna/eviCore coverage</div>
               <div className="price-feat"><span className="chk">✓</span>Missing-field flags before submit</div>
               <div className="price-feat"><span className="chk">✓</span>Request tracking dashboard</div>
-              <div className="price-btn"><Link href="/sign-up">Get Started</Link></div>
+              <div className="price-btn"><Link href="/sign-up">{c("pricing_practice_cta")}</Link></div>
             </div>
             <div className="price-card">
               <div className="price-tier">Multi-Site</div>
               <div className="price-num">{c("pricing_multisite_price")}</div>
-              <div className="price-sub">Groups &amp; multi-location practices</div>
+              <div className="price-sub">{c("pricing_multisite_sub")}</div>
               <div className="price-divider"></div>
               <div className="price-feat"><span className="chk">✓</span>Volume-based pricing</div>
               <div className="price-feat"><span className="chk">✓</span>Extra payer criteria on request</div>
               <div className="price-feat"><span className="chk">✓</span>Dedicated onboarding</div>
-              <div className="price-btn"><a href="mailto:hello@asaanbil.com">Talk to Us</a></div>
+              <div className="price-btn"><a href="mailto:hello@asaanbil.com">{c("pricing_multisite_cta")}</a></div>
             </div>
           </div>
         </div>
@@ -278,7 +260,7 @@ export default async function LandingPage() {
         <div className="wrap">
           <h2>{c("cta_final_headline")}</h2>
           <p>{c("cta_final_copy")}</p>
-          <a className="btn btn-primary" href="mailto:hello@asaanbil.com" style={{ fontSize: "15px", padding: "14px 28px" }}>Request a Free Pilot →</a>
+          <a className="btn btn-primary" href="mailto:hello@asaanbil.com" style={{ fontSize: "15px", padding: "14px 28px" }}>{c("cta_final_button")} →</a>
         </div>
       </section>
 
