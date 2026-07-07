@@ -1,21 +1,28 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useHoverDelay } from "./useHoverDelay";
 
-interface TaskPreviewItem {
+export interface TaskPreviewItem {
   id: string;
   title: string;
   due_date: string | null;
   due_time: string | null;
 }
 
-export default function TasksBell({ tasks }: { tasks: TaskPreviewItem[] }) {
-  const { open, setOpen, onMouseEnter, onMouseLeave } = useHoverDelay();
+export default function TasksBell({
+  tasks,
+  open,
+  onMouseEnter,
+  onMouseLeave,
+}: {
+  tasks: TaskPreviewItem[];
+  open: boolean;
+  onMouseEnter: () => void;
+  onMouseLeave: () => void;
+}) {
   const router = useRouter();
 
   function goToTasks(openAdd?: boolean) {
-    setOpen(false);
     router.push(openAdd ? "/dashboard/tasks?openAdd=1" : "/dashboard/tasks");
   }
 

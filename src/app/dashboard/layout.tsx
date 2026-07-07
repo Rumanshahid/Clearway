@@ -3,10 +3,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { ensureTeamConversation, ensureDirectConversations, getConversationSummaries } from "@/lib/chat";
 import { getTaskPreview } from "@/lib/taskPreview";
-import NotificationBell from "./NotificationBell";
-import ChatBell from "./ChatBell";
-import TasksBell from "./TasksBell";
-import UserMenu from "./UserMenu";
+import NavMenus from "./NavMenus";
 import NavLink from "./NavLink";
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -81,10 +78,14 @@ export default async function DashboardLayout({ children }: { children: React.Re
             </div>
           </div>
           <div className="flex items-center gap-1">
-            <ChatBell conversations={conversationPreviews} />
-            <TasksBell tasks={taskPreviews} />
-            <NotificationBell notifications={notifications || []} />
-            <UserMenu name={profile.full_name || "Account"} isAdmin={isAdmin} plan={practice?.plan || null} />
+            <NavMenus
+              conversations={conversationPreviews}
+              tasks={taskPreviews}
+              notifications={notifications || []}
+              userName={profile.full_name || "Account"}
+              isAdmin={isAdmin}
+              plan={practice?.plan || null}
+            />
           </div>
         </div>
       </nav>

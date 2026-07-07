@@ -1,21 +1,28 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useHoverDelay } from "./useHoverDelay";
 
-interface ConversationPreview {
+export interface ConversationPreview {
   id: string;
   type: string;
   label: string;
   lastMessage: string | null;
 }
 
-export default function ChatBell({ conversations }: { conversations: ConversationPreview[] }) {
-  const { open, setOpen, onMouseEnter, onMouseLeave } = useHoverDelay();
+export default function ChatBell({
+  conversations,
+  open,
+  onMouseEnter,
+  onMouseLeave,
+}: {
+  conversations: ConversationPreview[];
+  open: boolean;
+  onMouseEnter: () => void;
+  onMouseLeave: () => void;
+}) {
   const router = useRouter();
 
   function goToChat(conversationId?: string) {
-    setOpen(false);
     router.push(conversationId ? `/dashboard/chat?conversation=${conversationId}` : "/dashboard/chat");
   }
 

@@ -3,9 +3,8 @@
 import { useTransition, useState } from "react";
 import Link from "next/link";
 import { markAllNotificationsReadAction, markNotificationReadAction } from "./notification-actions";
-import { useHoverDelay } from "./useHoverDelay";
 
-interface NotificationRow {
+export interface NotificationRow {
   id: string;
   type: string;
   message: string;
@@ -14,8 +13,21 @@ interface NotificationRow {
   created_at: string;
 }
 
-export default function NotificationBell({ notifications }: { notifications: NotificationRow[] }) {
-  const { open, setOpen, onMouseEnter, onMouseLeave } = useHoverDelay();
+export default function NotificationBell({
+  notifications,
+  open,
+  onMouseEnter,
+  onMouseLeave,
+  onToggle,
+  onClose,
+}: {
+  notifications: NotificationRow[];
+  open: boolean;
+  onMouseEnter: () => void;
+  onMouseLeave: () => void;
+  onToggle: () => void;
+  onClose: () => void;
+}) {
   // Optimistic overlay on top of the server-provided prop so read-state
   // updates feel instant instead of waiting on a full server round trip.
   const [locallyRead, setLocallyRead] = useState<Set<string>>(new Set());
@@ -46,7 +58,7 @@ export default function NotificationBell({ notifications }: { notifications: Not
         type="button"
         className="relative w-9 h-9 rounded-md flex items-center justify-center flex-shrink-0 hover:bg-gray-100 active:scale-95"
         style={{ transition: "background-color 0.2s ease, transform 0.1s ease" }}
-        onClick={() => setOpen((v) => !v)}
+        onClick={onToggle}
         aria-label="Notifications"
       >
         <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
@@ -94,7 +106,7 @@ export default function NotificationBell({ notifications }: { notifications: Not
                 style={{ borderBottom: "1px solid var(--gray-200)", ...(read ? {} : { background: "var(--gray-50)" }) }}
                 onClick={() => {
                   if (!read) markOneRead(n.id);
-                  setOpen(false);
+                  onClose();
                 }}
               >
                 <span className="text-[13px] text-gray-900 flex items-center gap-2">

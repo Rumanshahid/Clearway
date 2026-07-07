@@ -2,18 +2,33 @@
 
 import Link from "next/link";
 import { signOutAction } from "@/app/(auth)/actions";
-import { useHoverDelay } from "./useHoverDelay";
 
-export default function UserMenu({ name, isAdmin, plan }: { name: string; isAdmin: boolean; plan: string | null }) {
-  const { open, setOpen, onMouseEnter, onMouseLeave } = useHoverDelay();
-
+export default function UserMenu({
+  name,
+  isAdmin,
+  plan,
+  open,
+  onMouseEnter,
+  onMouseLeave,
+  onToggle,
+  onClose,
+}: {
+  name: string;
+  isAdmin: boolean;
+  plan: string | null;
+  open: boolean;
+  onMouseEnter: () => void;
+  onMouseLeave: () => void;
+  onToggle: () => void;
+  onClose: () => void;
+}) {
   return (
     <div className="relative" onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave}>
       <button
         type="button"
         className="flex items-center gap-1.5 text-[13.5px] text-gray-700 font-medium px-2 py-1.5 rounded-md hover:bg-gray-100 active:scale-95"
         style={{ transition: "background-color 0.2s ease, transform 0.1s ease" }}
-        onClick={() => setOpen((v) => !v)}
+        onClick={onToggle}
         aria-label="Account menu"
       >
         {name}
@@ -33,7 +48,7 @@ export default function UserMenu({ name, isAdmin, plan }: { name: string; isAdmi
         <Link
           href="/dashboard/profiles"
           className="block px-4 py-2.5 text-[13.5px] text-gray-700 hover:bg-gray-50"
-          onClick={() => setOpen(false)}
+          onClick={onClose}
         >
           Profile
         </Link>
@@ -41,7 +56,7 @@ export default function UserMenu({ name, isAdmin, plan }: { name: string; isAdmi
           <Link
             href="/dashboard/billing"
             className="block px-4 py-2.5 text-[13.5px] text-gray-700 hover:bg-gray-50"
-            onClick={() => setOpen(false)}
+            onClick={onClose}
           >
             Billing
           </Link>
