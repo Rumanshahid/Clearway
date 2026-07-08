@@ -5,6 +5,12 @@ import { redirect } from "next/navigation";
 import { getSessionProfile } from "@/lib/permissions";
 import { createClient } from "@/lib/supabase/server";
 
+interface HourBlock {
+  weekday: number;
+  start_time: string;
+  end_time: string;
+}
+
 // Self-editable only — title and role stay admin-controlled via the Team
 // page (dashboard/team/actions.ts). RLS (profiles_update_own) already
 // restricts writes to your own row; this re-check exists so the form being
@@ -22,6 +28,17 @@ export async function updateProfileAction(formData: FormData) {
 
   if (memberId !== session.userId) {
     redirect(`/dashboard/profiles?error=${encodeURIComponent("You can only edit your own profile.")}`);
+  }
+
+  // The doctor scheduling fields only ever get read/written for the caller's
+  // own doctor_profiles row (looked up by profile_id = session.userId, never
+  // trusted from the client), matching the personal-fields check above.
+  const isDoctor = formData.get("is_doctor") === "1" && session.isAdmin;
+  if (isDoctor) {
+    const blocks: HourBlock[] = JSON.parse(String(formData.get("blocks") || "[]"));
+    if (blocks.length === 0) {
+      redirect(`/dashboard/profiles?error=${encodeURIComponent("Select at least one working day before saving.")}`);
+    }
   }
 
   let avatarUrl: string | undefined;
@@ -48,6 +65,94 @@ export async function updateProfileAction(formData: FormData) {
     })
     .eq("id", memberId);
 
+  if (isDoctor) {
+    const { data: doctorProfile } = await supabase.from("doctor_profiles").select("id").eq("profile_id", session.userId).single();
+    if (doctorProfile) {
+      const blocks: HourBlock[] = JSON.parse(String(formData.get("blocks") || "[]"));
+      const appointmentTypeId = String(formData.get("appointment_type_id") || "");
+      const conditionsTreated = String(formData.get("conditions_treated") || "")
+        .split(",")
+        .map((s) => s.trim())
+        .filter(Boolean);
+
+      await supabase
+        .from("doctor_profiles")
+        .update({
+          public_enabled: formData.get("public_enabled") === "on",
+          specialty: String(formData.get("specialty") || "").trim() || null,
+          credentials: String(formData.get("credentials") || "").trim() || null,
+          conditions_treated: conditionsTreated,
+          insurance_accepted: formData.getAll("insurance_accepted").map(String),
+          languages: formData.getAll("languages").map(String),
+          accepting_new_patients: formData.get("accepting_new_patients") === "on",
+          telehealth_available: formData.get("telehealth_available") === "on",
+          city: String(formData.get("city") || "").trim() || null,
+          state: String(formData.get("state") || "").trim() || null,
+          zip: String(formData.get("zip") || "").trim() || null,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", doctorProfile.id);
+
+      await supabase.from("doctor_availability").delete().eq("doctor_profile_id", doctorProfile.id);
+      if (blocks.length > 0) {
+        await supabase.from("doctor_availability").insert(
+          blocks.map((b) => ({
+            practice_id: session.practiceId,
+            doctor_profile_id: doctorProfile.id,
+            weekday: b.weekday,
+            start_time: b.start_time,
+            end_time: b.end_time,
+          }))
+        );
+      }
+
+      if (appointmentTypeId) {
+        await supabase
+          .from("appointment_types")
+          .update({
+            duration_minutes: Number(formData.get("duration_minutes") || 30),
+            is_telehealth: formData.get("telehealth_available") === "on",
+          })
+          .eq("id", appointmentTypeId);
+      }
+    }
+  }
+
   revalidatePath("/dashboard/profiles");
   revalidatePath("/dashboard/chat");
+}
+
+export async function addBlackoutDateAction(formData: FormData) {
+  const session = await getSessionProfile();
+  const supabase = await createClient();
+  const doctorProfileId = String(formData.get("doctor_profile_id") || "");
+
+  const { data: doctorProfile } = await supabase.from("doctor_profiles").select("profile_id").eq("id", doctorProfileId).single();
+  if (!doctorProfile || doctorProfile.profile_id !== session.userId) {
+    redirect(`/dashboard/profiles?error=${encodeURIComponent("You can only edit your own schedule.")}`);
+  }
+
+  await supabase.from("blackout_dates").insert({
+    practice_id: session.practiceId,
+    doctor_profile_id: doctorProfileId,
+    date: String(formData.get("date") || ""),
+    reason: String(formData.get("reason") || "").trim() || null,
+  });
+
+  revalidatePath("/dashboard/profiles");
+}
+
+export async function deleteBlackoutDateAction(formData: FormData) {
+  const session = await getSessionProfile();
+  const supabase = await createClient();
+  const doctorProfileId = String(formData.get("doctor_profile_id") || "");
+
+  const { data: doctorProfile } = await supabase.from("doctor_profiles").select("profile_id").eq("id", doctorProfileId).single();
+  if (!doctorProfile || doctorProfile.profile_id !== session.userId) {
+    redirect(`/dashboard/profiles?error=${encodeURIComponent("You can only edit your own schedule.")}`);
+  }
+
+  await supabase.from("blackout_dates").delete().eq("id", String(formData.get("id") || "")).eq("doctor_profile_id", doctorProfileId);
+
+  revalidatePath("/dashboard/profiles");
 }

@@ -1,8 +1,8 @@
 "use server";
 
 import { createAdminClient } from "@/lib/supabase/server";
-import { getOpenSlots, createBooking, type BookingResult, type SlotWindow } from "@/lib/scheduling";
-import { routeIntakeToAppointmentType, type AppointmentTypeOption } from "@/lib/scheduling-anthropic";
+import { getOpenSlots, createBooking, getOrCreateSingleAppointmentType, type BookingResult, type SlotWindow } from "@/lib/scheduling";
+import { interpretIntake } from "@/lib/scheduling-anthropic";
 import { bookingConfirmationEmail, doctorNewBookingEmail } from "@/lib/scheduling-emails";
 import { sendEmail } from "@/lib/email";
 import { notify } from "@/lib/notifications";
@@ -20,12 +20,11 @@ export interface RoutingAndSlotsResult {
 }
 
 /**
- * One Claude call interprets the patient's already-collected answers (the
- * one-question-at-a-time UI is plain client state, not itself a per-message
- * AI round trip) and picks a real appointment_type_id, then the deterministic
- * slot engine finds real openings for it -- keeps the AI's job to the part
- * that's genuinely fuzzy (matching intent to a type) rather than also being
- * responsible for inventing valid times.
+ * Every doctor now has exactly one bookable appointment type, so there's
+ * nothing to route between -- the one Claude call here is just reading the
+ * patient's answers for the genuinely fuzzy part (new vs returning, urgency,
+ * a plain-language reason for staff), while the actual open times come from
+ * the deterministic slot engine.
  */
 export async function routeAndGetSlotsAction(
   doctorSlug: string,
@@ -33,38 +32,23 @@ export async function routeAndGetSlotsAction(
 ): Promise<RoutingAndSlotsResult | { error: string }> {
   const supabase = await createAdminClient();
 
-  const { data: doctor } = await supabase.from("doctor_profiles").select("id").eq("slug", doctorSlug).eq("public_enabled", true).maybeSingle();
+  const { data: doctor } = await supabase.from("doctor_profiles").select("id, practice_id").eq("slug", doctorSlug).eq("public_enabled", true).maybeSingle();
   if (!doctor) return { error: "not_found" };
 
-  const { data: types } = await supabase
-    .from("appointment_types")
-    .select("id, name, is_new_patient, is_telehealth")
-    .eq("doctor_profile_id", doctor.id)
-    .eq("active", true)
-    .order("sort_order");
-  if (!types || types.length === 0) return { error: "no_appointment_types" };
-
-  const options: AppointmentTypeOption[] = types.map((t) => ({
-    id: t.id,
-    name: t.name,
-    isNewPatient: t.is_new_patient,
-    isTelehealth: t.is_telehealth,
-  }));
-
-  const routed = await routeIntakeToAppointmentType(options, answersByQuestionText);
-  const chosenType = types.find((t) => t.id === routed.appointmentTypeId)!;
+  const type = await getOrCreateSingleAppointmentType(supabase, doctor.practice_id, doctor.id);
+  const interpreted = await interpretIntake(answersByQuestionText);
 
   const from = new Date();
   const to = new Date(from.getTime() + 30 * 24 * 60 * 60 * 1000);
-  const slots = await getOpenSlots(supabase, doctor.id, chosenType.id, from, to);
+  const slots = await getOpenSlots(supabase, doctor.id, type.id, from, to);
 
   return {
-    appointmentTypeId: chosenType.id,
-    appointmentTypeName: chosenType.name,
-    isNewPatient: routed.isNewPatient,
-    isUrgent: routed.isUrgent,
-    isTelehealth: chosenType.is_telehealth,
-    reasonForVisit: routed.reasonForVisit,
+    appointmentTypeId: type.id,
+    appointmentTypeName: type.name,
+    isNewPatient: interpreted.isNewPatient,
+    isUrgent: interpreted.isUrgent,
+    isTelehealth: type.is_telehealth,
+    reasonForVisit: interpreted.reasonForVisit,
     slots: slots.slice(0, 8),
   };
 }

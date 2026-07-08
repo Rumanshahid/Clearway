@@ -161,11 +161,8 @@ export async function getOpenSlots(
   toDate: Date
 ): Promise<SlotWindow[]> {
   const ctx = await loadSchedulingContext(supabase, doctorProfileId, appointmentTypeId, fromDate, toDate);
-  console.log("[getOpenSlots debug]", JSON.stringify({ doctorProfileId, appointmentTypeId, fromDate, toDate, ctx }));
   if (!ctx) return [];
-  const result = computeOpenSlots(ctx, fromDate, toDate);
-  console.log("[getOpenSlots debug] result count", result.length);
-  return result;
+  return computeOpenSlots(ctx, fromDate, toDate);
 }
 
 export interface BookingInput {
@@ -339,11 +336,53 @@ export async function getOrCreateDoctorProfile(
     }))
   );
 
-  await supabase.from("appointment_types").insert([
-    { practice_id: practiceId, doctor_profile_id: created.id, name: "New Patient", duration_minutes: 60, buffer_minutes: 10, is_new_patient: true, sort_order: 0 },
-    { practice_id: practiceId, doctor_profile_id: created.id, name: "Follow-up", duration_minutes: 20, buffer_minutes: 5, sort_order: 1 },
-  ]);
+  await supabase
+    .from("appointment_types")
+    .insert({ practice_id: practiceId, doctor_profile_id: created.id, name: "Appointment", duration_minutes: 30, buffer_minutes: 10 });
 
+  return created;
+}
+
+export type AppointmentTypeRow = Database["public"]["Tables"]["appointment_types"]["Row"];
+
+/**
+ * Every doctor has exactly one bookable appointment type -- no per-visit-type
+ * duration picker, no free-text name field (that's what let someone type
+ * their own name into it by mistake). If a doctor somehow already has
+ * multiple (e.g. from before this simplification), the oldest active one
+ * wins and is treated as canonical; the rest are left alone rather than
+ * silently deleted.
+ */
+export async function getOrCreateSingleAppointmentType(
+  supabase: Db,
+  practiceId: string,
+  doctorProfileId: string
+): Promise<AppointmentTypeRow> {
+  const { data: existing } = await supabase
+    .from("appointment_types")
+    .select("*")
+    .eq("doctor_profile_id", doctorProfileId)
+    .eq("active", true)
+    .order("sort_order")
+    .limit(1)
+    .maybeSingle();
+  if (existing) {
+    // Self-heals rows created back when this had a free-text Name field --
+    // there's no UI to fix a bad name anymore, so normalize it here instead
+    // of leaving it stuck on whatever got typed in before.
+    if (existing.name !== "Appointment") {
+      const { data: renamed } = await supabase.from("appointment_types").update({ name: "Appointment" }).eq("id", existing.id).select("*").single();
+      if (renamed) return renamed;
+    }
+    return existing;
+  }
+
+  const { data: created, error } = await supabase
+    .from("appointment_types")
+    .insert({ practice_id: practiceId, doctor_profile_id: doctorProfileId, name: "Appointment", duration_minutes: 30, buffer_minutes: 10 })
+    .select("*")
+    .single();
+  if (error) throw error;
   return created;
 }
 

@@ -45,7 +45,7 @@ export default async function AppointmentsPage({
         <p className="text-[14px] text-gray-600">
           No scheduling profile has been set up yet.{" "}
           {session.isAdmin && (
-            <Link href="/dashboard/scheduling" className="text-indigo-600">Set one up in Scheduling Settings →</Link>
+            <Link href="/dashboard/profiles" className="text-indigo-600">Set it up on your Profile →</Link>
           )}
         </p>
       </div>

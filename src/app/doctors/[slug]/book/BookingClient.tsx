@@ -79,11 +79,7 @@ export default function BookingClient({
     setStep("routing");
     const result = await routeAndGetSlotsAction(doctorSlug, nextAnswers);
     if ("error" in result) {
-      setErrorMessage(
-        result.error === "no_appointment_types"
-          ? "This doctor hasn't set up bookable appointment types yet."
-          : "This doctor's profile couldn't be found."
-      );
+      setErrorMessage("This doctor's profile couldn't be found.");
       setStep("error");
       return;
     }
