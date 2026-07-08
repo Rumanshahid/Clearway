@@ -87,6 +87,11 @@ export default function ProfileCard({
 
     return (
       <div className={`card p-4 flex flex-col gap-4 ${fullWidth ? "" : ""}`}>
+        {isDoctor && (
+          <pre style={{ fontSize: 10, background: "#fee", padding: 8, overflow: "auto" }}>
+            DEBUG availability prop: {JSON.stringify(doctorData?.availability)}
+          </pre>
+        )}
         <form action={updateProfileAction} className="flex flex-col gap-3">
           <input type="hidden" name="member_id" value={member.id} />
           <div className="flex items-center gap-3">
