@@ -3,7 +3,7 @@ import "../landing.css";
 import SiteNav from "../SiteNav";
 import SiteFooter from "../SiteFooter";
 import LandingScripts from "../LandingScripts";
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/server";
 import { getOpenSlots } from "@/lib/scheduling";
 
 export const metadata = {
@@ -20,7 +20,11 @@ export default async function DoctorsDirectoryPage({
   searchParams: Promise<{ q?: string; specialty?: string; insurance?: string; language?: string; zip?: string; new_patients?: string; telehealth?: string }>;
 }) {
   const { q, specialty, insurance, language, zip, new_patients, telehealth } = await searchParams;
-  const supabase = await createClient();
+  // Admin client: anonymous visitors have no session, and the profiles
+  // table (queried below for names) has no public-select policy the way
+  // doctor_profiles does, so the RLS-scoped client silently returned
+  // nothing for it.
+  const supabase = await createAdminClient();
 
   let query = supabase.from("doctor_profiles").select("*").eq("public_enabled", true);
   if (specialty) query = query.ilike("specialty", `%${specialty}%`);

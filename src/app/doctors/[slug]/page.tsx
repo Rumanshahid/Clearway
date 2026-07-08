@@ -4,11 +4,11 @@ import "../../landing.css";
 import SiteNav from "../../SiteNav";
 import SiteFooter from "../../SiteFooter";
 import LandingScripts from "../../LandingScripts";
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/server";
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const supabase = await createClient();
+  const supabase = await createAdminClient();
   const { data: doctor } = await supabase.from("doctor_profiles").select("specialty, profile_id").eq("slug", slug).eq("public_enabled", true).maybeSingle();
   if (!doctor) return { title: "Doctor — asaanbil.com" };
   const { data: profile } = await supabase.from("profiles").select("full_name").eq("id", doctor.profile_id).single();
@@ -20,7 +20,9 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 
 export default async function DoctorProfilePage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const supabase = await createClient();
+  // Admin client: anonymous visitors have no session, and profiles has no
+  // public-select policy the way doctor_profiles/reviews do.
+  const supabase = await createAdminClient();
 
   const { data: doctor } = await supabase.from("doctor_profiles").select("*").eq("slug", slug).eq("public_enabled", true).maybeSingle();
   if (!doctor) notFound();

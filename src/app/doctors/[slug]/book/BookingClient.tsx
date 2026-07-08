@@ -289,8 +289,8 @@ export default function BookingClient({
       <div className="card p-6">
         <h1 style={{ fontSize: 20, fontWeight: 700, marginBottom: 4 }}>No open times right now</h1>
         <p style={{ fontSize: 13.5, color: "var(--gray-600)", marginBottom: 20 }}>
-          {routing.appointmentTypeName} with {doctorName} has nothing open in the next 30 days. Join the waitlist and
-          we&apos;ll email you if a spot opens up.
+          {routing.appointmentTypeName} with {doctorName}{" "}
+          has nothing open in the next 30 days. Join the waitlist and we&apos;ll email you if a spot opens up.
         </p>
         <div className="flex flex-col gap-3">
           <div>

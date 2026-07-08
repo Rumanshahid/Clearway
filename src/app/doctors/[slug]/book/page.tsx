@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import "../../../landing.css";
 import SiteNav from "../../../SiteNav";
 import SiteFooter from "../../../SiteFooter";
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/server";
 import BookingClient from "./BookingClient";
 
 export const metadata = {
@@ -11,7 +11,11 @@ export const metadata = {
 
 export default async function BookAppointmentPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const supabase = await createClient();
+  // Admin client, not the RLS-scoped one: an anonymous visitor has no
+  // session, and the profiles table (unlike doctor_profiles/intake_questions)
+  // has no public-select policy, so the regular client silently returned
+  // null for full_name here and fell back to "the doctor".
+  const supabase = await createAdminClient();
 
   const { data: doctor } = await supabase.from("doctor_profiles").select("id, slug").eq("slug", slug).eq("public_enabled", true).maybeSingle();
   if (!doctor) notFound();

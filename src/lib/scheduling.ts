@@ -161,8 +161,11 @@ export async function getOpenSlots(
   toDate: Date
 ): Promise<SlotWindow[]> {
   const ctx = await loadSchedulingContext(supabase, doctorProfileId, appointmentTypeId, fromDate, toDate);
+  console.log("[getOpenSlots debug]", JSON.stringify({ doctorProfileId, appointmentTypeId, fromDate, toDate, ctx }));
   if (!ctx) return [];
-  return computeOpenSlots(ctx, fromDate, toDate);
+  const result = computeOpenSlots(ctx, fromDate, toDate);
+  console.log("[getOpenSlots debug] result count", result.length);
+  return result;
 }
 
 export interface BookingInput {
