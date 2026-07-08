@@ -98,18 +98,32 @@ export async function updateProfileAction(formData: FormData) {
         redirect(`/dashboard/profiles?error=${encodeURIComponent(`DEBUG delete failed: ${deleteError.message}`)}`);
       }
       if (blocks.length > 0) {
-        const { error: insertError } = await supabase.from("doctor_availability").insert(
-          blocks.map((b) => ({
-            practice_id: session.practiceId,
-            doctor_profile_id: doctorProfile.id,
-            weekday: b.weekday,
-            start_time: b.start_time,
-            end_time: b.end_time,
-          }))
-        );
+        const { data: insertedRows, error: insertError } = await supabase
+          .from("doctor_availability")
+          .insert(
+            blocks.map((b) => ({
+              practice_id: session.practiceId,
+              doctor_profile_id: doctorProfile.id,
+              weekday: b.weekday,
+              start_time: b.start_time,
+              end_time: b.end_time,
+            }))
+          )
+          .select("*");
         if (insertError) {
           redirect(`/dashboard/profiles?error=${encodeURIComponent(`DEBUG insert failed: ${insertError.message}`)}`);
         }
+
+        const { data: verifyRows, error: verifyError } = await supabase
+          .from("doctor_availability")
+          .select("*")
+          .eq("doctor_profile_id", doctorProfile.id);
+
+        redirect(
+          `/dashboard/profiles?error=${encodeURIComponent(
+            `DEBUG doctorProfile.id=${doctorProfile.id} practiceId=${session.practiceId} inserted=${JSON.stringify(insertedRows)} verifyRows=${JSON.stringify(verifyRows)} verifyError=${verifyError?.message || "none"}`
+          )}`
+        );
       }
 
       if (appointmentTypeId) {
