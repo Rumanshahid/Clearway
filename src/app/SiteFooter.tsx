@@ -22,7 +22,7 @@ export default function SiteFooter() {
           <div className="footer-col"><h4>Product</h4><Link href="/#how">How It Works</Link><Link href="/#insurers">Coverage</Link><Link href="/#pricing">Pricing</Link></div>
           <div className="footer-col"><h4>Company</h4><Link href="/about">About Us</Link><a href="mailto:hello@asaanbil.com">Contact</a><a href="#">Careers</a></div>
           <div className="footer-col"><h4>Resources</h4><a href="#">Help Center</a><a href="#">Documentation</a><a href="#">FAQs</a></div>
-          <div className="footer-col"><h4>Legal</h4><a href="#">Privacy Policy</a><a href="#">Terms of Service</a><a href="#">HIPAA</a></div>
+          <div className="footer-col"><h4>Legal</h4><Link href="/privacy">Privacy Policy</Link><Link href="/terms">Terms of Service</Link><Link href="/refund-policy">Refund Policy</Link><Link href="/privacy#hipaa">HIPAA</Link></div>
           <div className="footer-col"><h4>Payers</h4><a href="#">Aetna</a><a href="#">Cigna / eviCore</a><a href="#">Roadmap</a></div>
         </div>
         <div className="footer-bottom">
