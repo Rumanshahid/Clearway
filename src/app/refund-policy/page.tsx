@@ -31,8 +31,8 @@ export default function RefundPolicyPage() {
       <h2>4. Billing errors</h2>
       <p>
         If you&apos;re charged in error — for example, a duplicate charge or a charge after you cancelled — contact
-        us at <a href="mailto:hello@asaanbil.com">hello@asaanbil.com</a> and we&apos;ll investigate and correct it,
-        including a refund where one is due.
+        us at <a href="mailto:hello@asaanbil.com">hello@asaanbil.com</a>{" "}
+        and we&apos;ll investigate and correct it, including a refund where one is due.
       </p>
 
       <h2>5. Paddle as merchant of record</h2>
