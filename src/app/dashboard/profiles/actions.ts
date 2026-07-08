@@ -34,12 +34,6 @@ export async function updateProfileAction(formData: FormData) {
   // own doctor_profiles row (looked up by profile_id = session.userId, never
   // trusted from the client), matching the personal-fields check above.
   const isDoctor = formData.get("is_doctor") === "1" && session.isAdmin;
-  if (isDoctor) {
-    const blocks: HourBlock[] = JSON.parse(String(formData.get("blocks") || "[]"));
-    if (blocks.length === 0) {
-      redirect(`/dashboard/profiles?error=${encodeURIComponent("Select at least one working day before saving.")}`);
-    }
-  }
 
   let avatarUrl: string | undefined;
   if (avatarFile && avatarFile.size > 0) {
@@ -99,11 +93,14 @@ export async function updateProfileAction(formData: FormData) {
         redirect(`/dashboard/profiles?error=${encodeURIComponent(`Could not save your schedule: ${doctorUpdateError.message}`)}`);
       }
 
-      const { error: deleteError } = await supabase.from("doctor_availability").delete().eq("doctor_profile_id", doctorProfile.id);
-      if (deleteError) {
-        redirect(`/dashboard/profiles?error=${encodeURIComponent(`Could not save your working hours: ${deleteError.message}`)}`);
-      }
+      // Zero selected days means "leave working hours as they are" rather than
+      // "clear them" -- a doctor should still be able to save their name,
+      // photo, or other fields without being forced to touch their schedule.
       if (blocks.length > 0) {
+        const { error: deleteError } = await supabase.from("doctor_availability").delete().eq("doctor_profile_id", doctorProfile.id);
+        if (deleteError) {
+          redirect(`/dashboard/profiles?error=${encodeURIComponent(`Could not save your working hours: ${deleteError.message}`)}`);
+        }
         const { error: insertError } = await supabase.from("doctor_availability").insert(
           blocks.map((b) => ({
             practice_id: session.practiceId,

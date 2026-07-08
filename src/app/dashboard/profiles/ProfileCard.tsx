@@ -212,7 +212,7 @@ export default function ProfileCard({
                 </div>
                 {!hasHours && (
                   <p className="text-[12.5px] mt-2" style={{ color: "var(--danger-red)" }}>
-                    Select at least one working day before you can save.
+                    Select at least one working day so patients can book you. Other profile changes still save without this.
                   </p>
                 )}
               </div>
@@ -220,7 +220,7 @@ export default function ProfileCard({
           )}
 
           <div className="flex gap-2">
-            <button type="submit" className="btn btn-primary btn-sm" disabled={isDoctor && !hasHours} onClick={() => setEditing(false)}>
+            <button type="submit" className="btn btn-primary btn-sm" onClick={() => setEditing(false)}>
               Save
             </button>
             <button type="button" className="btn btn-outline btn-sm" onClick={() => setEditing(false)}>Cancel</button>
