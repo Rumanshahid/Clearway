@@ -61,16 +61,16 @@ export default function ProfileCard({
   isSelf,
   roleLabel,
   doctorData,
-  fullWidth,
 }: {
   member: Member;
   email: string;
   isSelf: boolean;
   roleLabel: string;
   doctorData: DoctorData | null;
-  fullWidth: boolean;
 }) {
-  const [editing, setEditing] = useState(false);
+  // Your own card opens straight into editing -- there's no real value in
+  // showing a read-only summary of your own profile first, for anyone.
+  const [editing, setEditing] = useState(isSelf);
   const [hours, setHours] = useState<HourRow[]>(() => buildInitialHours(doctorData?.availability || []));
 
   const hasHours = hours.some((h) => h.enabled);
@@ -86,12 +86,7 @@ export default function ProfileCard({
     );
 
     return (
-      <div className={`card p-4 flex flex-col gap-4 ${fullWidth ? "" : ""}`}>
-        {isDoctor && (
-          <pre style={{ fontSize: 10, background: "#fee", padding: 8, overflow: "auto" }}>
-            DEBUG availability prop: {JSON.stringify(doctorData?.availability)}
-          </pre>
-        )}
+      <div className="card p-4 flex flex-col gap-4">
         <form action={updateProfileAction} className="flex flex-col gap-3">
           <input type="hidden" name="member_id" value={member.id} />
           <div className="flex items-center gap-3">

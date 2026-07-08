@@ -64,7 +64,6 @@ export default async function ProfilesPage({
             isSelf
             roleLabel={self.role === "clinic_admin" || self.role === "super_admin" ? "Doctor / Admin" : "Staff"}
             doctorData={doctorData}
-            fullWidth
           />
         </div>
       )}
@@ -78,7 +77,6 @@ export default async function ProfilesPage({
             isSelf={false}
             roleLabel={m.role === "clinic_admin" || m.role === "super_admin" ? "Doctor / Admin" : "Staff"}
             doctorData={null}
-            fullWidth={false}
           />
         ))}
       </div>

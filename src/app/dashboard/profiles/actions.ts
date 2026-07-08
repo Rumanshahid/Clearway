@@ -50,12 +50,12 @@ export async function updateProfileAction(formData: FormData) {
     const path = `${session.practiceId}/${memberId}-${Date.now()}.${ext}`;
     const { error: uploadError } = await supabase.storage.from("avatars").upload(path, avatarFile, { upsert: true });
     if (uploadError) {
-      redirect(`/dashboard/profiles?error=${encodeURIComponent(uploadError.message)}`);
+      redirect(`/dashboard/profiles?error=${encodeURIComponent(`Photo upload failed: ${uploadError.message}`)}`);
     }
     avatarUrl = supabase.storage.from("avatars").getPublicUrl(path).data.publicUrl;
   }
 
-  await supabase
+  const { error: profileUpdateError } = await supabase
     .from("profiles")
     .update({
       full_name: fullName || null,
@@ -64,6 +64,9 @@ export async function updateProfileAction(formData: FormData) {
       ...(avatarUrl ? { avatar_url: avatarUrl } : {}),
     })
     .eq("id", memberId);
+  if (profileUpdateError) {
+    redirect(`/dashboard/profiles?error=${encodeURIComponent(`Could not save your profile: ${profileUpdateError.message}`)}`);
+  }
 
   if (isDoctor) {
     const { data: doctorProfile } = await supabase.from("doctor_profiles").select("id").eq("profile_id", session.userId).single();
@@ -75,7 +78,7 @@ export async function updateProfileAction(formData: FormData) {
         .map((s) => s.trim())
         .filter(Boolean);
 
-      await supabase
+      const { error: doctorUpdateError } = await supabase
         .from("doctor_profiles")
         .update({
           public_enabled: formData.get("public_enabled") === "on",
@@ -92,38 +95,27 @@ export async function updateProfileAction(formData: FormData) {
           updated_at: new Date().toISOString(),
         })
         .eq("id", doctorProfile.id);
+      if (doctorUpdateError) {
+        redirect(`/dashboard/profiles?error=${encodeURIComponent(`Could not save your schedule: ${doctorUpdateError.message}`)}`);
+      }
 
       const { error: deleteError } = await supabase.from("doctor_availability").delete().eq("doctor_profile_id", doctorProfile.id);
       if (deleteError) {
-        redirect(`/dashboard/profiles?error=${encodeURIComponent(`DEBUG delete failed: ${deleteError.message}`)}`);
+        redirect(`/dashboard/profiles?error=${encodeURIComponent(`Could not save your working hours: ${deleteError.message}`)}`);
       }
       if (blocks.length > 0) {
-        const { data: insertedRows, error: insertError } = await supabase
-          .from("doctor_availability")
-          .insert(
-            blocks.map((b) => ({
-              practice_id: session.practiceId,
-              doctor_profile_id: doctorProfile.id,
-              weekday: b.weekday,
-              start_time: b.start_time,
-              end_time: b.end_time,
-            }))
-          )
-          .select("*");
-        if (insertError) {
-          redirect(`/dashboard/profiles?error=${encodeURIComponent(`DEBUG insert failed: ${insertError.message}`)}`);
-        }
-
-        const { data: verifyRows, error: verifyError } = await supabase
-          .from("doctor_availability")
-          .select("*")
-          .eq("doctor_profile_id", doctorProfile.id);
-
-        redirect(
-          `/dashboard/profiles?error=${encodeURIComponent(
-            `DEBUG doctorProfile.id=${doctorProfile.id} practiceId=${session.practiceId} inserted=${JSON.stringify(insertedRows)} verifyRows=${JSON.stringify(verifyRows)} verifyError=${verifyError?.message || "none"}`
-          )}`
+        const { error: insertError } = await supabase.from("doctor_availability").insert(
+          blocks.map((b) => ({
+            practice_id: session.practiceId,
+            doctor_profile_id: doctorProfile.id,
+            weekday: b.weekday,
+            start_time: b.start_time,
+            end_time: b.end_time,
+          }))
         );
+        if (insertError) {
+          redirect(`/dashboard/profiles?error=${encodeURIComponent(`Could not save your working hours: ${insertError.message}`)}`);
+        }
       }
 
       if (appointmentTypeId) {
