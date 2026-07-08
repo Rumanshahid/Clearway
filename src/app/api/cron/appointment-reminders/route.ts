@@ -5,12 +5,16 @@ import { appointmentReminderEmail, reviewRequestEmail } from "@/lib/scheduling-e
 
 export const runtime = "nodejs";
 
-// Runs every 15 minutes (see vercel.json) rather than once/day like the
-// other cron jobs, since a "2 hours before" reminder needs finer granularity
-// than a daily check can give. Each appointment carries its own
-// reminder_24h_sent_at / reminder_2h_sent_at columns so a "not yet sent and
-// within the window" query is correct regardless of exact cron timing --
-// no dependency on hitting an exact threshold on a particular run.
+// Runs once/day (see vercel.json) -- Vercel Hobby plan rejects any
+// sub-daily cron schedule outright (deployment fails, not just a silent
+// downgrade), so a true "2 hours before" reminder isn't achievable without a
+// Pro plan. On this cadence the 24h reminder still works well; the 2h
+// reminder will only fire for appointments that happen to fall within 2
+// hours of whenever this runs, so treat it as best-effort until upgraded.
+// Each appointment carries its own reminder_24h_sent_at / reminder_2h_sent_at
+// columns so a "not yet sent and within the window" query is correct
+// regardless of exact cron timing -- no dependency on hitting an exact
+// threshold on a particular run.
 export async function GET(request: Request) {
   const authHeader = request.headers.get("authorization");
   if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
