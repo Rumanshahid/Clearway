@@ -93,9 +93,12 @@ export async function updateProfileAction(formData: FormData) {
         })
         .eq("id", doctorProfile.id);
 
-      await supabase.from("doctor_availability").delete().eq("doctor_profile_id", doctorProfile.id);
+      const { error: deleteError } = await supabase.from("doctor_availability").delete().eq("doctor_profile_id", doctorProfile.id);
+      if (deleteError) {
+        redirect(`/dashboard/profiles?error=${encodeURIComponent(`DEBUG delete failed: ${deleteError.message}`)}`);
+      }
       if (blocks.length > 0) {
-        await supabase.from("doctor_availability").insert(
+        const { error: insertError } = await supabase.from("doctor_availability").insert(
           blocks.map((b) => ({
             practice_id: session.practiceId,
             doctor_profile_id: doctorProfile.id,
@@ -104,6 +107,9 @@ export async function updateProfileAction(formData: FormData) {
             end_time: b.end_time,
           }))
         );
+        if (insertError) {
+          redirect(`/dashboard/profiles?error=${encodeURIComponent(`DEBUG insert failed: ${insertError.message}`)}`);
+        }
       }
 
       if (appointmentTypeId) {
