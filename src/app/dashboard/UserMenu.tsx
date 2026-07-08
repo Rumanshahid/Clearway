@@ -54,6 +54,15 @@ export default function UserMenu({
         </Link>
         {isAdmin && (
           <Link
+            href="/dashboard/scheduling"
+            className="block px-4 py-2.5 text-[13.5px] text-gray-700 hover:bg-gray-50"
+            onClick={onClose}
+          >
+            Scheduling Settings
+          </Link>
+        )}
+        {isAdmin && (
+          <Link
             href="/dashboard/billing"
             className="block px-4 py-2.5 text-[13.5px] text-gray-700 hover:bg-gray-50"
             onClick={onClose}

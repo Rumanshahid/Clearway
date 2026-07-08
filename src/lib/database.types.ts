@@ -10,6 +10,10 @@ export type RequestStatus = "draft" | "reviewed" | "submitted" | "approved" | "d
 export type AuthoringMode = "doctor" | "patient";
 export type LetterApproach = "RED_FLAG" | "CONSERVATIVE_CARE_EXHAUSTED" | "STANDARD";
 export type DenialRisk = "LOW" | "MEDIUM" | "HIGH";
+export type AppointmentStatus = "confirmed" | "checked_in" | "complete" | "no_show" | "cancelled";
+export type WaitlistStatus = "waiting" | "offered" | "booked" | "expired" | "cancelled";
+export type IntakeQuestionKey = "reason" | "duration_since" | "new_or_returning" | "referral" | "urgent" | "insurance";
+export type InsuranceVerificationStatus = "verified" | "not_verified" | "unavailable";
 
 export interface LetterMeta {
   approachUsed: LetterApproach;
@@ -628,6 +632,245 @@ export interface Database {
           message: string;
         };
         Update: Partial<Database["public"]["Tables"]["notifications"]["Row"]>;
+        Relationships: [];
+      };
+      doctor_profiles: {
+        Row: {
+          id: string;
+          practice_id: string;
+          profile_id: string;
+          public_enabled: boolean;
+          slug: string;
+          credentials: string | null;
+          specialty: string | null;
+          sub_specialties: string[];
+          photo_url: string | null;
+          bio: string | null;
+          languages: string[];
+          insurance_accepted: string[];
+          conditions_treated: string[];
+          accepting_new_patients: boolean;
+          telehealth_available: boolean;
+          timezone: string;
+          min_notice_hours: number;
+          max_advance_days: number;
+          max_appointments_per_day: number | null;
+          address_line1: string | null;
+          city: string | null;
+          state: string | null;
+          zip: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: Partial<Database["public"]["Tables"]["doctor_profiles"]["Row"]> & {
+          practice_id: string;
+          profile_id: string;
+          slug: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["doctor_profiles"]["Row"]>;
+        Relationships: [];
+      };
+      doctor_availability: {
+        Row: {
+          id: string;
+          practice_id: string;
+          doctor_profile_id: string;
+          weekday: number;
+          start_time: string;
+          end_time: string;
+        };
+        Insert: Partial<Database["public"]["Tables"]["doctor_availability"]["Row"]> & {
+          practice_id: string;
+          doctor_profile_id: string;
+          weekday: number;
+          start_time: string;
+          end_time: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["doctor_availability"]["Row"]>;
+        Relationships: [];
+      };
+      appointment_types: {
+        Row: {
+          id: string;
+          practice_id: string;
+          doctor_profile_id: string;
+          name: string;
+          duration_minutes: number;
+          buffer_minutes: number;
+          is_telehealth: boolean;
+          is_new_patient: boolean;
+          active: boolean;
+          sort_order: number;
+        };
+        Insert: Partial<Database["public"]["Tables"]["appointment_types"]["Row"]> & {
+          practice_id: string;
+          doctor_profile_id: string;
+          name: string;
+          duration_minutes: number;
+        };
+        Update: Partial<Database["public"]["Tables"]["appointment_types"]["Row"]>;
+        Relationships: [];
+      };
+      blackout_dates: {
+        Row: {
+          id: string;
+          practice_id: string;
+          doctor_profile_id: string;
+          date: string;
+          start_time: string | null;
+          end_time: string | null;
+          reason: string | null;
+        };
+        Insert: Partial<Database["public"]["Tables"]["blackout_dates"]["Row"]> & {
+          practice_id: string;
+          doctor_profile_id: string;
+          date: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["blackout_dates"]["Row"]>;
+        Relationships: [];
+      };
+      intake_questions: {
+        Row: {
+          id: string;
+          practice_id: string;
+          doctor_profile_id: string;
+          question_key: IntakeQuestionKey | null;
+          question_text: string;
+          sort_order: number;
+          active: boolean;
+        };
+        Insert: Partial<Database["public"]["Tables"]["intake_questions"]["Row"]> & {
+          practice_id: string;
+          doctor_profile_id: string;
+          question_text: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["intake_questions"]["Row"]>;
+        Relationships: [];
+      };
+      notification_prefs: {
+        Row: {
+          doctor_profile_id: string;
+          practice_id: string;
+          email_new_booking: boolean;
+          sms_new_booking: boolean;
+          daily_summary_email: boolean;
+          reminder_24h: boolean;
+          reminder_2h: boolean;
+          cancellation_policy_hours: number;
+        };
+        Insert: Partial<Database["public"]["Tables"]["notification_prefs"]["Row"]> & {
+          doctor_profile_id: string;
+          practice_id: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["notification_prefs"]["Row"]>;
+        Relationships: [];
+      };
+      appointments: {
+        Row: {
+          id: string;
+          practice_id: string;
+          doctor_profile_id: string;
+          appointment_type_id: string;
+          patient_id: string | null;
+          patient_full_name: string;
+          patient_dob: string | null;
+          patient_phone: string;
+          patient_email: string;
+          patient_insurance_company: string | null;
+          patient_member_id: string | null;
+          patient_notes: string | null;
+          insurance_verification_status: InsuranceVerificationStatus | null;
+          is_new_patient: boolean;
+          is_telehealth: boolean;
+          telehealth_room_url: string | null;
+          reason_for_visit: string | null;
+          intake_answers: Record<string, string>;
+          start_at: string;
+          end_at: string;
+          status: AppointmentStatus;
+          cancelled_at: string | null;
+          cancelled_reason: string | null;
+          thank_you_draft: string | null;
+          thank_you_sent_at: string | null;
+          reminder_24h_sent_at: string | null;
+          reminder_2h_sent_at: string | null;
+          review_requested_at: string | null;
+          created_at: string;
+        };
+        Insert: Partial<Database["public"]["Tables"]["appointments"]["Row"]> & {
+          practice_id: string;
+          doctor_profile_id: string;
+          appointment_type_id: string;
+          patient_full_name: string;
+          patient_phone: string;
+          patient_email: string;
+          start_at: string;
+          end_at: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["appointments"]["Row"]>;
+        Relationships: [];
+      };
+      waitlist: {
+        Row: {
+          id: string;
+          practice_id: string;
+          doctor_profile_id: string;
+          appointment_type_id: string;
+          patient_full_name: string;
+          patient_phone: string;
+          patient_email: string;
+          status: WaitlistStatus;
+          offered_at: string | null;
+          offer_expires_at: string | null;
+          offered_start_at: string | null;
+          offered_end_at: string | null;
+          created_at: string;
+        };
+        Insert: Partial<Database["public"]["Tables"]["waitlist"]["Row"]> & {
+          practice_id: string;
+          doctor_profile_id: string;
+          appointment_type_id: string;
+          patient_full_name: string;
+          patient_phone: string;
+          patient_email: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["waitlist"]["Row"]>;
+        Relationships: [];
+      };
+      reviews: {
+        Row: {
+          id: string;
+          practice_id: string;
+          doctor_profile_id: string;
+          appointment_id: string | null;
+          rating: number;
+          comment: string | null;
+          patient_display_name: string | null;
+          published: boolean;
+          created_at: string;
+        };
+        Insert: Partial<Database["public"]["Tables"]["reviews"]["Row"]> & {
+          practice_id: string;
+          doctor_profile_id: string;
+          rating: number;
+        };
+        Update: Partial<Database["public"]["Tables"]["reviews"]["Row"]>;
+        Relationships: [];
+      };
+      pre_appointment_intake: {
+        Row: {
+          appointment_id: string;
+          practice_id: string;
+          symptoms: string | null;
+          medical_history: string | null;
+          current_medications: string | null;
+          submitted_at: string;
+        };
+        Insert: Partial<Database["public"]["Tables"]["pre_appointment_intake"]["Row"]> & {
+          appointment_id: string;
+          practice_id: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["pre_appointment_intake"]["Row"]>;
         Relationships: [];
       };
     };

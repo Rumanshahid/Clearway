@@ -73,6 +73,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
               {showSection("requests") && <NavLink href="/dashboard" extraPrefixes={["/dashboard/requests"]}>PA</NavLink>}
               {showSection("patients") && <NavLink href="/dashboard/patients">Patients</NavLink>}
               {showSection("appeals") && <NavLink href="/dashboard/appeals">Appeals</NavLink>}
+              <NavLink href="/dashboard/appointments">Appointments</NavLink>
               <NavLink href="/dashboard/resources">Resources</NavLink>
               {isAdmin && <NavLink href="/dashboard/team">Team</NavLink>}
             </div>

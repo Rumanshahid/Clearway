@@ -24,6 +24,7 @@ export default async function SiteNav() {
             <Link href="/#how">{c("nav_link_how")}</Link>
             <Link href="/#insurers">{c("nav_link_coverage")}</Link>
             <Link href="/#pricing">{c("nav_link_pricing")}</Link>
+            <Link href="/doctors">Find a Doctor</Link>
             <Link href="/about">{c("nav_link_about")}</Link>
           </div>
           <div className="nav-right">
@@ -43,6 +44,7 @@ export default async function SiteNav() {
         <Link href="/#how">{c("nav_link_how")}</Link>
         <Link href="/#insurers">{c("nav_link_coverage")}</Link>
         <Link href="/#pricing">{c("nav_link_pricing")}</Link>
+        <Link href="/doctors">Find a Doctor</Link>
         <Link href="/about">{c("nav_link_about")}</Link>
         <div className="dd-divider"></div>
         <Link className="btn btn-outline dd-cta" href="/sign-in" style={{ display: "block", textAlign: "center", marginBottom: "8px" }}>{c("nav_signin_label")}</Link>
