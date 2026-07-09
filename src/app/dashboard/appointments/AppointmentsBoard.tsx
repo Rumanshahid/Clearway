@@ -1,9 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
 import type { AppointmentStatus } from "@/lib/database.types";
 import AppointmentCalendar from "./AppointmentCalendar";
+import AppointmentDetailModal from "./AppointmentDetailModal";
 import { markCompleteAction, markNoShowAction, cancelAppointmentAction, checkInAction } from "./actions";
 
 const STATUS_COLORS: Record<AppointmentStatus, { bg: string; fg: string }> = {
@@ -95,6 +95,7 @@ function AppointmentStatusSelect({ id, status }: { id: string; status: Appointme
 // this app behave identically.
 export default function AppointmentsBoard({ appointments, todayIso }: { appointments: AppointmentRow[]; todayIso: string }) {
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
+  const [viewingId, setViewingId] = useState<string | null>(null);
 
   return (
     <div className="grid gap-6" style={{ gridTemplateColumns: "280px 1fr" }}>
@@ -138,7 +139,7 @@ export default function AppointmentsBoard({ appointments, todayIso }: { appointm
                     </td>
                     <td className="px-5 py-3">
                       <div className="flex justify-end">
-                        <Link href={`/dashboard/appointments/${a.id}`} className="text-indigo-600 text-[12.5px]">View</Link>
+                        <button type="button" className="text-btn text-indigo-600 text-[12.5px]" onClick={() => setViewingId(a.id)}>View</button>
                       </div>
                     </td>
                   </tr>
@@ -148,6 +149,8 @@ export default function AppointmentsBoard({ appointments, todayIso }: { appointm
           </table>
         </div>
       </div>
+
+      <AppointmentDetailModal appointmentId={viewingId} onClose={() => setViewingId(null)} />
     </div>
   );
 }

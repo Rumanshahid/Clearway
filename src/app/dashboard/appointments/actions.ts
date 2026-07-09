@@ -12,6 +12,37 @@ function str(formData: FormData, key: string): string {
   return String(formData.get(key) || "").trim();
 }
 
+// Feeds the "View" popup on the appointments list -- same data the old
+// standalone detail page fetched, just callable directly from a client
+// component instead of only reachable via a page navigation.
+export async function getAppointmentDetailAction(id: string) {
+  const session = await getSessionProfile();
+  const supabase = await createClient();
+
+  const { data: appointment } = await supabase
+    .from("appointments")
+    .select("*")
+    .eq("id", id)
+    .eq("practice_id", session.practiceId)
+    .single();
+  if (!appointment) return null;
+
+  const [{ data: type }, { data: intakeQuestions }, { data: preVisitIntake }] = await Promise.all([
+    supabase.from("appointment_types").select("name").eq("id", appointment.appointment_type_id).single(),
+    supabase.from("intake_questions").select("question_key, question_text").eq("doctor_profile_id", appointment.doctor_profile_id),
+    supabase.from("pre_appointment_intake").select("*").eq("appointment_id", appointment.id).maybeSingle(),
+  ]);
+
+  return {
+    appointment,
+    typeName: type?.name || null,
+    intakeQuestions: intakeQuestions || [],
+    preVisitIntake: preVisitIntake || null,
+  };
+}
+
+export type AppointmentDetail = NonNullable<Awaited<ReturnType<typeof getAppointmentDetailAction>>>;
+
 export async function checkInAction(formData: FormData) {
   const session = await getSessionProfile();
   const supabase = await createClient();
