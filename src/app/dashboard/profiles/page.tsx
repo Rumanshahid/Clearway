@@ -12,20 +12,15 @@ export default async function ProfilesPage({
   const session = await getSessionProfile();
   const supabase = await createClient();
 
-  const { data: members } = await supabase
+  const { data: self } = await supabase
     .from("profiles")
     .select("id, full_name, role, title, avatar_url, bio, phone")
-    .eq("practice_id", session.practiceId)
-    .order("role", { ascending: false })
-    .order("full_name");
+    .eq("id", session.userId)
+    .single();
 
   const admin = await createAdminClient();
-  const { data: authList } = await admin.auth.admin.listUsers({ perPage: 200 });
-  const emailById = new Map((authList?.users || []).map((u) => [u.id, u.email || ""]));
-
-  const allMembers = members || [];
-  const self = allMembers.find((m) => m.id === session.userId);
-  const others = allMembers.filter((m) => m.id !== session.userId);
+  const { data: authUser } = await admin.auth.admin.getUserById(session.userId);
+  const email = authUser?.user?.email || "";
 
   let doctorData = null;
   if (session.isAdmin && self) {
@@ -45,9 +40,9 @@ export default async function ProfilesPage({
 
   return (
     <div className="max-w-[1000px] mx-auto py-8 px-5">
-      <h1 className="text-[24px] font-semibold mb-1">Profiles</h1>
+      <h1 className="text-[24px] font-semibold mb-1">My Profile</h1>
       <p className="text-[14px] text-gray-600 mb-6">
-        Everyone on the team — add your own photo, name, and a few basic details so people recognize you in chat. Title and role are set by an admin on the Team page.
+        Your photo, name, and a few basic details so people recognize you in chat. Title and role are set by an admin on the Team page.
       </p>
 
       {error && (
@@ -62,30 +57,15 @@ export default async function ProfilesPage({
       )}
 
       {self && (
-        <div className="mb-6">
-          <ProfileCard
-            member={self}
-            email={emailById.get(self.id) || ""}
-            isSelf
-            roleLabel={self.role === "clinic_admin" || self.role === "super_admin" ? "Doctor / Admin" : "Staff"}
-            doctorData={doctorData}
-            justSaved={!!saved}
-          />
-        </div>
+        <ProfileCard
+          member={self}
+          email={email}
+          isSelf
+          roleLabel={self.role === "clinic_admin" || self.role === "super_admin" ? "Doctor / Admin" : "Staff"}
+          doctorData={doctorData}
+          justSaved={!!saved}
+        />
       )}
-
-      <div className="grid gap-4" style={{ gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))" }}>
-        {others.map((m) => (
-          <ProfileCard
-            key={m.id}
-            member={m}
-            email={emailById.get(m.id) || ""}
-            isSelf={false}
-            roleLabel={m.role === "clinic_admin" || m.role === "super_admin" ? "Doctor / Admin" : "Staff"}
-            doctorData={null}
-          />
-        ))}
-      </div>
     </div>
   );
 }
