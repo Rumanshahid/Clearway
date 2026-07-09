@@ -4,7 +4,9 @@ import "../../landing.css";
 import SiteNav from "../../SiteNav";
 import SiteFooter from "../../SiteFooter";
 import LandingScripts from "../../LandingScripts";
+import DashboardNavBar from "@/app/dashboard/DashboardNavBar";
 import { createAdminClient, createClient } from "@/lib/supabase/server";
+import { getDashboardNavData } from "@/lib/dashboardNav";
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
@@ -44,6 +46,12 @@ export default async function DoctorProfilePage({
 
   if (!doctor || (!doctor.public_enabled && !isOwner)) notFound();
 
+  // Signed in and looking at your own page should feel like still being in
+  // the dashboard -- the full internal nav (section links, chat/tasks/
+  // notifications, account menu) replaces the marketing SiteNav here,
+  // rather than just linking out to it.
+  const navData = isOwner ? await getDashboardNavData(user!.id) : null;
+
   const [{ data: profile }, { data: reviews }] = await Promise.all([
     supabase.from("profiles").select("full_name, avatar_url").eq("id", doctor.profile_id).single(),
     supabase
@@ -59,7 +67,7 @@ export default async function DoctorProfilePage({
 
   return (
     <div className="landing-root">
-      <SiteNav />
+      {navData ? <DashboardNavBar data={navData} /> : <SiteNav />}
 
       <div className="wrap" style={{ padding: "48px 40px 80px", maxWidth: 900 }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
