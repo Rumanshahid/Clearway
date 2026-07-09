@@ -105,11 +105,13 @@ export default async function DoctorsDirectoryPage({
             <input type="checkbox" name="new_patients" value="1" defaultChecked={new_patients === "1"} className="w-4 h-4" />
             Accepting new patients
           </label>
-          <label className="flex items-center gap-2 text-[13.5px]">
-            <input type="checkbox" name="telehealth" value="1" defaultChecked={telehealth === "1"} className="w-4 h-4" />
-            Telehealth available
-          </label>
-          <button type="submit" className="btn btn-primary sm:col-span-2">Search</button>
+          <div className="flex items-center justify-between gap-3">
+            <label className="flex items-center gap-2 text-[13.5px]">
+              <input type="checkbox" name="telehealth" value="1" defaultChecked={telehealth === "1"} className="w-4 h-4" />
+              Telehealth available
+            </label>
+            <button type="submit" className="btn btn-primary btn-sm">Search</button>
+          </div>
         </form>
 
         <div className="flex flex-col gap-4">
