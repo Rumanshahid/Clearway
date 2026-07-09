@@ -17,9 +17,9 @@ const LANGUAGE_OPTIONS = ["English", "Spanish", "Mandarin", "Vietnamese", "Arabi
 export default async function DoctorsDirectoryPage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string; specialty?: string; insurance?: string; language?: string; zip?: string; new_patients?: string; telehealth?: string }>;
+  searchParams: Promise<{ q?: string; specialty?: string; insurance?: string; language?: string; city?: string; new_patients?: string; telehealth?: string }>;
 }) {
-  const { q, specialty, insurance, language, zip, new_patients, telehealth } = await searchParams;
+  const { q, specialty, insurance, language, city, new_patients, telehealth } = await searchParams;
   // Admin client: anonymous visitors have no session, and the profiles
   // table (queried below for names) has no public-select policy the way
   // doctor_profiles does, so the RLS-scoped client silently returned
@@ -30,7 +30,7 @@ export default async function DoctorsDirectoryPage({
   if (specialty) query = query.ilike("specialty", `%${specialty}%`);
   if (insurance) query = query.contains("insurance_accepted", [insurance]);
   if (language) query = query.contains("languages", [language]);
-  if (zip) query = query.eq("zip", zip);
+  if (city) query = query.ilike("city", `%${city}%`);
   if (new_patients === "1") query = query.eq("accepting_new_patients", true);
   if (telehealth === "1") query = query.eq("telehealth_available", true);
 
@@ -84,8 +84,8 @@ export default async function DoctorsDirectoryPage({
             <input className="input" id="q" name="q" placeholder="Dr. Okonkwo, orthopedics..." defaultValue={q || ""} />
           </div>
           <div>
-            <label className="label" htmlFor="zip">ZIP code</label>
-            <input className="input" id="zip" name="zip" defaultValue={zip || ""} />
+            <label className="label" htmlFor="city">City</label>
+            <input className="input" id="city" name="city" placeholder="Austin" defaultValue={city || ""} />
           </div>
           <div>
             <label className="label" htmlFor="insurance">Insurance</label>
