@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import Avatar from "@/components/Avatar";
 import { updateProfileAction, addBlackoutDateAction, deleteBlackoutDateAction } from "./actions";
 
@@ -248,7 +249,16 @@ export default function ProfileCard({
             <button type="submit" className="btn btn-primary btn-sm">
               Save
             </button>
-            <button type="button" className="btn btn-outline btn-sm" onClick={() => setEditing(false)}>Cancel</button>
+            {/* Doctors got here from their public page (via Edit Profile
+                there), so Cancel sends them back to it, matching Save's
+                redirect -- a local setEditing(false) would strand them on
+                this internal page instead of "back where they clicked
+                Edit Profile from". Staff have no public page to return to. */}
+            {isDoctor && doctorData ? (
+              <Link href={`/doctors/${doctorData.profile.slug}`} className="btn btn-outline btn-sm">Cancel</Link>
+            ) : (
+              <button type="button" className="btn btn-outline btn-sm" onClick={() => setEditing(false)}>Cancel</button>
+            )}
           </div>
         </form>
 
