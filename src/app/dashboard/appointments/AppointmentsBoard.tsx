@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import type { AppointmentStatus } from "@/lib/database.types";
 import AppointmentCalendar from "./AppointmentCalendar";
@@ -32,57 +32,60 @@ export interface AppointmentRow {
   is_telehealth: boolean;
 }
 
-function AppointmentActionsMenu({ id, status }: { id: string; status: AppointmentStatus }) {
-  const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
+// Which appointments can transition where -- confirmed can move to any of
+// the four; checked_in can move to any of them except back to itself via
+// checkInAction (there's no "un-check-in" action); complete/no_show/
+// cancelled are terminal, so the select just shows the current value with
+// nothing else to pick.
+const NEXT_STATUS_OPTIONS: Record<AppointmentStatus, AppointmentStatus[]> = {
+  confirmed: ["confirmed", "checked_in", "complete", "no_show", "cancelled"],
+  checked_in: ["checked_in", "complete", "no_show", "cancelled"],
+  complete: ["complete"],
+  no_show: ["no_show"],
+  cancelled: ["cancelled"],
+};
 
-  useEffect(() => {
-    function handleClickOutside(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
-    }
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
+const STATUS_ACTION: Partial<Record<AppointmentStatus, (formData: FormData) => Promise<void>>> = {
+  checked_in: checkInAction,
+  complete: markCompleteAction,
+  no_show: markNoShowAction,
+  cancelled: cancelAppointmentAction,
+};
 
-  const showStatusActions = status === "confirmed" || status === "checked_in";
+function AppointmentStatusSelect({ id, status }: { id: string; status: AppointmentStatus }) {
+  const [pending, setPending] = useState(false);
+  const options = NEXT_STATUS_OPTIONS[status];
+
+  async function handleChange(e: React.ChangeEvent<HTMLSelectElement>) {
+    const next = e.target.value as AppointmentStatus;
+    const action = next === status ? undefined : STATUS_ACTION[next];
+    if (!action) return;
+    setPending(true);
+    const formData = new FormData();
+    formData.set("id", id);
+    await action(formData);
+    setPending(false);
+  }
 
   return (
-    <div className="relative inline-block" ref={ref}>
-      <button type="button" className="text-btn text-gray-400 hover:text-gray-700 px-1" aria-label="Actions" onClick={() => setOpen((v) => !v)}>
-        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-          <circle cx="8" cy="3.5" r="1.3" fill="currentColor" />
-          <circle cx="8" cy="8" r="1.3" fill="currentColor" />
-          <circle cx="8" cy="12.5" r="1.3" fill="currentColor" />
-        </svg>
-      </button>
-      <div className={`dropdown-panel absolute right-0 top-7 w-[150px] card z-20 overflow-hidden${open ? " open" : ""}`}>
-        <Link href={`/dashboard/appointments/${id}`} className="block px-3 py-2 text-[13px] text-gray-700 hover:bg-gray-50" onClick={() => setOpen(false)}>
-          View
-        </Link>
-        {showStatusActions && (
-          <>
-            {status === "confirmed" && (
-              <form action={checkInAction}>
-                <input type="hidden" name="id" value={id} />
-                <button type="submit" className="w-full text-left px-3 py-2 text-[13px] text-gray-700 hover:bg-gray-50">Check In</button>
-              </form>
-            )}
-            <form action={markCompleteAction}>
-              <input type="hidden" name="id" value={id} />
-              <button type="submit" className="w-full text-left px-3 py-2 text-[13px] text-gray-700 hover:bg-gray-50">Complete</button>
-            </form>
-            <form action={markNoShowAction}>
-              <input type="hidden" name="id" value={id} />
-              <button type="submit" className="w-full text-left px-3 py-2 text-[13px] text-gray-700 hover:bg-gray-50">No-Show</button>
-            </form>
-            <form action={cancelAppointmentAction}>
-              <input type="hidden" name="id" value={id} />
-              <button type="submit" className="w-full text-left px-3 py-2 text-[13px] text-gray-400 hover:bg-gray-50">Cancel</button>
-            </form>
-          </>
-        )}
-      </div>
-    </div>
+    <select
+      className="input"
+      value={status}
+      disabled={pending || options.length === 1}
+      onChange={handleChange}
+      style={{
+        width: "auto",
+        padding: "4px 22px 4px 10px",
+        fontSize: 12,
+        fontWeight: 600,
+        borderRadius: 999,
+        border: "none",
+        background: STATUS_COLORS[status].bg,
+        color: STATUS_COLORS[status].fg,
+      }}
+    >
+      {options.map((s) => <option key={s} value={s}>{STATUS_LABELS[s]}</option>)}
+    </select>
   );
 }
 
@@ -131,13 +134,11 @@ export default function AppointmentsBoard({ appointments, todayIso }: { appointm
                     <td className="px-5 py-3">{a.patient_full_name}</td>
                     <td className="px-5 py-3 text-gray-600">{a.reason_for_visit || "—"}</td>
                     <td className="px-5 py-3">
-                      <span className="status-pill" style={{ background: STATUS_COLORS[a.status].bg, color: STATUS_COLORS[a.status].fg }}>
-                        {STATUS_LABELS[a.status]}
-                      </span>
+                      <AppointmentStatusSelect id={a.id} status={a.status} />
                     </td>
                     <td className="px-5 py-3">
                       <div className="flex justify-end">
-                        <AppointmentActionsMenu id={a.id} status={a.status} />
+                        <Link href={`/dashboard/appointments/${a.id}`} className="text-indigo-600 text-[12.5px]">View</Link>
                       </div>
                     </td>
                   </tr>
