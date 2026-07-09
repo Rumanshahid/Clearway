@@ -1,12 +1,22 @@
 import Link from "next/link";
 import { getSiteContent } from "@/lib/criteria-repo";
 import { getPageBySlug, makeFieldGetter } from "@/lib/content-schema";
+import { createClient } from "@/lib/supabase/server";
 
 const NAV_PAGE = getPageBySlug("nav")!;
 
 export default async function SiteNav() {
   const content = await getSiteContent();
   const c = makeFieldGetter(NAV_PAGE, content);
+
+  // This nav renders on every public/marketing page, including ones a
+  // signed-in doctor now visits regularly (their own /doctors/[slug]
+  // page) -- without this check it always showed Sign In/Sign Up even to
+  // someone already logged in.
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
   return (
     <>
@@ -28,8 +38,14 @@ export default async function SiteNav() {
             <Link href="/about">{c("nav_link_about")}</Link>
           </div>
           <div className="nav-right">
-            <Link className="btn btn-text" href="/sign-in" id="navSignIn">{c("nav_signin_label")}</Link>
-            <Link className="btn btn-primary" href="/sign-up" id="navCta">{c("nav_signup_label")}</Link>
+            {user ? (
+              <Link className="btn btn-primary" href="/dashboard" id="navCta">Go to Dashboard</Link>
+            ) : (
+              <>
+                <Link className="btn btn-text" href="/sign-in" id="navSignIn">{c("nav_signin_label")}</Link>
+                <Link className="btn btn-primary" href="/sign-up" id="navCta">{c("nav_signup_label")}</Link>
+              </>
+            )}
             <button className="hamburger" id="mobileHamburger" aria-label="Open menu">
               <span></span><span></span><span></span>
             </button>
@@ -47,8 +63,14 @@ export default async function SiteNav() {
         <Link href="/doctors">Find a Doctor</Link>
         <Link href="/about">{c("nav_link_about")}</Link>
         <div className="dd-divider"></div>
-        <Link className="btn btn-outline dd-cta" href="/sign-in" style={{ display: "block", textAlign: "center", marginBottom: "8px" }}>{c("nav_signin_label")}</Link>
-        <Link className="btn btn-primary dd-cta" href="/sign-up" style={{ display: "block", textAlign: "center" }}>{c("nav_signup_label")}</Link>
+        {user ? (
+          <Link className="btn btn-primary dd-cta" href="/dashboard" style={{ display: "block", textAlign: "center" }}>Go to Dashboard</Link>
+        ) : (
+          <>
+            <Link className="btn btn-outline dd-cta" href="/sign-in" style={{ display: "block", textAlign: "center", marginBottom: "8px" }}>{c("nav_signin_label")}</Link>
+            <Link className="btn btn-primary dd-cta" href="/sign-up" style={{ display: "block", textAlign: "center" }}>{c("nav_signup_label")}</Link>
+          </>
+        )}
       </div>
     </>
   );
