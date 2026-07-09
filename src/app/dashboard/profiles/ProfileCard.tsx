@@ -72,6 +72,7 @@ export default function ProfileCard({
   // showing a read-only summary of your own profile first, for anyone.
   const [editing, setEditing] = useState(isSelf);
   const [hours, setHours] = useState<HourRow[]>(() => buildInitialHours(doctorData?.availability || []));
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
 
   const hasHours = hours.some((h) => h.enabled);
   const isDoctor = isSelf && !!doctorData;
@@ -90,10 +91,20 @@ export default function ProfileCard({
         <form action={updateProfileAction} className="flex flex-col gap-3">
           <input type="hidden" name="member_id" value={member.id} />
           <div className="flex items-center gap-3">
-            <Avatar name={member.full_name} userId={member.id} avatarUrl={member.avatar_url} size={44} />
+            <Avatar name={member.full_name} userId={member.id} avatarUrl={avatarPreview || member.avatar_url} size={44} />
             <div>
               <label className="label" htmlFor={`avatar-${member.id}`}>Photo</label>
-              <input className="input" id={`avatar-${member.id}`} name="avatar" type="file" accept="image/*" />
+              <input
+                className="input"
+                id={`avatar-${member.id}`}
+                name="avatar"
+                type="file"
+                accept="image/*"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  setAvatarPreview(file ? URL.createObjectURL(file) : null);
+                }}
+              />
             </div>
           </div>
           <div>
