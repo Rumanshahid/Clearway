@@ -21,6 +21,7 @@ export default function NavMenus({
   userName,
   isAdmin,
   plan,
+  profileHref,
 }: {
   conversations: ConversationPreview[];
   tasks: TaskPreviewItem[];
@@ -28,6 +29,7 @@ export default function NavMenus({
   userName: string;
   isAdmin: boolean;
   plan: string | null;
+  profileHref: string;
 }) {
   const [openMenu, setOpenMenu] = useState<MenuKey | null>(null);
   const closeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -95,6 +97,7 @@ export default function NavMenus({
         name={userName}
         isAdmin={isAdmin}
         plan={plan}
+        profileHref={profileHref}
         open={openMenu === "account"}
         onMouseEnter={() => openNow("account")}
         onMouseLeave={() => closeSoon("account")}

@@ -31,6 +31,16 @@ export default async function DashboardLayout({ children }: { children: React.Re
   const sections = profile.allowed_sections || [];
   const showSection = (key: string) => isAdmin || sections.includes(key);
 
+  // Doctors' "Profile" link in the account menu goes to their live public
+  // page instead of straight to the edit form -- staff without a doctor
+  // profile fall back to the edit form directly (there's nothing public to
+  // show them).
+  let profileHref = "/dashboard/profiles";
+  if (isAdmin) {
+    const { data: doctorProfile } = await supabase.from("doctor_profiles").select("slug").eq("profile_id", user.id).maybeSingle();
+    if (doctorProfile) profileHref = `/doctors/${doctorProfile.slug}`;
+  }
+
   const { data: practice, error: practiceError } = await supabase
     .from("practices")
     .select("name, plan, billing_status")
@@ -86,6 +96,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
               userName={profile.full_name || "Account"}
               isAdmin={isAdmin}
               plan={practice?.plan || null}
+              profileHref={profileHref}
             />
           </div>
         </div>

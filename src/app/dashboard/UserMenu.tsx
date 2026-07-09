@@ -12,6 +12,7 @@ export default function UserMenu({
   onMouseLeave,
   onToggle,
   onClose,
+  profileHref,
 }: {
   name: string;
   isAdmin: boolean;
@@ -21,6 +22,7 @@ export default function UserMenu({
   onMouseLeave: () => void;
   onToggle: () => void;
   onClose: () => void;
+  profileHref: string;
 }) {
   return (
     <div className="relative" onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave}>
@@ -46,7 +48,7 @@ export default function UserMenu({
           </div>
         )}
         <Link
-          href="/dashboard/profiles"
+          href={profileHref}
           className="block px-4 py-2.5 text-[13.5px] text-gray-700 hover:bg-gray-50"
           onClick={onClose}
         >

@@ -4,7 +4,7 @@ import "../../landing.css";
 import SiteNav from "../../SiteNav";
 import SiteFooter from "../../SiteFooter";
 import LandingScripts from "../../LandingScripts";
-import { createAdminClient } from "@/lib/supabase/server";
+import { createAdminClient, createClient } from "@/lib/supabase/server";
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
@@ -18,14 +18,31 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   };
 }
 
-export default async function DoctorProfilePage({ params }: { params: Promise<{ slug: string }> }) {
+export default async function DoctorProfilePage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ slug: string }>;
+  searchParams: Promise<{ saved?: string }>;
+}) {
   const { slug } = await params;
+  const { saved } = await searchParams;
   // Admin client: anonymous visitors have no session, and profiles has no
   // public-select policy the way doctor_profiles/reviews do.
   const supabase = await createAdminClient();
 
-  const { data: doctor } = await supabase.from("doctor_profiles").select("*").eq("slug", slug).eq("public_enabled", true).maybeSingle();
-  if (!doctor) notFound();
+  // Fetched without the public_enabled filter so the owner can preview their
+  // own page before publishing -- visibility for everyone else is enforced
+  // just below instead.
+  const { data: doctor } = await supabase.from("doctor_profiles").select("*").eq("slug", slug).maybeSingle();
+
+  const sessionClient = await createClient();
+  const {
+    data: { user },
+  } = await sessionClient.auth.getUser();
+  const isOwner = !!user && !!doctor && user.id === doctor.profile_id;
+
+  if (!doctor || (!doctor.public_enabled && !isOwner)) notFound();
 
   const [{ data: profile }, { data: reviews }] = await Promise.all([
     supabase.from("profiles").select("full_name, avatar_url").eq("id", doctor.profile_id).single(),
@@ -45,7 +62,18 @@ export default async function DoctorProfilePage({ params }: { params: Promise<{ 
       <SiteNav />
 
       <div className="wrap" style={{ padding: "48px 40px 80px", maxWidth: 900 }}>
-        <Link href="/doctors" style={{ fontSize: 13, color: "var(--gray-400)" }}>← Back to directory</Link>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <Link href="/doctors" style={{ fontSize: 13, color: "var(--gray-400)" }}>← Back to directory</Link>
+          {isOwner && (
+            <Link href="/dashboard/profiles" className="btn btn-primary btn-sm">Edit Profile</Link>
+          )}
+        </div>
+
+        {isOwner && saved && (
+          <div className="mt-4 text-[13px] rounded-lg px-3 py-2" style={{ background: "var(--success-bg)", color: "var(--success-green)" }}>
+            Profile saved.
+          </div>
+        )}
 
         <div style={{ display: "flex", gap: 24, marginTop: 20, marginBottom: 32, flexWrap: "wrap" }}>
           <div

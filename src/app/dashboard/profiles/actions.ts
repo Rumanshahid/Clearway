@@ -62,9 +62,15 @@ export async function updateProfileAction(formData: FormData) {
     redirect(`/dashboard/profiles?error=${encodeURIComponent(`Could not save your profile: ${profileUpdateError.message}`)}`);
   }
 
+  // Doctors land back on their live public page after saving (so they can
+  // immediately see the result of what they just changed); staff without a
+  // public page just go back to the profiles list.
+  let redirectTarget = "/dashboard/profiles?saved=1";
+
   if (isDoctor) {
-    const { data: doctorProfile } = await supabase.from("doctor_profiles").select("id").eq("profile_id", session.userId).single();
+    const { data: doctorProfile } = await supabase.from("doctor_profiles").select("id, slug").eq("profile_id", session.userId).single();
     if (doctorProfile) {
+      redirectTarget = `/doctors/${doctorProfile.slug}?saved=1`;
       const blocks: HourBlock[] = JSON.parse(String(formData.get("blocks") || "[]"));
       const appointmentTypeId = String(formData.get("appointment_type_id") || "");
       const conditionsTreated = String(formData.get("conditions_treated") || "")
@@ -129,11 +135,12 @@ export async function updateProfileAction(formData: FormData) {
 
   revalidatePath("/dashboard/profiles");
   revalidatePath("/dashboard/chat");
+  if (isDoctor) revalidatePath("/doctors/[slug]", "page");
   // A real redirect (not just revalidatePath) is what actually closes edit
   // mode back to the summary view -- ProfileCard's local `editing` state
   // survives a revalidate-only re-render since the component isn't
   // remounted, so justSaved needs a fresh navigation to reset it.
-  redirect("/dashboard/profiles?saved=1");
+  redirect(redirectTarget);
 }
 
 export async function addBlackoutDateAction(formData: FormData) {
