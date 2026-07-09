@@ -225,7 +225,7 @@ function CalendarView({
       <div className="grid grid-cols-7 gap-1 text-center text-[11px] uppercase tracking-wide text-gray-400 mb-2">
         {["S", "M", "T", "W", "T", "F", "S"].map((d, i) => <div key={i}>{d}</div>)}
       </div>
-      <div className="grid grid-cols-7 gap-1">
+      <div className="grid grid-cols-7 gap-1 text-center">
         {cells.map((day, i) => {
           if (day === null) return <div key={i} />;
           const dateKey = `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
@@ -234,13 +234,19 @@ function CalendarView({
           return (
             <div
               key={i}
-              className="rounded-lg p-1.5 flex flex-col items-center gap-1"
-              style={isToday ? { background: "#EEF0FF" } : undefined}
+              className="relative rounded-md py-1.5 text-[12.5px]"
+              style={{
+                background: isToday ? "var(--gray-100)" : "transparent",
+                fontWeight: isToday ? 600 : 400,
+              }}
             >
-              <span className="text-[13px]">{day}</span>
+              {day}
               {count > 0 && (
-                <span className="status-pill" style={{ background: "var(--indigo-600)", color: "#fff", fontSize: 10, padding: "1px 7px" }}>
-                  {count}
+                <span
+                  className="absolute -top-0.5 -right-0.5 rounded-full flex items-center justify-center text-white"
+                  style={{ background: "var(--indigo-600)", width: 14, height: 14, fontSize: 9, lineHeight: 1 }}
+                >
+                  {count > 9 ? "9+" : count}
                 </span>
               )}
             </div>
