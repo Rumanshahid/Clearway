@@ -129,6 +129,11 @@ export async function updateProfileAction(formData: FormData) {
 
   revalidatePath("/dashboard/profiles");
   revalidatePath("/dashboard/chat");
+  // A real redirect (not just revalidatePath) is what actually closes edit
+  // mode back to the summary view -- ProfileCard's local `editing` state
+  // survives a revalidate-only re-render since the component isn't
+  // remounted, so justSaved needs a fresh navigation to reset it.
+  redirect("/dashboard/profiles?saved=1");
 }
 
 export async function addBlackoutDateAction(formData: FormData) {

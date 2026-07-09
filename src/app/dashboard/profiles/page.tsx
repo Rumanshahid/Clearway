@@ -6,9 +6,9 @@ import ProfileCard from "./ProfileCard";
 export default async function ProfilesPage({
   searchParams,
 }: {
-  searchParams: Promise<{ error?: string }>;
+  searchParams: Promise<{ error?: string; saved?: string }>;
 }) {
-  const { error } = await searchParams;
+  const { error, saved } = await searchParams;
   const session = await getSessionProfile();
   const supabase = await createClient();
 
@@ -55,6 +55,11 @@ export default async function ProfilesPage({
           {error}
         </div>
       )}
+      {saved && !error && (
+        <div className="mb-5 text-[13px] rounded-lg px-3 py-2" style={{ background: "var(--success-bg)", color: "var(--success-green)" }}>
+          Profile saved.
+        </div>
+      )}
 
       {self && (
         <div className="mb-6">
@@ -64,6 +69,7 @@ export default async function ProfilesPage({
             isSelf
             roleLabel={self.role === "clinic_admin" || self.role === "super_admin" ? "Doctor / Admin" : "Staff"}
             doctorData={doctorData}
+            justSaved={!!saved}
           />
         </div>
       )}

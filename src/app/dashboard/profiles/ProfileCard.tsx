@@ -61,16 +61,23 @@ export default function ProfileCard({
   isSelf,
   roleLabel,
   doctorData,
+  justSaved,
 }: {
   member: Member;
   email: string;
   isSelf: boolean;
   roleLabel: string;
   doctorData: DoctorData | null;
+  justSaved?: boolean;
 }) {
   // Your own card opens straight into editing -- there's no real value in
-  // showing a read-only summary of your own profile first, for anyone.
-  const [editing, setEditing] = useState(isSelf);
+  // showing a read-only summary of your own profile first, for anyone. The
+  // one exception is right after a successful save (justSaved): the action
+  // redirects back here specifically so this remounts fresh and closes back
+  // to the summary view, which is the only reliable way to do that -- see
+  // the note on the Save button below for why a plain setEditing(false) on
+  // click doesn't work.
+  const [editing, setEditing] = useState(isSelf && !justSaved);
   const [hours, setHours] = useState<HourRow[]>(() => buildInitialHours(doctorData?.availability || []));
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
 
@@ -231,7 +238,14 @@ export default function ProfileCard({
           )}
 
           <div className="flex gap-2">
-            <button type="submit" className="btn btn-primary btn-sm" onClick={() => setEditing(false)}>
+            {/* No onClick here on purpose -- setEditing(false) on this same
+                click raced with the browser's native form submission (React
+                batches the state update into the same event, which could
+                unmount the form before the submit event fired), so Save
+                silently did nothing. The action itself redirects back here
+                with justSaved on success, which is what actually closes
+                edit mode now. */}
+            <button type="submit" className="btn btn-primary btn-sm">
               Save
             </button>
             <button type="button" className="btn btn-outline btn-sm" onClick={() => setEditing(false)}>Cancel</button>
