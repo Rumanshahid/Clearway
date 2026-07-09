@@ -20,16 +20,12 @@ const STATUS_LABELS: Record<AppointmentStatus, string> = {
   cancelled: "Cancelled",
 };
 
-function todayKey(): string {
-  return new Date().toISOString().slice(0, 10);
-}
-
 export default async function AppointmentsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ doctor?: string; date?: string; view?: string; year?: string; month?: string }>;
+  searchParams: Promise<{ doctor?: string; year?: string; month?: string }>;
 }) {
-  const { doctor: doctorParam, date, view, year, month } = await searchParams;
+  const { doctor: doctorParam, year, month } = await searchParams;
   const session = await getSessionProfile();
   const supabase = await createClient();
 
@@ -63,51 +59,33 @@ export default async function AppointmentsPage({
       ? doctorParam
       : doctors.find((d) => d.profile_id === session.userId)?.id || doctors[0].id;
 
-  const activeView = view === "calendar" ? "calendar" : "list";
-
-  // With no explicit date, land on the next upcoming appointment instead of
-  // always today -- a booking made for tomorrow (or any other day) shouldn't
-  // look "missing" just because today's list happens to be empty.
-  let selectedDate = date && /^\d{4}-\d{2}-\d{2}$/.test(date) ? date : todayKey();
-  if (!date) {
-    const { data: nextAppt } = await supabase
-      .from("appointments")
-      .select("start_at")
-      .eq("doctor_profile_id", selectedDoctorId)
-      .neq("status", "cancelled")
-      .gte("start_at", new Date().toISOString())
-      .order("start_at")
-      .limit(1)
-      .maybeSingle();
-    if (nextAppt) selectedDate = nextAppt.start_at.slice(0, 10);
-  }
-
-  const [selectedYear, selectedMonthIndex] = selectedDate.split("-").map(Number);
-  const calYear = year ? Number(year) : selectedYear;
-  const calMonth = month ? Number(month) : selectedMonthIndex - 1; // 0-indexed
+  const now = new Date();
+  const calYear = year ? Number(year) : now.getFullYear();
+  const calMonth = month ? Number(month) : now.getMonth(); // 0-indexed
 
   const monthStart = new Date(Date.UTC(calYear, calMonth, 1));
   const monthEnd = new Date(Date.UTC(calYear, calMonth + 1, 0, 23, 59, 59));
 
-  const { data: monthAppointments } = await supabase
-    .from("appointments")
-    .select("id, appointment_type_id, patient_full_name, reason_for_visit, status, start_at, end_at, is_telehealth")
-    .eq("doctor_profile_id", selectedDoctorId)
-    .gte("start_at", monthStart.toISOString())
-    .lte("start_at", monthEnd.toISOString())
-    .order("start_at");
-
-  const { data: types } = await supabase
-    .from("appointment_types")
-    .select("id, name")
-    .eq("doctor_profile_id", selectedDoctorId);
+  const [{ data: allAppointments }, { data: monthAppointments }, { data: types }] = await Promise.all([
+    supabase
+      .from("appointments")
+      .select("id, appointment_type_id, patient_full_name, reason_for_visit, status, start_at, end_at, is_telehealth")
+      .eq("doctor_profile_id", selectedDoctorId)
+      .order("start_at"),
+    supabase
+      .from("appointments")
+      .select("start_at")
+      .eq("doctor_profile_id", selectedDoctorId)
+      .gte("start_at", monthStart.toISOString())
+      .lte("start_at", monthEnd.toISOString()),
+    supabase.from("appointment_types").select("id, name").eq("doctor_profile_id", selectedDoctorId),
+  ]);
   const typeNameById = new Map((types || []).map((t) => [t.id, t.name]));
 
-  const appointments = monthAppointments || [];
-  const dayAppointments = appointments.filter((a) => a.start_at.slice(0, 10) === selectedDate);
+  const appointments = allAppointments || [];
 
   const countsByDay = new Map<string, number>();
-  for (const a of appointments) {
+  for (const a of monthAppointments || []) {
     const key = a.start_at.slice(0, 10);
     countsByDay.set(key, (countsByDay.get(key) || 0) + 1);
   }
@@ -115,7 +93,7 @@ export default async function AppointmentsPage({
   const doctorQuery = `doctor=${selectedDoctorId}`;
 
   return (
-    <div className="max-w-[1100px] mx-auto py-8 px-5">
+    <div className="max-w-[1300px] mx-auto py-8 px-5">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
         <h1 className="text-[24px] font-semibold">Appointments</h1>
         <div className="flex items-center gap-3">
@@ -133,41 +111,23 @@ export default async function AppointmentsPage({
               </select>
             </form>
           )}
-          <div className="flex gap-1 card p-1">
-            <Link href={`/dashboard/appointments?${doctorQuery}&view=list&date=${selectedDate}`} className={`px-3 py-1.5 rounded-md text-[13px] ${activeView === "list" ? "font-semibold" : "text-gray-500"}`} style={activeView === "list" ? { background: "var(--gray-100)" } : undefined}>
-              List
-            </Link>
-            <Link href={`/dashboard/appointments?${doctorQuery}&view=calendar&year=${calYear}&month=${calMonth}`} className={`px-3 py-1.5 rounded-md text-[13px] ${activeView === "calendar" ? "font-semibold" : "text-gray-500"}`} style={activeView === "calendar" ? { background: "var(--gray-100)" } : undefined}>
-              Calendar
-            </Link>
-          </div>
           {session.isAdmin && (
             <Link href={`/dashboard/appointments/analytics?${doctorQuery}`} className="text-[13px] text-indigo-600">Analytics →</Link>
           )}
         </div>
       </div>
 
-      {activeView === "calendar" ? (
-        <CalendarView
-          year={calYear}
-          month={calMonth}
-          countsByDay={countsByDay}
-          doctorQuery={doctorQuery}
-          selectedDate={selectedDate}
-        />
-      ) : (
-        <div className="flex flex-col gap-4">
-          <div className="flex items-center justify-between">
-            <Link href={`/dashboard/appointments?${doctorQuery}&view=list&date=${shiftDate(selectedDate, -1)}`} className="text-btn text-[13px] text-gray-500">← Previous day</Link>
-            <div className="text-[14px] font-semibold">{formatDateLabel(selectedDate)}</div>
-            <Link href={`/dashboard/appointments?${doctorQuery}&view=list&date=${shiftDate(selectedDate, 1)}`} className="text-btn text-[13px] text-gray-500">Next day →</Link>
-          </div>
+      <div className="flex flex-col lg:flex-row gap-6 items-start">
+        <aside className="w-full lg:w-[280px] flex-shrink-0">
+          <CalendarView year={calYear} month={calMonth} countsByDay={countsByDay} doctorQuery={doctorQuery} />
+        </aside>
 
+        <div className="flex-1 min-w-0 w-full">
           <div className="card overflow-hidden overflow-x-auto">
             <table className="w-full text-[13.5px]">
               <thead>
                 <tr className="text-left text-gray-400 text-[11px] uppercase tracking-wide" style={{ borderBottom: "1px solid var(--gray-200)" }}>
-                  <th className="px-5 py-3 font-semibold">Time</th>
+                  <th className="px-5 py-3 font-semibold">Date</th>
                   <th className="px-5 py-3 font-semibold">Patient</th>
                   <th className="px-5 py-3 font-semibold">Type</th>
                   <th className="px-5 py-3 font-semibold">Reason</th>
@@ -176,13 +136,13 @@ export default async function AppointmentsPage({
                 </tr>
               </thead>
               <tbody>
-                {dayAppointments.length === 0 && (
-                  <tr><td className="px-5 py-10 text-center text-gray-400" colSpan={6}>No appointments this day.</td></tr>
+                {appointments.length === 0 && (
+                  <tr><td className="px-5 py-10 text-center text-gray-400" colSpan={6}>No appointments yet.</td></tr>
                 )}
-                {dayAppointments.map((a) => (
+                {appointments.map((a) => (
                   <tr key={a.id} style={{ borderBottom: "1px solid var(--gray-100)" }}>
                     <td className="px-5 py-3">
-                      {new Date(a.start_at).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}
+                      {new Date(a.start_at).toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}
                       {a.is_telehealth && <span className="text-gray-400"> · Telehealth</span>}
                     </td>
                     <td className="px-5 py-3">{a.patient_full_name}</td>
@@ -226,19 +186,9 @@ export default async function AppointmentsPage({
             </table>
           </div>
         </div>
-      )}
+      </div>
     </div>
   );
-}
-
-function shiftDate(dateKey: string, days: number): string {
-  const d = new Date(`${dateKey}T00:00:00Z`);
-  d.setUTCDate(d.getUTCDate() + days);
-  return d.toISOString().slice(0, 10);
-}
-
-function formatDateLabel(dateKey: string): string {
-  return new Date(`${dateKey}T00:00:00Z`).toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric", timeZone: "UTC" });
 }
 
 function CalendarView({
@@ -246,18 +196,17 @@ function CalendarView({
   month,
   countsByDay,
   doctorQuery,
-  selectedDate,
 }: {
   year: number;
   month: number;
   countsByDay: Map<string, number>;
   doctorQuery: string;
-  selectedDate: string;
 }) {
   const firstOfMonth = new Date(Date.UTC(year, month, 1));
   const daysInMonth = new Date(Date.UTC(year, month + 1, 0)).getUTCDate();
   const startWeekday = firstOfMonth.getUTCDay();
   const monthLabel = firstOfMonth.toLocaleDateString("en-US", { month: "long", year: "numeric", timeZone: "UTC" });
+  const todayKey = new Date().toISOString().slice(0, 10);
 
   const prevMonth = month === 0 ? 11 : month - 1;
   const prevYear = month === 0 ? year - 1 : year;
@@ -267,27 +216,26 @@ function CalendarView({
   const cells: (number | null)[] = [...Array(startWeekday).fill(null), ...Array.from({ length: daysInMonth }, (_, i) => i + 1)];
 
   return (
-    <div className="card p-5">
+    <div className="card p-4">
       <div className="flex items-center justify-between mb-4">
-        <Link href={`/dashboard/appointments?${doctorQuery}&view=calendar&year=${prevYear}&month=${prevMonth}`} className="text-btn text-[13px] text-gray-500">← Prev</Link>
+        <Link href={`/dashboard/appointments?${doctorQuery}&year=${prevYear}&month=${prevMonth}`} className="text-btn text-[13px] text-gray-500">← Prev</Link>
         <div className="text-[14px] font-semibold">{monthLabel}</div>
-        <Link href={`/dashboard/appointments?${doctorQuery}&view=calendar&year=${nextYear}&month=${nextMonth}`} className="text-btn text-[13px] text-gray-500">Next →</Link>
+        <Link href={`/dashboard/appointments?${doctorQuery}&year=${nextYear}&month=${nextMonth}`} className="text-btn text-[13px] text-gray-500">Next →</Link>
       </div>
       <div className="grid grid-cols-7 gap-1 text-center text-[11px] uppercase tracking-wide text-gray-400 mb-2">
-        {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((d) => <div key={d}>{d}</div>)}
+        {["S", "M", "T", "W", "T", "F", "S"].map((d, i) => <div key={i}>{d}</div>)}
       </div>
       <div className="grid grid-cols-7 gap-1">
         {cells.map((day, i) => {
           if (day === null) return <div key={i} />;
           const dateKey = `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
           const count = countsByDay.get(dateKey) || 0;
-          const isSelected = dateKey === selectedDate;
+          const isToday = dateKey === todayKey;
           return (
-            <Link
+            <div
               key={i}
-              href={`/dashboard/appointments?${doctorQuery}&view=list&date=${dateKey}`}
-              className="rounded-lg p-2 flex flex-col items-center gap-1 hover:bg-gray-50"
-              style={isSelected ? { background: "#EEF0FF" } : undefined}
+              className="rounded-lg p-1.5 flex flex-col items-center gap-1"
+              style={isToday ? { background: "#EEF0FF" } : undefined}
             >
               <span className="text-[13px]">{day}</span>
               {count > 0 && (
@@ -295,7 +243,7 @@ function CalendarView({
                   {count}
                 </span>
               )}
-            </Link>
+            </div>
           );
         })}
       </div>
