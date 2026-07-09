@@ -98,11 +98,13 @@ export default async function DoctorProfilePage({
               {doctor.telehealth_available && <span className="status-pill" style={{ background: "#EEF0FF", color: "var(--indigo-600)" }}>Telehealth available</span>}
             </div>
           </div>
-          <div style={{ flexShrink: 0, alignSelf: "center" }}>
-            <Link href={`/doctors/${doctor.slug}/book`} className="btn btn-primary" style={{ fontSize: 15, padding: "14px 28px" }}>
-              Book Appointment →
-            </Link>
-          </div>
+          {!isOwner && (
+            <div style={{ flexShrink: 0, alignSelf: "center" }}>
+              <Link href={`/doctors/${doctor.slug}/book`} className="btn btn-primary" style={{ fontSize: 15, padding: "14px 28px" }}>
+                Book Appointment →
+              </Link>
+            </div>
+          )}
         </div>
 
         {doctor.bio && (
@@ -167,11 +169,13 @@ export default async function DoctorProfilePage({
           </section>
         )}
 
-        <div style={{ textAlign: "center", paddingTop: 8 }}>
-          <Link href={`/doctors/${doctor.slug}/book`} className="btn btn-primary" style={{ fontSize: 15, padding: "14px 28px" }}>
-            Book Appointment →
-          </Link>
-        </div>
+        {!isOwner && (
+          <div style={{ textAlign: "center", paddingTop: 8 }}>
+            <Link href={`/doctors/${doctor.slug}/book`} className="btn btn-primary" style={{ fontSize: 15, padding: "14px 28px" }}>
+              Book Appointment →
+            </Link>
+          </div>
+        )}
       </div>
 
       <SiteFooter />
