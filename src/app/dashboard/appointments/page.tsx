@@ -42,20 +42,13 @@ export default async function AppointmentsPage({
       ? doctorParam
       : doctors.find((d) => d.profile_id === session.userId)?.id || doctors[0].id;
 
-  const [{ data: allAppointments }, { data: types }] = await Promise.all([
-    supabase
-      .from("appointments")
-      .select("id, appointment_type_id, patient_full_name, reason_for_visit, status, start_at, end_at, is_telehealth")
-      .eq("doctor_profile_id", selectedDoctorId)
-      .order("start_at"),
-    supabase.from("appointment_types").select("id, name").eq("doctor_profile_id", selectedDoctorId),
-  ]);
-  const typeNameById = new Map((types || []).map((t) => [t.id, t.name]));
+  const { data: allAppointments } = await supabase
+    .from("appointments")
+    .select("id, patient_full_name, reason_for_visit, status, start_at, end_at, is_telehealth")
+    .eq("doctor_profile_id", selectedDoctorId)
+    .order("start_at");
 
-  const appointments: AppointmentRow[] = (allAppointments || []).map((a) => ({
-    ...a,
-    typeName: typeNameById.get(a.appointment_type_id) || "—",
-  }));
+  const appointments: AppointmentRow[] = allAppointments || [];
 
   const doctorQuery = `doctor=${selectedDoctorId}`;
 
