@@ -64,10 +64,27 @@ export default async function AppointmentsPage({
       : doctors.find((d) => d.profile_id === session.userId)?.id || doctors[0].id;
 
   const activeView = view === "calendar" ? "calendar" : "list";
-  const selectedDate = date && /^\d{4}-\d{2}-\d{2}$/.test(date) ? date : todayKey();
-  const now = new Date();
-  const calYear = year ? Number(year) : now.getFullYear();
-  const calMonth = month ? Number(month) : now.getMonth(); // 0-indexed
+
+  // With no explicit date, land on the next upcoming appointment instead of
+  // always today -- a booking made for tomorrow (or any other day) shouldn't
+  // look "missing" just because today's list happens to be empty.
+  let selectedDate = date && /^\d{4}-\d{2}-\d{2}$/.test(date) ? date : todayKey();
+  if (!date) {
+    const { data: nextAppt } = await supabase
+      .from("appointments")
+      .select("start_at")
+      .eq("doctor_profile_id", selectedDoctorId)
+      .neq("status", "cancelled")
+      .gte("start_at", new Date().toISOString())
+      .order("start_at")
+      .limit(1)
+      .maybeSingle();
+    if (nextAppt) selectedDate = nextAppt.start_at.slice(0, 10);
+  }
+
+  const [selectedYear, selectedMonthIndex] = selectedDate.split("-").map(Number);
+  const calYear = year ? Number(year) : selectedYear;
+  const calMonth = month ? Number(month) : selectedMonthIndex - 1; // 0-indexed
 
   const monthStart = new Date(Date.UTC(calYear, calMonth, 1));
   const monthEnd = new Date(Date.UTC(calYear, calMonth + 1, 0, 23, 59, 59));
