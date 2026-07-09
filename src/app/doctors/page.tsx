@@ -5,6 +5,7 @@ import SiteFooter from "../SiteFooter";
 import LandingScripts from "../LandingScripts";
 import { createAdminClient } from "@/lib/supabase/server";
 import { getOpenSlots } from "@/lib/scheduling";
+import DoctorSearchButton from "./DoctorSearchButton";
 
 export const metadata = {
   title: "Find a Doctor — asaanbil.com",
@@ -73,48 +74,16 @@ export default async function DoctorsDirectoryPage({
       <SiteNav />
 
       <div className="wrap" style={{ padding: "48px 40px 80px" }}>
-        <h1 style={{ fontSize: 32, fontWeight: 700, marginBottom: 8 }}>Find a doctor</h1>
-        <p style={{ fontSize: 14.5, color: "var(--gray-600)", marginBottom: 32 }}>
-          Search Asaanbil&apos;s network of practices and book directly — no phone tag.
-        </p>
+        <div className="flex items-center justify-between mb-8 flex-wrap gap-3">
+          <h1 style={{ fontSize: 32, fontWeight: 700 }}>Doctors</h1>
+          <DoctorSearchButton
+            insuranceOptions={INSURANCE_OPTIONS}
+            languageOptions={LANGUAGE_OPTIONS}
+            defaults={{ q, city, insurance, language, new_patients, telehealth }}
+          />
+        </div>
 
-        <form className="card p-5 mb-8 grid grid-cols-1 sm:grid-cols-4 gap-4">
-          <div className="sm:col-span-2">
-            <label className="label" htmlFor="q">Name or specialty</label>
-            <input className="input" id="q" name="q" placeholder="Dr. Okonkwo, orthopedics..." defaultValue={q || ""} />
-          </div>
-          <div>
-            <label className="label" htmlFor="city">City</label>
-            <input className="input" id="city" name="city" placeholder="Austin" defaultValue={city || ""} />
-          </div>
-          <div>
-            <label className="label" htmlFor="insurance">Insurance</label>
-            <select className="input" id="insurance" name="insurance" defaultValue={insurance || ""}>
-              <option value="">Any</option>
-              {INSURANCE_OPTIONS.map((opt) => <option key={opt} value={opt}>{opt}</option>)}
-            </select>
-          </div>
-          <div>
-            <label className="label" htmlFor="language">Language</label>
-            <select className="input" id="language" name="language" defaultValue={language || ""}>
-              <option value="">Any</option>
-              {LANGUAGE_OPTIONS.map((opt) => <option key={opt} value={opt}>{opt}</option>)}
-            </select>
-          </div>
-          <label className="flex items-center gap-2 text-[13.5px]">
-            <input type="checkbox" name="new_patients" value="1" defaultChecked={new_patients === "1"} className="w-4 h-4" />
-            Accepting new patients
-          </label>
-          <div className="flex items-center justify-between gap-3">
-            <label className="flex items-center gap-2 text-[13.5px]">
-              <input type="checkbox" name="telehealth" value="1" defaultChecked={telehealth === "1"} className="w-4 h-4" />
-              Telehealth available
-            </label>
-            <button type="submit" className="btn btn-primary btn-sm">Search</button>
-          </div>
-        </form>
-
-        <div className="flex flex-col gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {doctors.length === 0 && (
             <p style={{ color: "var(--gray-400)", fontSize: 14 }}>No doctors match those filters yet.</p>
           )}
