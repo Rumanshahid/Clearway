@@ -43,10 +43,11 @@ export default async function DoctorsDirectoryPage({
     doctors = doctors.filter((d) => matchingIds.has(d.profile_id) || (d.specialty || "").toLowerCase().includes(q.toLowerCase()));
   }
 
-  const { data: profileNames } = doctors.length
-    ? await supabase.from("profiles").select("id, full_name").in("id", doctors.map((d) => d.profile_id))
-    : { data: [] as { id: string; full_name: string | null }[] };
-  const nameById = new Map((profileNames || []).map((p) => [p.id, p.full_name || "Doctor"]));
+  const { data: profileRows } = doctors.length
+    ? await supabase.from("profiles").select("id, full_name, avatar_url").in("id", doctors.map((d) => d.profile_id))
+    : { data: [] as { id: string; full_name: string | null; avatar_url: string | null }[] };
+  const nameById = new Map((profileRows || []).map((p) => [p.id, p.full_name || "Doctor"]));
+  const avatarById = new Map((profileRows || []).map((p) => [p.id, p.avatar_url]));
 
   const searchWindowStart = new Date();
   const searchWindowEnd = new Date(searchWindowStart.getTime() + 14 * 24 * 60 * 60 * 1000);
@@ -124,7 +125,7 @@ export default async function DoctorsDirectoryPage({
             >
               <div
                 className="rounded-full flex-shrink-0"
-                style={{ width: 56, height: 56, background: "var(--gray-100)", backgroundImage: d.photo_url ? `url(${d.photo_url})` : undefined, backgroundSize: "cover", backgroundPosition: "center" }}
+                style={{ width: 56, height: 56, background: "var(--gray-100)", backgroundImage: avatarById.get(d.profile_id) ? `url(${avatarById.get(d.profile_id)})` : undefined, backgroundSize: "cover", backgroundPosition: "center" }}
               />
               <div className="flex-1">
                 <div style={{ fontSize: 15.5, fontWeight: 600, color: "var(--gray-900)" }}>

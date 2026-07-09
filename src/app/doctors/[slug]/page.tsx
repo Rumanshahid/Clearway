@@ -28,7 +28,7 @@ export default async function DoctorProfilePage({ params }: { params: Promise<{ 
   if (!doctor) notFound();
 
   const [{ data: profile }, { data: reviews }] = await Promise.all([
-    supabase.from("profiles").select("full_name").eq("id", doctor.profile_id).single(),
+    supabase.from("profiles").select("full_name, avatar_url").eq("id", doctor.profile_id).single(),
     supabase
       .from("reviews")
       .select("rating, comment, patient_display_name, created_at")
@@ -50,7 +50,7 @@ export default async function DoctorProfilePage({ params }: { params: Promise<{ 
         <div style={{ display: "flex", gap: 24, marginTop: 20, marginBottom: 32, flexWrap: "wrap" }}>
           <div
             className="rounded-full flex-shrink-0"
-            style={{ width: 96, height: 96, background: "var(--gray-100)", backgroundImage: doctor.photo_url ? `url(${doctor.photo_url})` : undefined, backgroundSize: "cover", backgroundPosition: "center" }}
+            style={{ width: 96, height: 96, background: "var(--gray-100)", backgroundImage: profile?.avatar_url ? `url(${profile.avatar_url})` : undefined, backgroundSize: "cover", backgroundPosition: "center" }}
           />
           <div style={{ flex: 1, minWidth: 240 }}>
             <h1 style={{ fontSize: 26, fontWeight: 700 }}>
