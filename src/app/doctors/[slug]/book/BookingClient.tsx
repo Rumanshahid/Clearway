@@ -5,12 +5,14 @@ import Link from "next/link";
 import { routeAndGetSlotsAction, submitBookingAction, joinWaitlistAction, bookRecurringSeriesAction, type RoutingAndSlotsResult } from "./actions";
 import type { SlotWindow } from "@/lib/scheduling";
 
-type Step = "intake" | "routing" | "slots" | "waitlist" | "waitlisted" | "details" | "submitting" | "confirmed" | "error";
+type Step = "purpose" | "duration" | "location" | "routing" | "slots" | "waitlist" | "waitlisted" | "details" | "submitting" | "confirmed" | "error";
 
 interface ChatEntry {
   role: "assistant" | "patient";
   text: string;
 }
+
+const DURATION_PRESETS = [30, 40, 60];
 
 function buildIcs(doctorName: string, start: string, end: string): string {
   const fmt = (iso: string) => iso.replace(/[-:]/g, "").split(".")[0] + "Z";
@@ -29,17 +31,18 @@ function buildIcs(doctorName: string, start: string, end: string): string {
 export default function BookingClient({
   doctorSlug,
   doctorName,
-  questions,
+  telehealthAvailable,
 }: {
   doctorSlug: string;
   doctorName: string;
-  questions: string[];
+  telehealthAvailable: boolean;
 }) {
-  const [step, setStep] = useState<Step>("intake");
-  const [questionIndex, setQuestionIndex] = useState(0);
-  const [currentAnswer, setCurrentAnswer] = useState("");
-  const [answers, setAnswers] = useState<Record<string, string>>({});
-  const [chatLog, setChatLog] = useState<ChatEntry[]>(questions.length ? [{ role: "assistant", text: questions[0] }] : []);
+  const [step, setStep] = useState<Step>("purpose");
+  const [chatLog, setChatLog] = useState<ChatEntry[]>([{ role: "assistant", text: "What's the purpose of your visit?" }]);
+  const [purposeOfVisit, setPurposeOfVisit] = useState("");
+  const [showCustomDuration, setShowCustomDuration] = useState(false);
+  const [customDuration, setCustomDuration] = useState("");
+  const [pendingDuration, setPendingDuration] = useState<number | null>(null);
   const [routing, setRouting] = useState<RoutingAndSlotsResult | null>(null);
   const [visibleSlotCount, setVisibleSlotCount] = useState(3);
   const [selectedSlot, setSelectedSlot] = useState<SlotWindow | null>(null);
@@ -61,23 +64,35 @@ export default function BookingClient({
     recurringCount: 4,
   });
 
-  async function handleAnswerSubmit() {
-    if (!currentAnswer.trim()) return;
-    const question = questions[questionIndex];
-    const nextAnswers = { ...answers, [question]: currentAnswer.trim() };
-    setAnswers(nextAnswers);
-    setChatLog((prev) => [...prev, { role: "patient", text: currentAnswer.trim() }]);
-    setCurrentAnswer("");
+  function handlePurposeSubmit() {
+    if (!purposeOfVisit.trim()) return;
+    setChatLog((prev) => [
+      ...prev,
+      { role: "patient", text: purposeOfVisit.trim() },
+      { role: "assistant", text: "How long would you like the appointment to be?" },
+    ]);
+    setStep("duration");
+  }
 
-    if (questionIndex + 1 < questions.length) {
-      const nextQuestion = questions[questionIndex + 1];
-      setQuestionIndex((i) => i + 1);
-      setChatLog((prev) => [...prev, { role: "assistant", text: nextQuestion }]);
-      return;
+  function handleDurationChosen(minutes: number) {
+    setChatLog((prev) => [...prev, { role: "patient", text: `${minutes} minutes` }]);
+    if (telehealthAvailable) {
+      setChatLog((prev) => [...prev, { role: "assistant", text: "Would you like an on-call (telehealth) visit, or in person?" }]);
+      setPendingDuration(minutes);
+      setStep("location");
+    } else {
+      startRouting(purposeOfVisit.trim(), minutes, false);
     }
+  }
 
+  function handleLocationChosen(isTelehealth: boolean) {
+    setChatLog((prev) => [...prev, { role: "patient", text: isTelehealth ? "On call (telehealth)" : "In person" }]);
+    startRouting(purposeOfVisit.trim(), pendingDuration ?? 30, isTelehealth);
+  }
+
+  async function startRouting(reason: string, durationMinutes: number, isTelehealth: boolean) {
     setStep("routing");
-    const result = await routeAndGetSlotsAction(doctorSlug, nextAnswers);
+    const result = await routeAndGetSlotsAction(doctorSlug, reason, durationMinutes, isTelehealth);
     if ("error" in result) {
       setErrorMessage("This doctor's profile couldn't be found.");
       setStep("error");
@@ -106,11 +121,8 @@ export default function BookingClient({
       appointmentTypeId: routing.appointmentTypeId,
       start: selectedSlot.start,
       end: selectedSlot.end,
-      isNewPatient: routing.isNewPatient,
       isTelehealth: routing.isTelehealth,
-      isUrgent: routing.isUrgent,
       reasonForVisit: routing.reasonForVisit,
-      intakeAnswers: answers,
       patientFullName: details.patientFullName,
       patientDob: details.patientDob,
       patientPhone: details.patientPhone,
@@ -139,7 +151,7 @@ export default function BookingClient({
         firstStart: selectedSlot.start,
         intervalWeeks: details.recurringWeeks,
         totalOccurrences: details.recurringCount,
-        isNewPatient: routing.isNewPatient,
+        durationMinutes: routing.durationMinutes,
         isTelehealth: routing.isTelehealth,
         patientFullName: details.patientFullName,
         patientPhone: details.patientPhone,
@@ -169,14 +181,13 @@ export default function BookingClient({
       <div className="card p-6">
         <h1 style={{ fontSize: 22, fontWeight: 700, marginBottom: 12 }}>You&apos;re booked</h1>
         <p style={{ fontSize: 14.5, color: "var(--gray-600)", marginBottom: 4 }}>
-          {routing.appointmentTypeName} with {doctorName}
+          {routing.durationMinutes} min · {routing.isTelehealth ? "Telehealth" : "In person"} with {doctorName}
         </p>
         <p style={{ fontSize: 14.5, color: "var(--gray-900)", fontWeight: 600, marginBottom: 16 }}>
           {new Date(selectedSlot.start).toLocaleString("en-US", { dateStyle: "full", timeStyle: "short" })}
         </p>
         <p style={{ fontSize: 13, color: "var(--gray-600)", marginBottom: 16 }}>
-          Bring your insurance card and photo ID{routing.isNewPatient ? ", and any referral paperwork" : ""}.
-          A confirmation has been sent to {details.patientEmail}.
+          Bring your insurance card and photo ID. A confirmation has been sent to {details.patientEmail}.
         </p>
         <a href={icsData} download="appointment.ics" className="btn btn-outline btn-sm">Add to calendar</a>
         {recurringSummary && (
@@ -196,7 +207,8 @@ export default function BookingClient({
       <div className="card p-6">
         <h1 style={{ fontSize: 20, fontWeight: 700, marginBottom: 4 }}>Your details</h1>
         <p style={{ fontSize: 13.5, color: "var(--gray-600)", marginBottom: 20 }}>
-          {routing.appointmentTypeName} · {new Date(selectedSlot.start).toLocaleString("en-US", { dateStyle: "medium", timeStyle: "short" })}
+          {routing.durationMinutes} min · {routing.isTelehealth ? "Telehealth" : "In person"} ·{" "}
+          {new Date(selectedSlot.start).toLocaleString("en-US", { dateStyle: "medium", timeStyle: "short" })}
         </p>
 
         <div className="flex flex-col gap-3">
@@ -205,16 +217,16 @@ export default function BookingClient({
             <input className="input" value={details.patientFullName} onChange={(e) => setDetails({ ...details, patientFullName: e.target.value })} />
           </div>
           <div>
-            <label className="label">Date of birth</label>
-            <input className="input" type="date" value={details.patientDob} onChange={(e) => setDetails({ ...details, patientDob: e.target.value })} />
-          </div>
-          <div>
             <label className="label">Phone</label>
             <input className="input" type="tel" value={details.patientPhone} onChange={(e) => setDetails({ ...details, patientPhone: e.target.value })} />
           </div>
           <div>
             <label className="label">Email</label>
             <input className="input" type="email" value={details.patientEmail} onChange={(e) => setDetails({ ...details, patientEmail: e.target.value })} />
+          </div>
+          <div>
+            <label className="label">Date of birth (optional)</label>
+            <input className="input" type="date" value={details.patientDob} onChange={(e) => setDetails({ ...details, patientDob: e.target.value })} />
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
@@ -230,29 +242,27 @@ export default function BookingClient({
             <label className="label">Notes for the doctor (optional)</label>
             <textarea className="input" rows={2} value={details.patientNotes} onChange={(e) => setDetails({ ...details, patientNotes: e.target.value })} />
           </div>
-          {!routing.isNewPatient && (
-            <div className="card p-3" style={{ background: "var(--gray-50)" }}>
-              <label className="flex items-center gap-2 text-[13px] mb-2">
-                <input type="checkbox" className="w-4 h-4" checked={details.recurring} onChange={(e) => setDetails({ ...details, recurring: e.target.checked })} />
-                Book follow-ups at regular intervals
-              </label>
-              {details.recurring && (
-                <div className="flex items-center gap-2 text-[13px]">
-                  Every
-                  <select className="input w-auto" value={details.recurringWeeks} onChange={(e) => setDetails({ ...details, recurringWeeks: Number(e.target.value) })}>
-                    <option value={1}>1 week</option>
-                    <option value={2}>2 weeks</option>
-                    <option value={4}>4 weeks</option>
-                    <option value={6}>6 weeks</option>
-                  </select>
-                  for
-                  <select className="input w-auto" value={details.recurringCount} onChange={(e) => setDetails({ ...details, recurringCount: Number(e.target.value) })}>
-                    {[2, 3, 4, 5, 6].map((n) => <option key={n} value={n}>{n} visits</option>)}
-                  </select>
-                </div>
-              )}
-            </div>
-          )}
+          <div className="card p-3" style={{ background: "var(--gray-50)" }}>
+            <label className="flex items-center gap-2 text-[13px] mb-2">
+              <input type="checkbox" className="w-4 h-4" checked={details.recurring} onChange={(e) => setDetails({ ...details, recurring: e.target.checked })} />
+              Book follow-ups at regular intervals
+            </label>
+            {details.recurring && (
+              <div className="flex items-center gap-2 text-[13px]">
+                Every
+                <select className="input w-auto" value={details.recurringWeeks} onChange={(e) => setDetails({ ...details, recurringWeeks: Number(e.target.value) })}>
+                  <option value={1}>1 week</option>
+                  <option value={2}>2 weeks</option>
+                  <option value={4}>4 weeks</option>
+                  <option value={6}>6 weeks</option>
+                </select>
+                for
+                <select className="input w-auto" value={details.recurringCount} onChange={(e) => setDetails({ ...details, recurringCount: Number(e.target.value) })}>
+                  {[2, 3, 4, 5, 6].map((n) => <option key={n} value={n}>{n} visits</option>)}
+                </select>
+              </div>
+            )}
+          </div>
           <label className="flex items-start gap-2 text-[12.5px] text-gray-600">
             <input type="checkbox" className="w-4 h-4 mt-0.5" checked={details.agreed} onChange={(e) => setDetails({ ...details, agreed: e.target.checked })} />
             I confirm I am booking a real appointment and will show up or cancel in advance.
@@ -285,7 +295,7 @@ export default function BookingClient({
       <div className="card p-6">
         <h1 style={{ fontSize: 20, fontWeight: 700, marginBottom: 4 }}>No open times right now</h1>
         <p style={{ fontSize: 13.5, color: "var(--gray-600)", marginBottom: 20 }}>
-          {routing.appointmentTypeName} with {doctorName}{" "}
+          A {routing.durationMinutes}-minute {routing.isTelehealth ? "telehealth" : "in-person"} visit with {doctorName}{" "}
           has nothing open in the next 30 days. Join the waitlist and we&apos;ll email you if a spot opens up.
         </p>
         <div className="flex flex-col gap-3">
@@ -319,7 +329,9 @@ export default function BookingClient({
     return (
       <div className="card p-6">
         <h1 style={{ fontSize: 20, fontWeight: 700, marginBottom: 4 }}>Pick a time</h1>
-        <p style={{ fontSize: 13.5, color: "var(--gray-600)", marginBottom: 20 }}>{routing.appointmentTypeName} with {doctorName}</p>
+        <p style={{ fontSize: 13.5, color: "var(--gray-600)", marginBottom: 20 }}>
+          {routing.durationMinutes} min · {routing.isTelehealth ? "Telehealth" : "In person"} with {doctorName}
+        </p>
         <div className="flex flex-col gap-2">
           {visible.map((slot) => (
             <button
@@ -350,17 +362,17 @@ export default function BookingClient({
     return (
       <div className="card p-6 text-center">
         <p style={{ fontSize: 14, color: "var(--gray-600)" }}>
-          {step === "routing" ? "Finding the right appointment and available times..." : "Confirming your booking..."}
+          {step === "routing" ? "Finding available times..." : "Confirming your booking..."}
         </p>
       </div>
     );
   }
 
-  // step === "intake"
+  // step === "purpose" | "duration" | "location" -- the conversational intake
   return (
     <div className="card p-6">
       <h1 style={{ fontSize: 20, fontWeight: 700, marginBottom: 4 }}>Book with {doctorName}</h1>
-      <p style={{ fontSize: 13, color: "var(--gray-400)", marginBottom: 20 }}>A few quick questions first — about 60 seconds.</p>
+      <p style={{ fontSize: 13, color: "var(--gray-400)", marginBottom: 20 }}>A few quick questions first — about 30 seconds.</p>
 
       <div className="flex flex-col gap-3 mb-4">
         {chatLog.map((entry, i) => (
@@ -381,19 +393,64 @@ export default function BookingClient({
         ))}
       </div>
 
-      {questions.length === 0 ? (
-        <p style={{ fontSize: 13.5, color: "var(--gray-400)" }}>This doctor hasn&apos;t set up intake questions yet.</p>
-      ) : (
+      {step === "purpose" && (
         <form
           className="flex gap-2"
           onSubmit={(e) => {
             e.preventDefault();
-            handleAnswerSubmit();
+            handlePurposeSubmit();
           }}
         >
-          <input className="input" value={currentAnswer} onChange={(e) => setCurrentAnswer(e.target.value)} autoFocus />
+          <input className="input" value={purposeOfVisit} onChange={(e) => setPurposeOfVisit(e.target.value)} autoFocus />
           <button type="submit" className="btn btn-primary btn-sm">Send</button>
         </form>
+      )}
+
+      {step === "duration" && (
+        <div className="flex flex-col gap-2">
+          <div className="flex gap-2 flex-wrap">
+            {DURATION_PRESETS.map((minutes) => (
+              <button key={minutes} type="button" className="btn btn-outline btn-sm" onClick={() => handleDurationChosen(minutes)}>
+                {minutes} min
+              </button>
+            ))}
+            <button type="button" className="btn btn-outline btn-sm" onClick={() => setShowCustomDuration(true)}>
+              Custom
+            </button>
+          </div>
+          {showCustomDuration && (
+            <form
+              className="flex gap-2"
+              onSubmit={(e) => {
+                e.preventDefault();
+                const minutes = Number(customDuration);
+                if (minutes >= 5) handleDurationChosen(minutes);
+              }}
+            >
+              <input
+                className="input w-32"
+                type="number"
+                min={5}
+                placeholder="Minutes"
+                value={customDuration}
+                onChange={(e) => setCustomDuration(e.target.value)}
+                autoFocus
+              />
+              <button type="submit" className="btn btn-primary btn-sm">Use this</button>
+            </form>
+          )}
+        </div>
+      )}
+
+      {step === "location" && (
+        <div className="flex gap-2 flex-wrap">
+          <button type="button" className="btn btn-outline btn-sm" onClick={() => handleLocationChosen(true)}>
+            On call (telehealth)
+          </button>
+          <button type="button" className="btn btn-outline btn-sm" onClick={() => handleLocationChosen(false)}>
+            In person
+          </button>
+        </div>
       )}
     </div>
   );

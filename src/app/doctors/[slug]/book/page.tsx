@@ -17,7 +17,7 @@ export default async function BookAppointmentPage({ params }: { params: Promise<
   // null for full_name here and fell back to "the doctor".
   const supabase = await createAdminClient();
 
-  const { data: doctor } = await supabase.from("doctor_profiles").select("id, slug").eq("slug", slug).eq("public_enabled", true).maybeSingle();
+  const { data: doctor } = await supabase.from("doctor_profiles").select("id, slug, telehealth_available").eq("slug", slug).eq("public_enabled", true).maybeSingle();
   if (!doctor) notFound();
 
   const { data: profileRow } = await supabase
@@ -27,13 +27,6 @@ export default async function BookAppointmentPage({ params }: { params: Promise<
     .single();
   const { data: profile } = await supabase.from("profiles").select("full_name").eq("id", profileRow!.profile_id).single();
 
-  const { data: questions } = await supabase
-    .from("intake_questions")
-    .select("question_key, question_text")
-    .eq("doctor_profile_id", doctor.id)
-    .eq("active", true)
-    .order("sort_order");
-
   return (
     <div className="landing-root">
       <SiteNav />
@@ -41,7 +34,7 @@ export default async function BookAppointmentPage({ params }: { params: Promise<
         <BookingClient
           doctorSlug={slug}
           doctorName={`${profile?.full_name || "the doctor"}${profileRow?.credentials ? `, ${profileRow.credentials}` : ""}`}
-          questions={(questions || []).map((q) => q.question_text)}
+          telehealthAvailable={doctor.telehealth_available}
         />
       </div>
       <SiteFooter />

@@ -2,7 +2,6 @@
 
 import { createAdminClient } from "@/lib/supabase/server";
 import { getOpenSlots, createBooking, getOrCreateSingleAppointmentType, type BookingResult, type SlotWindow } from "@/lib/scheduling";
-import { interpretIntake } from "@/lib/scheduling-anthropic";
 import { bookingConfirmationEmail, doctorNewBookingEmail } from "@/lib/scheduling-emails";
 import { sendEmail } from "@/lib/email";
 import { notify } from "@/lib/notifications";
@@ -12,23 +11,23 @@ import { checkInsuranceEligibility } from "@/lib/insurance-eligibility";
 export interface RoutingAndSlotsResult {
   appointmentTypeId: string;
   appointmentTypeName: string;
-  isNewPatient: boolean;
-  isUrgent: boolean;
   isTelehealth: boolean;
+  durationMinutes: number;
   reasonForVisit: string;
   slots: SlotWindow[];
 }
 
 /**
- * Every doctor now has exactly one bookable appointment type, so there's
- * nothing to route between -- the one Claude call here is just reading the
- * patient's answers for the genuinely fuzzy part (new vs returning, urgency,
- * a plain-language reason for staff), while the actual open times come from
- * the deterministic slot engine.
+ * The patient picks duration and telehealth-vs-in-person directly in the
+ * booking chat now, so there's nothing left to infer with AI here -- slots
+ * come straight from the deterministic engine using exactly what they
+ * chose, rather than the doctor's stored default appointment length.
  */
 export async function routeAndGetSlotsAction(
   doctorSlug: string,
-  answersByQuestionText: Record<string, string>
+  reasonForVisit: string,
+  durationMinutes: number,
+  isTelehealth: boolean
 ): Promise<RoutingAndSlotsResult | { error: string }> {
   const supabase = await createAdminClient();
 
@@ -36,19 +35,17 @@ export async function routeAndGetSlotsAction(
   if (!doctor) return { error: "not_found" };
 
   const type = await getOrCreateSingleAppointmentType(supabase, doctor.practice_id, doctor.id);
-  const interpreted = await interpretIntake(answersByQuestionText);
 
   const from = new Date();
   const to = new Date(from.getTime() + 30 * 24 * 60 * 60 * 1000);
-  const slots = await getOpenSlots(supabase, doctor.id, type.id, from, to);
+  const slots = await getOpenSlots(supabase, doctor.id, type.id, from, to, durationMinutes);
 
   return {
     appointmentTypeId: type.id,
     appointmentTypeName: type.name,
-    isNewPatient: interpreted.isNewPatient,
-    isUrgent: interpreted.isUrgent,
-    isTelehealth: type.is_telehealth,
-    reasonForVisit: interpreted.reasonForVisit,
+    isTelehealth,
+    durationMinutes,
+    reasonForVisit,
     slots: slots.slice(0, 8),
   };
 }
@@ -58,11 +55,8 @@ export interface SubmitBookingInput {
   appointmentTypeId: string;
   start: string;
   end: string;
-  isNewPatient: boolean;
   isTelehealth: boolean;
-  isUrgent: boolean;
   reasonForVisit: string;
-  intakeAnswers: Record<string, string>;
   patientFullName: string;
   patientDob: string;
   patientPhone: string;
@@ -82,6 +76,15 @@ export async function submitBookingAction(input: SubmitBookingInput): Promise<Bo
     .maybeSingle();
   if (!doctor) return { ok: false, error: "not_found" };
 
+  // The chat no longer asks new-vs-returning or urgency directly -- purpose
+  // of visit, duration, and telehealth-vs-in-person are the only signals it
+  // collects now. isNewPatient defaults true (safer messaging: mention
+  // bringing referral paperwork/ID) and isUrgent false (no signal to flag
+  // urgent from); front-desk staff still see the patient's own words via
+  // reasonForVisit.
+  const isNewPatient = true;
+  const isUrgent = false;
+
   const result = await createBooking(supabase, {
     doctorProfileId: doctor.id,
     appointmentTypeId: input.appointmentTypeId,
@@ -94,10 +97,9 @@ export async function submitBookingAction(input: SubmitBookingInput): Promise<Bo
     patientInsuranceCompany: input.patientInsuranceCompany || undefined,
     patientMemberId: input.patientMemberId || undefined,
     patientNotes: input.patientNotes || undefined,
-    isNewPatient: input.isNewPatient,
+    isNewPatient,
     isTelehealth: input.isTelehealth,
     reasonForVisit: input.reasonForVisit,
-    intakeAnswers: input.intakeAnswers,
   });
 
   if (result.ok) {
@@ -125,7 +127,7 @@ export async function submitBookingAction(input: SubmitBookingInput): Promise<Bo
       appointmentTypeName: type?.name || "your appointment",
       start: input.start,
       isTelehealth: input.isTelehealth,
-      isNewPatient: input.isNewPatient,
+      isNewPatient,
       cancellationPolicyHours: prefs?.cancellation_policy_hours ?? 24,
       manageUrl: `${process.env.NEXT_PUBLIC_SITE_URL || ""}/appointments/manage/${result.appointmentId}`,
     });
@@ -145,7 +147,7 @@ export async function submitBookingAction(input: SubmitBookingInput): Promise<Bo
         appointmentTypeName: type?.name || "Appointment",
         start: input.start,
         reasonForVisit: input.reasonForVisit,
-        isUrgent: input.isUrgent,
+        isUrgent,
       });
       await notify({
         userId: doctor.profile_id,
@@ -168,7 +170,7 @@ export interface RecurringSeriesInput {
   firstStart: string;
   intervalWeeks: number;
   totalOccurrences: number; // includes the already-booked first one
-  isNewPatient: boolean;
+  durationMinutes: number;
   isTelehealth: boolean;
   patientFullName: string;
   patientPhone: string;
@@ -196,15 +198,13 @@ export async function bookRecurringSeriesAction(input: RecurringSeriesInput): Pr
   if (!doctor) return { bookedCount: 0, skippedDates: [] };
 
   const firstStartDate = new Date(input.firstStart);
-  const { data: type } = await supabase.from("appointment_types").select("duration_minutes").eq("id", input.appointmentTypeId).single();
-  const durationMinutes = type?.duration_minutes ?? 30;
 
   let bookedCount = 0;
   const skippedDates: string[] = [];
 
   for (let i = 1; i < input.totalOccurrences; i++) {
     const start = new Date(firstStartDate.getTime() + i * input.intervalWeeks * 7 * 24 * 60 * 60 * 1000);
-    const end = new Date(start.getTime() + durationMinutes * 60 * 1000);
+    const end = new Date(start.getTime() + input.durationMinutes * 60 * 1000);
 
     const result = await createBooking(supabase, {
       doctorProfileId: doctor.id,

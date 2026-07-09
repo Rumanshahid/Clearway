@@ -28,7 +28,8 @@ export async function loadSchedulingContext(
   doctorProfileId: string,
   appointmentTypeId: string,
   fromDate: Date,
-  toDate: Date
+  toDate: Date,
+  durationMinutesOverride?: number
 ): Promise<SchedulingContext | null> {
   const [{ data: doctor }, { data: type }, { data: availability }, { data: blackouts }, { data: booked }] =
     await Promise.all([
@@ -67,7 +68,7 @@ export async function loadSchedulingContext(
     minNoticeHours: doctor.min_notice_hours,
     maxAdvanceDays: doctor.max_advance_days,
     maxAppointmentsPerDay: doctor.max_appointments_per_day,
-    durationMinutes: type.duration_minutes,
+    durationMinutes: durationMinutesOverride ?? type.duration_minutes,
     bufferMinutes: type.buffer_minutes,
     availability: (availability || []).map((a) => ({ weekday: a.weekday, startTime: a.start_time, endTime: a.end_time })),
     blackouts: (blackouts || []).map((b) => ({ date: b.date, startTime: b.start_time, endTime: b.end_time })),
@@ -158,9 +159,10 @@ export async function getOpenSlots(
   doctorProfileId: string,
   appointmentTypeId: string,
   fromDate: Date,
-  toDate: Date
+  toDate: Date,
+  durationMinutesOverride?: number
 ): Promise<SlotWindow[]> {
-  const ctx = await loadSchedulingContext(supabase, doctorProfileId, appointmentTypeId, fromDate, toDate);
+  const ctx = await loadSchedulingContext(supabase, doctorProfileId, appointmentTypeId, fromDate, toDate, durationMinutesOverride);
   if (!ctx) return [];
   return computeOpenSlots(ctx, fromDate, toDate);
 }
