@@ -32,8 +32,6 @@ export default function DashboardNavBar({ data }: { data: DashboardNavData }) {
             {showSection("patients") && <NavLink href="/dashboard/patients">Patients</NavLink>}
             {showSection("appeals") && <NavLink href="/dashboard/appeals">Appeals</NavLink>}
             <NavLink href="/dashboard/appointments">Appointments</NavLink>
-            <NavLink href="/dashboard/resources">Resources</NavLink>
-            {isAdmin && <NavLink href="/dashboard/team">Team</NavLink>}
           </div>
         </div>
         <div className="flex items-center gap-1">

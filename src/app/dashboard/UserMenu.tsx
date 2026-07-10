@@ -54,6 +54,22 @@ export default function UserMenu({
         >
           Profile
         </Link>
+        <Link
+          href="/dashboard/resources"
+          className="block px-4 py-2.5 text-[13.5px] text-gray-700 hover:bg-gray-50"
+          onClick={onClose}
+        >
+          Resources
+        </Link>
+        {isAdmin && (
+          <Link
+            href="/dashboard/team"
+            className="block px-4 py-2.5 text-[13.5px] text-gray-700 hover:bg-gray-50"
+            onClick={onClose}
+          >
+            Team
+          </Link>
+        )}
         {isAdmin && (
           <Link
             href="/dashboard/billing"
