@@ -2,6 +2,7 @@ import { createClient, createAdminClient } from "@/lib/supabase/server";
 import { requireAdmin } from "@/lib/permissions";
 import MemberRow, { type TeamMember } from "./MemberRow";
 import InvitePanel from "./InvitePanel";
+import InviteButton from "./InviteButton";
 
 export default async function TeamPage({
   searchParams,
@@ -57,7 +58,10 @@ export default async function TeamPage({
 
   return (
     <div className="max-w-[1100px] mx-auto py-8 px-5">
-      <h1 className="text-[24px] font-semibold mb-1">Team</h1>
+      <div className="flex items-center justify-between gap-3 mb-1">
+        <h1 className="text-[24px] font-semibold">Team</h1>
+        <InviteButton />
+      </div>
       <p className="text-[14px] text-gray-600 mb-6">
         Everyone in your practice, what they can access, and what they&apos;ve been working on.
       </p>
