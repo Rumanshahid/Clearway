@@ -11,11 +11,15 @@ export interface WidgetDef {
   size: WidgetSize;
 }
 
+// "Tasks" (a staff to-do count) and "Today's Schedule" (today's actual
+// appointments) used to both exist as separate widgets, but read as
+// duplicates of each other on a "what's happening today" dashboard --
+// Schedule already covers that ground with real detail, so Tasks was
+// dropped rather than kept as a redundant, detail-free count.
 export const WIDGET_REGISTRY: WidgetDef[] = [
   { key: "pa_requests", title: "PA Requests", size: "sm" },
   { key: "patients", title: "Patients", size: "sm" },
   { key: "appeals", title: "Appeals", size: "sm" },
-  { key: "tasks", title: "Tasks", size: "sm" },
   { key: "billing", title: "Plan usage", size: "sm" },
   { key: "schedule", title: "Today's Schedule", size: "lg" },
   { key: "attention", title: "Needs Attention", size: "lg" },

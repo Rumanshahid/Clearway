@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Avatar from "@/components/Avatar";
 import { createClient } from "@/lib/supabase/server";
 import { requireAdmin } from "@/lib/permissions";
 import { getSiteContent, getProcedureLabelMap } from "@/lib/criteria-repo";
@@ -9,9 +10,10 @@ import type { AppointmentStatus } from "@/lib/database.types";
 
 const DASHBOARD_PAGE = getPageBySlug("dashboard")!;
 
-// Staff is now a shared-width panel rather than the page's single biggest
-// card, so it needs fewer visible pills before collapsing into "+N more".
-const MAX_STAFF_PILLS = 10;
+// Staff is now a shared-width panel with a vertical, one-row-per-person
+// layout rather than wrapped pills, so it needs fewer visible rows before
+// collapsing into "+N more".
+const MAX_STAFF_VISIBLE = 6;
 
 const APPT_STATUS_COLORS: Record<AppointmentStatus, { bg: string; fg: string }> = {
   confirmed: { bg: "#EEF0FF", fg: "var(--indigo-600)" },
@@ -55,7 +57,12 @@ interface PracticeBilling {
   billing_status: string;
 }
 
-export default async function OverviewPage() {
+export default async function OverviewPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ error?: string; saved?: string }>;
+}) {
+  const { error, saved } = await searchParams;
   const session = await requireAdmin();
   const supabase = await createClient();
   const c = makeFieldGetter(DASHBOARD_PAGE, await getSiteContent());
@@ -80,7 +87,6 @@ export default async function OverviewPage() {
     { data: denials },
     { count: membersCount },
     { data: profiles },
-    { data: visibleTasks },
     { data: doctorProfiles },
     { data: todaysAppointments },
     { data: staleDrafts },
@@ -95,11 +101,7 @@ export default async function OverviewPage() {
       .select("id, claim_number, denial_reason_code, appeal_deadline, amount_denied, amount_recovered, status, updated_at, created_at")
       .eq("practice_id", session.practiceId),
     supabase.from("profiles").select("id", { count: "exact", head: true }).eq("practice_id", session.practiceId),
-    // RLS already limits this to team-wide tasks plus whatever the admin
-    // created themselves — a doctor's overview never surfaces a staff
-    // member's personal to-dos.
-    supabase.from("profiles").select("id, full_name, role, title").eq("practice_id", session.practiceId),
-    supabase.from("tasks").select("id").eq("practice_id", session.practiceId),
+    supabase.from("profiles").select("id, full_name, role, title, bio, avatar_url").eq("practice_id", session.practiceId),
     supabase.from("doctor_profiles").select("id, profile_id").eq("practice_id", session.practiceId),
     supabase
       .from("appointments")
@@ -122,13 +124,6 @@ export default async function OverviewPage() {
     getProcedureLabelMap(),
   ]);
 
-  const taskIds = (visibleTasks || []).map((t) => t.id);
-  const { data: taskCompletions } = taskIds.length
-    ? await supabase.from("task_completions").select("task_id").in("task_id", taskIds)
-    : { data: [] as { task_id: string }[] };
-  const completedTaskIds = new Set((taskCompletions || []).map((c) => c.task_id));
-  const openTasksCount = (visibleTasks || []).filter((t) => !completedTaskIds.has(t.id)).length;
-
   const paStats = {
     total: monthRequests?.length ?? 0,
     approved: monthRequests?.filter((r) => r.status === "approved").length ?? 0,
@@ -150,7 +145,7 @@ export default async function OverviewPage() {
   const admins = (profiles || []).filter((p) => p.role === "clinic_admin" || p.role === "super_admin");
   const staff = (profiles || []).filter((p) => p.role === "clinic_user");
   const allMembers = profiles || [];
-  const visibleMembers = allMembers.slice(0, MAX_STAFF_PILLS);
+  const visibleMembers = allMembers.slice(0, MAX_STAFF_VISIBLE);
   const hiddenCount = allMembers.length - visibleMembers.length;
 
   const nameByProfileId = new Map(allMembers.map((p) => [p.id, p.full_name || "(unnamed)"]));
@@ -227,12 +222,6 @@ export default async function OverviewPage() {
             <StatRow label="Recovery rate" value={recoveryRate !== null ? `${recoveryRate}%` : "—"} accent="var(--indigo-600)" />
           </SectionCard>
         );
-      case "tasks":
-        return (
-          <SectionCard title="Tasks" href="/dashboard/tasks">
-            <StatRow label="Open tasks" value={openTasksCount ?? 0} accent="var(--amber)" />
-          </SectionCard>
-        );
       case "billing":
         return <BillingWidget practice={practice as PracticeBilling | null} />;
       default:
@@ -276,6 +265,17 @@ export default async function OverviewPage() {
         </div>
         <DashboardCustomizer registry={WIDGET_REGISTRY} initialOrder={order} initialHidden={Array.from(hiddenSet)} />
       </div>
+
+      {error && (
+        <div className="text-[12.5px] rounded-lg px-3 py-2 flex-shrink-0" style={{ background: "var(--danger-bg)", color: "var(--danger-red)" }}>
+          {error}
+        </div>
+      )}
+      {saved && !error && (
+        <div className="text-[12.5px] rounded-lg px-3 py-2 flex-shrink-0" style={{ background: "var(--success-bg)", color: "var(--success-green)" }}>
+          Layout saved.
+        </div>
+      )}
 
       {smKeys.length > 0 && (
         <div className="grid gap-3 flex-shrink-0" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))" }}>
@@ -410,6 +410,15 @@ function AttentionWidget({ items }: { items: AttentionItem[] }) {
   );
 }
 
+interface StaffMember {
+  id: string;
+  full_name: string | null;
+  role: string;
+  title: string | null;
+  bio: string | null;
+  avatar_url: string | null;
+}
+
 function StaffWidget({
   admins,
   staff,
@@ -419,7 +428,7 @@ function StaffWidget({
 }: {
   admins: { id: string }[];
   staff: { id: string }[];
-  visibleMembers: { id: string; full_name: string | null; role: string; title: string | null }[];
+  visibleMembers: StaffMember[];
   hiddenCount: number;
   membersCount: number;
 }) {
@@ -435,27 +444,21 @@ function StaffWidget({
         </div>
         <Link href="/dashboard/team" className="text-[12px] text-indigo-600 font-medium flex-shrink-0">Manage →</Link>
       </div>
-      <div className="flex-1 min-h-0 overflow-y-auto flex flex-wrap content-start gap-2">
+      <div className="flex-1 min-h-0 overflow-y-auto flex flex-col gap-2.5">
         {visibleMembers.map((p) => (
-          <div
-            key={p.id}
-            className="flex items-center gap-1.5 text-[12.5px] rounded-full pl-1 pr-2.5 py-1"
-            style={{ background: "var(--gray-50)", border: "1px solid var(--gray-200)" }}
-          >
-            <span
-              className="w-[6px] h-[6px] rounded-full flex-shrink-0 ml-1"
-              style={{ background: p.role === "clinic_user" ? "var(--gray-400)" : "var(--indigo-600)" }}
-            />
-            <span className="text-gray-900">{p.full_name || "(unnamed)"}</span>
-            {p.title && <span className="text-gray-400">— {p.title}</span>}
+          <div key={p.id} className="flex items-center gap-2.5 text-[12.5px]">
+            <Avatar name={p.full_name} userId={p.id} avatarUrl={p.avatar_url} size={30} />
+            <div className="min-w-0">
+              <div className="text-gray-900 font-medium truncate">
+                {p.full_name || "(unnamed)"}
+                {p.title && <span className="text-gray-400 font-normal"> — {p.title}</span>}
+              </div>
+              {p.bio && <div className="text-gray-400 truncate">{p.bio}</div>}
+            </div>
           </div>
         ))}
         {hiddenCount > 0 && (
-          <Link
-            href="/dashboard/team"
-            className="flex items-center text-[12.5px] rounded-full px-2.5 py-1 text-indigo-600 font-medium"
-            style={{ background: "var(--gray-50)", border: "1px solid var(--gray-200)" }}
-          >
+          <Link href="/dashboard/team" className="text-[12.5px] text-indigo-600 font-medium">
             +{hiddenCount} more →
           </Link>
         )}

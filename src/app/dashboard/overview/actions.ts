@@ -23,7 +23,10 @@ export async function updateDashboardLayoutAction(formData: FormData) {
     hidden: Array.isArray(parsed.hidden) ? parsed.hidden.filter((k): k is string => typeof k === "string" && VALID_KEYS.has(k)) : [],
   };
 
-  await supabase.from("profiles").update({ dashboard_layout: layout }).eq("id", session.userId);
+  const { error } = await supabase.from("profiles").update({ dashboard_layout: layout }).eq("id", session.userId);
+  if (error) {
+    redirect(`/dashboard/overview?error=${encodeURIComponent(`Could not save layout: ${error.message}`)}`);
+  }
 
-  redirect("/dashboard/overview");
+  redirect("/dashboard/overview?saved=1");
 }
