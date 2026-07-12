@@ -6,7 +6,10 @@ const GOOGLE_AUTH_URL = "https://accounts.google.com/o/oauth2/v2/auth";
 const GOOGLE_TOKEN_URL = "https://oauth2.googleapis.com/token";
 const GMAIL_API_BASE = "https://gmail.googleapis.com/gmail/v1/users/me";
 
-const SCOPES = ["https://www.googleapis.com/auth/gmail.readonly", "https://www.googleapis.com/auth/gmail.send"].join(" ");
+// Read-only -- there's no in-app send/reply, so gmail.send was dropped
+// entirely rather than requested and left unused. A doctor replies from
+// Gmail itself; see threadHasSentReply below for how that's detected.
+const SCOPES = ["https://www.googleapis.com/auth/gmail.readonly"].join(" ");
 
 function getRedirectUri(): string {
   return `${process.env.NEXT_PUBLIC_SITE_URL}/api/integrations/gmail/callback`;
@@ -135,39 +138,16 @@ export async function getMessageSummary(accessToken: string, messageId: string):
   };
 }
 
-function base64UrlEncode(str: string): string {
-  return Buffer.from(str, "utf-8").toString("base64").replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
-}
-
-export async function sendGmailReply(
-  accessToken: string,
-  params: {
-    fromEmail: string;
-    to: string;
-    subject: string;
-    bodyText: string;
-    threadId: string;
-    inReplyTo: string | null;
-  }
-): Promise<void> {
-  const subject = params.subject.toLowerCase().startsWith("re:") ? params.subject : `Re: ${params.subject}`;
-  const headerLines = [
-    `From: ${params.fromEmail}`,
-    `To: ${params.to}`,
-    `Subject: ${subject}`,
-    "Content-Type: text/plain; charset=UTF-8",
-    "MIME-Version: 1.0",
-  ];
-  if (params.inReplyTo) {
-    headerLines.push(`In-Reply-To: ${params.inReplyTo}`);
-    headerLines.push(`References: ${params.inReplyTo}`);
-  }
-  const raw = base64UrlEncode(`${headerLines.join("\r\n")}\r\n\r\n${params.bodyText}`);
-
-  const res = await fetch(`${GMAIL_API_BASE}/messages/send`, {
-    method: "POST",
-    headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
-    body: JSON.stringify({ raw, threadId: params.threadId }),
+// There's no in-app reply -- a doctor replies straight from Gmail. This is
+// how a sync notices that happened: Gmail tags any message the account
+// owner sent with the SENT label, so a thread that now contains one means
+// they've already answered it, whether or not it started from this inbox.
+export async function threadHasSentReply(accessToken: string, threadId: string): Promise<boolean> {
+  const res = await fetch(`${GMAIL_API_BASE}/threads/${threadId}?format=metadata`, {
+    headers: { Authorization: `Bearer ${accessToken}` },
   });
-  if (!res.ok) throw new Error(`Gmail send failed: ${await res.text()}`);
+  if (!res.ok) throw new Error(`Gmail thread lookup failed: ${await res.text()}`);
+  const data = await res.json();
+  const messages: { labelIds?: string[] }[] = data.messages || [];
+  return messages.some((m) => (m.labelIds || []).includes("SENT"));
 }

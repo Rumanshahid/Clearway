@@ -1,6 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/database.types";
-import { refreshAccessToken, listRecentMessageIds, getMessageSummary } from "@/lib/gmail";
+import { refreshAccessToken, listRecentMessageIds, getMessageSummary, threadHasSentReply } from "@/lib/gmail";
 import { classifyInboxMessages } from "@/lib/inbox-anthropic";
 
 type Db = SupabaseClient<Database>;
@@ -24,55 +24,73 @@ export async function ensureValidAccessToken(supabase: Db, connection: EmailConn
 
 // Only fetches + classifies messages newer than the last sync (or the last
 // 14 days on a first sync) -- repeat dashboard loads with nothing new skip
-// both the Gmail and Claude calls entirely.
+// both the Gmail and Claude calls entirely. Separately (and regardless of
+// whether anything new came in), checks whatever's still showing as
+// unreplied against Gmail itself, since there's no in-app reply -- a
+// doctor answers straight from Gmail, and this is how that gets noticed
+// and the item drops off the dashboard.
 export async function syncInboxForDoctor(supabase: Db, connection: EmailConnectionRow): Promise<void> {
   const accessToken = await ensureValidAccessToken(supabase, connection);
   const afterEpochSeconds = connection.last_synced_at ? Math.floor(new Date(connection.last_synced_at).getTime() / 1000) : undefined;
 
   const ids = await listRecentMessageIds(accessToken, afterEpochSeconds);
-  const now = new Date().toISOString();
 
-  if (ids.length === 0) {
-    await supabase.from("email_connections").update({ last_synced_at: now }).eq("id", connection.id);
-    return;
+  if (ids.length > 0) {
+    const { data: existing } = await supabase
+      .from("inbox_messages")
+      .select("gmail_message_id")
+      .eq("doctor_profile_id", connection.doctor_profile_id)
+      .in("gmail_message_id", ids);
+    const existingIds = new Set((existing || []).map((r) => r.gmail_message_id));
+    const newIds = ids.filter((id) => !existingIds.has(id));
+
+    if (newIds.length > 0) {
+      const summaries = await Promise.all(newIds.map((id) => getMessageSummary(accessToken, id)));
+      const classifications = await classifyInboxMessages(
+        summaries.map((s) => ({ id: s.id, from: s.from, subject: s.subject, snippet: s.snippet }))
+      );
+
+      const rows = summaries.map((s) => {
+        const classification = classifications.get(s.id) || { category: "other" as const, isRelevant: false };
+        return {
+          practice_id: connection.practice_id,
+          doctor_profile_id: connection.doctor_profile_id,
+          gmail_message_id: s.id,
+          gmail_thread_id: s.threadId,
+          message_id_header: s.messageIdHeader,
+          from_address: s.from,
+          from_name: s.fromName,
+          subject: s.subject,
+          snippet: s.snippet,
+          received_at: s.receivedAt,
+          category: classification.category,
+          is_relevant: classification.isRelevant,
+        };
+      });
+
+      await supabase.from("inbox_messages").upsert(rows, { onConflict: "doctor_profile_id,gmail_message_id" });
+    }
   }
 
-  const { data: existing } = await supabase
+  // Capped at 15 to match the dashboard's own display limit -- no point
+  // checking Gmail for items that wouldn't be shown anyway.
+  const { data: unreplied } = await supabase
     .from("inbox_messages")
-    .select("gmail_message_id")
+    .select("id, gmail_thread_id")
     .eq("doctor_profile_id", connection.doctor_profile_id)
-    .in("gmail_message_id", ids);
-  const existingIds = new Set((existing || []).map((r) => r.gmail_message_id));
-  const newIds = ids.filter((id) => !existingIds.has(id));
+    .eq("is_relevant", true)
+    .eq("replied", false)
+    .order("received_at", { ascending: false })
+    .limit(15);
 
-  if (newIds.length === 0) {
-    await supabase.from("email_connections").update({ last_synced_at: now }).eq("id", connection.id);
-    return;
-  }
-
-  const summaries = await Promise.all(newIds.map((id) => getMessageSummary(accessToken, id)));
-  const classifications = await classifyInboxMessages(
-    summaries.map((s) => ({ id: s.id, from: s.from, subject: s.subject, snippet: s.snippet }))
+  await Promise.allSettled(
+    (unreplied || []).map(async (row) => {
+      const hasSentReply = await threadHasSentReply(accessToken, row.gmail_thread_id);
+      if (hasSentReply) {
+        await supabase.from("inbox_messages").update({ replied: true }).eq("id", row.id);
+      }
+    })
   );
 
-  const rows = summaries.map((s) => {
-    const classification = classifications.get(s.id) || { category: "other" as const, isRelevant: false };
-    return {
-      practice_id: connection.practice_id,
-      doctor_profile_id: connection.doctor_profile_id,
-      gmail_message_id: s.id,
-      gmail_thread_id: s.threadId,
-      message_id_header: s.messageIdHeader,
-      from_address: s.from,
-      from_name: s.fromName,
-      subject: s.subject,
-      snippet: s.snippet,
-      received_at: s.receivedAt,
-      category: classification.category,
-      is_relevant: classification.isRelevant,
-    };
-  });
-
-  await supabase.from("inbox_messages").upsert(rows, { onConflict: "doctor_profile_id,gmail_message_id" });
-  await supabase.from("email_connections").update({ last_synced_at: now }).eq("id", connection.id);
+  await supabase.from("email_connections").update({ last_synced_at: new Date().toISOString() }).eq("id", connection.id);
 }
