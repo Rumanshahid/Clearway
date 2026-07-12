@@ -643,6 +643,8 @@ export interface Database {
           slug: string;
           credentials: string | null;
           specialty: string | null;
+          npi: string | null;
+          fax: string | null;
           sub_specialties: string[];
           photo_url: string | null;
           bio: string | null;

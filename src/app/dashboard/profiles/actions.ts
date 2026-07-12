@@ -84,6 +84,8 @@ export async function updateProfileAction(formData: FormData) {
           public_enabled: formData.get("public_enabled") === "on",
           specialty: String(formData.get("specialty") || "").trim() || null,
           credentials: String(formData.get("credentials") || "").trim() || null,
+          npi: String(formData.get("npi") || "").trim() || null,
+          fax: String(formData.get("fax") || "").trim() || null,
           conditions_treated: conditionsTreated,
           insurance_accepted: formData.getAll("insurance_accepted").map(String),
           languages: formData.getAll("languages").map(String),

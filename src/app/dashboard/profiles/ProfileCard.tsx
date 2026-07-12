@@ -21,6 +21,8 @@ interface DoctorData {
     public_enabled: boolean;
     specialty: string | null;
     credentials: string | null;
+    npi: string | null;
+    fax: string | null;
     conditions_treated: string[];
     insurance_accepted: string[];
     languages: string[];
@@ -149,6 +151,15 @@ export default function ProfileCard({
                 <div>
                   <label className="label">Credentials</label>
                   <input className="input" name="credentials" placeholder="MD, FAAOS" defaultValue={doctorData.profile.credentials || ""} />
+                </div>
+                <div>
+                  <label className="label">NPI</label>
+                  <input className="input" name="npi" placeholder="10-digit NPI" defaultValue={doctorData.profile.npi || ""} />
+                  <p className="text-[12px] text-gray-400 mt-1">Lets you be selected as the ordering physician on a PA request.</p>
+                </div>
+                <div>
+                  <label className="label">Fax (optional)</label>
+                  <input className="input" name="fax" defaultValue={doctorData.profile.fax || ""} />
                 </div>
                 <div className="sm:col-span-2">
                   <label className="label">Conditions treated (comma separated)</label>

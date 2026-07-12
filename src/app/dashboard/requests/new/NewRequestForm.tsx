@@ -81,6 +81,7 @@ export default function NewRequestForm({
   initialProcedure,
   defaultAuthoringMode,
   savedPhysicians,
+  defaultPhysicianId,
   savedPatients,
 }: {
   procedures: ProcedureCriteria[];
@@ -89,24 +90,37 @@ export default function NewRequestForm({
   initialProcedure?: string;
   defaultAuthoringMode: AuthoringMode;
   savedPhysicians: SavedPhysician[];
+  defaultPhysicianId?: string | null;
   savedPatients: SavedPatient[];
 }) {
   const [procedureKey, setProcedureKey] = useState(initialProcedure || procedures[0].key);
   const [authoringMode, setAuthoringMode] = useState<AuthoringMode>(defaultAuthoringMode);
 
-  const [physicianSelection, setPhysicianSelection] = useState<string>(savedPhysicians[0]?.id || "new");
+  // Defaults to the signed-in doctor's own entry when they have one --
+  // "Doctor selects itself" -- falling back to the first saved physician,
+  // then to the blank "add manually" state.
+  const initialPhysician =
+    (defaultPhysicianId && savedPhysicians.find((p) => p.id === defaultPhysicianId)) || savedPhysicians[0] || null;
+  const [physicianSelection, setPhysicianSelection] = useState<string>(initialPhysician?.id || "new");
   const [physicianFields, setPhysicianFields] = useState(
-    savedPhysicians[0]
+    initialPhysician
       ? {
-          name: savedPhysicians[0].name,
-          credentials: savedPhysicians[0].credentials || "",
-          npi: savedPhysicians[0].npi,
-          direct_phone: savedPhysicians[0].direct_phone || "",
-          specialty: savedPhysicians[0].specialty || "",
-          fax: savedPhysicians[0].fax || "",
+          name: initialPhysician.name,
+          credentials: initialPhysician.credentials || "",
+          npi: initialPhysician.npi,
+          direct_phone: initialPhysician.direct_phone || "",
+          specialty: initialPhysician.specialty || "",
+          fax: initialPhysician.fax || "",
         }
       : BLANK_PHYSICIAN
   );
+
+  // A staff doctor's own profile might not have NPI/direct phone filled in
+  // yet -- both required before a letter can be drafted -- so an existing
+  // selection with either missing still shows the editable fields instead
+  // of collapsing behind a summary that would otherwise strand it there.
+  const physicianSelectionIncomplete = physicianSelection !== "new" && (!physicianFields.npi.trim() || !physicianFields.direct_phone.trim());
+  const showPhysicianFields = physicianSelection === "new" || physicianSelectionIncomplete;
 
   function handlePhysicianSelect(id: string) {
     setPhysicianSelection(id);
@@ -507,8 +521,13 @@ export default function NewRequestForm({
             </div>
           )}
 
-          {physicianSelection === "new" ? (
+          {showPhysicianFields ? (
             <>
+              {physicianSelectionIncomplete && (
+                <p className="col-span-2 text-[12.5px] rounded-lg px-3 py-2 -mt-1" style={{ background: "var(--amber-bg)", color: "var(--amber)" }}>
+                  This doctor&apos;s profile is missing an NPI or direct phone — fill them in below to continue, or save them once on their own Profile page.
+                </p>
+              )}
               <div>
                 <label className="label" htmlFor="ordering_physician_name">Ordering physician name</label>
                 <input

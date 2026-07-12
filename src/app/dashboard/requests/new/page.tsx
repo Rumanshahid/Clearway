@@ -35,9 +35,20 @@ export default async function NewRequestPage({
     .eq("id", profile!.practice_id!)
     .single();
 
-  const [procedures, payerToggles, { data: physicians }, { data: patients }] = await Promise.all([
+  const [procedures, payerToggles, { data: doctorProfiles }, { data: staffProfiles }, { data: physicians }, { data: patients }] = await Promise.all([
     getEnabledProcedures(),
     getAllPayerToggles(),
+    supabase
+      .from("doctor_profiles")
+      .select("id, profile_id, credentials, specialty, npi, fax")
+      .eq("practice_id", profile!.practice_id!),
+    supabase
+      .from("profiles")
+      .select("id, full_name, phone")
+      .eq("practice_id", profile!.practice_id!),
+    // External referring physicians who aren't on staff -- kept as a
+    // fallback list alongside the practice's own doctors below, for the
+    // (less common) case of an ordering physician outside the practice.
     supabase
       .from("physicians")
       .select("id, name, credentials, npi, direct_phone, specialty, fax")
@@ -49,6 +60,43 @@ export default async function NewRequestPage({
       .eq("practice_id", profile!.practice_id!)
       .order("last_name"),
   ]);
+
+  // The ordering physician is almost always the practice's own doctor, so
+  // staff doctors (anyone with a doctor_profiles row) come first and the
+  // signed-in doctor defaults to selecting themselves -- external entries
+  // from the physicians table (referring physicians outside the practice)
+  // still show up after, via "+ Add a new physician".
+  const staffProfileById = new Map((staffProfiles || []).map((p) => [p.id, p]));
+  const staffPhysicians = (doctorProfiles || []).flatMap((dp) => {
+    const staff = staffProfileById.get(dp.profile_id);
+    if (!staff) return [];
+    return [
+      {
+        id: dp.id,
+        name: staff.full_name || "Unnamed doctor",
+        credentials: dp.credentials,
+        npi: dp.npi || "",
+        direct_phone: staff.phone,
+        specialty: dp.specialty,
+        fax: dp.fax,
+        isSelf: dp.profile_id === user!.id,
+      },
+    ];
+  });
+  const selfPhysicianId = staffPhysicians.find((p) => p.isSelf)?.id || null;
+  staffPhysicians.sort((a, b) => (a.isSelf === b.isSelf ? 0 : a.isSelf ? -1 : 1));
+  const savedPhysicians = [
+    ...staffPhysicians.map((p) => ({
+      id: p.id,
+      name: p.name,
+      credentials: p.credentials,
+      npi: p.npi,
+      direct_phone: p.direct_phone,
+      specialty: p.specialty,
+      fax: p.fax,
+    })),
+    ...(physicians || []),
+  ];
 
   const patientIds = (patients || []).map((p) => p.id);
   const { data: eligibilityChecks } = patientIds.length
@@ -98,7 +146,8 @@ export default async function NewRequestPage({
           payerToggles={payerToggles}
           initialProcedure={procedure_type}
           defaultAuthoringMode={(practice?.default_authoring_mode || "doctor") as AuthoringMode}
-          savedPhysicians={physicians || []}
+          savedPhysicians={savedPhysicians}
+          defaultPhysicianId={selfPhysicianId}
           savedPatients={patientsWithEligibility}
         />
       )}
