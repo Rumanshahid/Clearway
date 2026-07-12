@@ -204,38 +204,47 @@ export default function NewRequestForm({
         </div>
 
         <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="label" htmlFor="patient_reference">Patient reference (internal use only)</label>
-            <input
-              className="input"
-              id="patient_reference"
-              name="patient_reference"
-              placeholder="e.g. PT-00417"
-              required
-              value={patientFields.patientReference}
-              onChange={(e) => setPatientFields((prev) => ({ ...prev, patientReference: e.target.value }))}
-            />
-            <p className="text-[12px] text-gray-400 mt-1">Used in your dashboard and notifications — never sent to the payer.</p>
-          </div>
-          <div>
-            <label className="label" htmlFor="plan_type">Plan type</label>
-            <select
-              className="input"
-              id="plan_type"
-              name="plan_type"
-              value={patientFields.planType}
-              onChange={(e) => setPatientFields((prev) => ({ ...prev, planType: e.target.value }))}
-            >
-              <option value="">Not specified</option>
-              <option value="Commercial PPO">Commercial PPO</option>
-              <option value="Commercial HMO">Commercial HMO</option>
-              <option value="Medicare Advantage">Medicare Advantage</option>
-              <option value="Medicaid Managed Care">Medicaid Managed Care</option>
-              <option value="ACA Marketplace">ACA Marketplace</option>
-              <option value="Self-funded employer plan">Self-funded employer plan</option>
-              <option value="Other">Other</option>
-            </select>
-          </div>
+          {patientSelection === "new" ? (
+            <>
+              <div>
+                <label className="label" htmlFor="patient_reference">Patient reference (internal use only)</label>
+                <input
+                  className="input"
+                  id="patient_reference"
+                  name="patient_reference"
+                  placeholder="e.g. PT-00417"
+                  required
+                  value={patientFields.patientReference}
+                  onChange={(e) => setPatientFields((prev) => ({ ...prev, patientReference: e.target.value }))}
+                />
+                <p className="text-[12px] text-gray-400 mt-1">Used in your dashboard and notifications — never sent to the payer.</p>
+              </div>
+              <div>
+                <label className="label" htmlFor="plan_type">Plan type</label>
+                <select
+                  className="input"
+                  id="plan_type"
+                  name="plan_type"
+                  value={patientFields.planType}
+                  onChange={(e) => setPatientFields((prev) => ({ ...prev, planType: e.target.value }))}
+                >
+                  <option value="">Not specified</option>
+                  <option value="Commercial PPO">Commercial PPO</option>
+                  <option value="Commercial HMO">Commercial HMO</option>
+                  <option value="Medicare Advantage">Medicare Advantage</option>
+                  <option value="Medicaid Managed Care">Medicaid Managed Care</option>
+                  <option value="ACA Marketplace">ACA Marketplace</option>
+                  <option value="Self-funded employer plan">Self-funded employer plan</option>
+                  <option value="Other">Other</option>
+                </select>
+              </div>
+            </>
+          ) : (
+            <>
+              <input type="hidden" name="patient_reference" value={patientFields.patientReference} />
+              <input type="hidden" name="plan_type" value={patientFields.planType} />
+            </>
+          )}
           <div>
             <label className="label" htmlFor="procedure_type">Procedure type</label>
             <select
@@ -274,28 +283,37 @@ export default function NewRequestForm({
             <label className="label" htmlFor="icd10_codes">ICD-10 diagnosis code(s)</label>
             <input className="input" id="icd10_codes" name="icd10_codes" placeholder="M54.5, M51.16" required />
           </div>
-          <div>
-            <label className="label" htmlFor="member_id">Member ID</label>
-            <input
-              className="input"
-              id="member_id"
-              name="member_id"
-              placeholder="Payer member ID"
-              value={patientFields.memberId}
-              onChange={(e) => setPatientFields((prev) => ({ ...prev, memberId: e.target.value }))}
-            />
-          </div>
-          <div>
-            <label className="label" htmlFor="insurance_group_number">Insurance group number</label>
-            <input
-              className="input"
-              id="insurance_group_number"
-              name="insurance_group_number"
-              placeholder="e.g. AET-77443"
-              value={patientFields.groupNumber}
-              onChange={(e) => setPatientFields((prev) => ({ ...prev, groupNumber: e.target.value }))}
-            />
-          </div>
+          {patientSelection === "new" ? (
+            <>
+              <div>
+                <label className="label" htmlFor="member_id">Member ID</label>
+                <input
+                  className="input"
+                  id="member_id"
+                  name="member_id"
+                  placeholder="Payer member ID"
+                  value={patientFields.memberId}
+                  onChange={(e) => setPatientFields((prev) => ({ ...prev, memberId: e.target.value }))}
+                />
+              </div>
+              <div>
+                <label className="label" htmlFor="insurance_group_number">Insurance group number</label>
+                <input
+                  className="input"
+                  id="insurance_group_number"
+                  name="insurance_group_number"
+                  placeholder="e.g. AET-77443"
+                  value={patientFields.groupNumber}
+                  onChange={(e) => setPatientFields((prev) => ({ ...prev, groupNumber: e.target.value }))}
+                />
+              </div>
+            </>
+          ) : (
+            <>
+              <input type="hidden" name="member_id" value={patientFields.memberId} />
+              <input type="hidden" name="insurance_group_number" value={patientFields.groupNumber} />
+            </>
+          )}
           <div>
             <label className="label" htmlFor="cpt_code">CPT/HCPCS code</label>
             <input className="input" id="cpt_code" name="cpt_code" placeholder="e.g. 72148" />
@@ -348,66 +366,83 @@ export default function NewRequestForm({
 
         <input type="hidden" name="patient_id" value={patientSelection === "new" ? "" : patientSelection} />
 
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="label" htmlFor="patient_full_name">Full legal name <span style={{ color: "var(--danger-red)" }}>*</span></label>
-            <input
-              className="input"
-              id="patient_full_name"
-              name="patient_full_name"
-              required
-              value={patientFields.fullName}
-              onChange={(e) => setPatientFields((prev) => ({ ...prev, fullName: e.target.value }))}
-            />
+        {patientSelection === "new" ? (
+          <>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="label" htmlFor="patient_full_name">Full legal name <span style={{ color: "var(--danger-red)" }}>*</span></label>
+                <input
+                  className="input"
+                  id="patient_full_name"
+                  name="patient_full_name"
+                  required
+                  value={patientFields.fullName}
+                  onChange={(e) => setPatientFields((prev) => ({ ...prev, fullName: e.target.value }))}
+                />
+              </div>
+              <div>
+                <label className="label" htmlFor="patient_dob">Date of birth <span style={{ color: "var(--danger-red)" }}>*</span></label>
+                <DateInput
+                  id="patient_dob"
+                  name="patient_dob"
+                  required
+                  value={patientFields.dob}
+                  onChange={(v) => setPatientFields((prev) => ({ ...prev, dob: v }))}
+                />
+              </div>
+              <div>
+                <label className="label" htmlFor="patient_address">Street address</label>
+                <input
+                  className="input"
+                  id="patient_address"
+                  name="patient_address"
+                  placeholder="123 Main St"
+                  value={patientFields.address}
+                  onChange={(e) => setPatientFields((prev) => ({ ...prev, address: e.target.value }))}
+                />
+              </div>
+              <div>
+                <label className="label" htmlFor="patient_city_state_zip">City, state, ZIP</label>
+                <input
+                  className="input"
+                  id="patient_city_state_zip"
+                  name="patient_city_state_zip"
+                  placeholder="Austin, TX 78701"
+                  value={patientFields.cityStateZip}
+                  onChange={(e) => setPatientFields((prev) => ({ ...prev, cityStateZip: e.target.value }))}
+                />
+              </div>
+              <div>
+                <label className="label" htmlFor="patient_phone">Phone</label>
+                <input
+                  className="input"
+                  id="patient_phone"
+                  name="patient_phone"
+                  type="tel"
+                  value={patientFields.phone}
+                  onChange={(e) => setPatientFields((prev) => ({ ...prev, phone: e.target.value }))}
+                />
+              </div>
+            </div>
+            <label className="flex items-center gap-2 text-[13px] text-gray-600 mt-4">
+              <input type="checkbox" name="save_patient" defaultChecked className="w-4 h-4" />
+              Save this patient for next time
+            </label>
+          </>
+        ) : (
+          <div className="rounded-lg px-3 py-2.5 text-[13px] text-gray-600" style={{ background: "var(--gray-50)", border: "1px solid var(--gray-200)" }}>
+            <span className="font-medium text-gray-900">{patientFields.fullName}</span>
+            {patientFields.dob && <> · DOB {patientFields.dob}</>}
+            {patientFields.phone && <> · {patientFields.phone}</>}
+            {patientFields.address && <> · {patientFields.address}</>}
+            {patientFields.cityStateZip && <>, {patientFields.cityStateZip}</>}
+            <input type="hidden" name="patient_full_name" value={patientFields.fullName} />
+            <input type="hidden" name="patient_dob" value={patientFields.dob} />
+            <input type="hidden" name="patient_address" value={patientFields.address} />
+            <input type="hidden" name="patient_city_state_zip" value={patientFields.cityStateZip} />
+            <input type="hidden" name="patient_phone" value={patientFields.phone} />
           </div>
-          <div>
-            <label className="label" htmlFor="patient_dob">Date of birth <span style={{ color: "var(--danger-red)" }}>*</span></label>
-            <DateInput
-              id="patient_dob"
-              name="patient_dob"
-              required
-              value={patientFields.dob}
-              onChange={(v) => setPatientFields((prev) => ({ ...prev, dob: v }))}
-            />
-          </div>
-          <div>
-            <label className="label" htmlFor="patient_address">Street address</label>
-            <input
-              className="input"
-              id="patient_address"
-              name="patient_address"
-              placeholder="123 Main St"
-              value={patientFields.address}
-              onChange={(e) => setPatientFields((prev) => ({ ...prev, address: e.target.value }))}
-            />
-          </div>
-          <div>
-            <label className="label" htmlFor="patient_city_state_zip">City, state, ZIP</label>
-            <input
-              className="input"
-              id="patient_city_state_zip"
-              name="patient_city_state_zip"
-              placeholder="Austin, TX 78701"
-              value={patientFields.cityStateZip}
-              onChange={(e) => setPatientFields((prev) => ({ ...prev, cityStateZip: e.target.value }))}
-            />
-          </div>
-          <div>
-            <label className="label" htmlFor="patient_phone">Phone</label>
-            <input
-              className="input"
-              id="patient_phone"
-              name="patient_phone"
-              type="tel"
-              value={patientFields.phone}
-              onChange={(e) => setPatientFields((prev) => ({ ...prev, phone: e.target.value }))}
-            />
-          </div>
-        </div>
-        <label className="flex items-center gap-2 text-[13px] text-gray-600 mt-4">
-          <input type="checkbox" name="save_patient" defaultChecked className="w-4 h-4" />
-          Save this patient for next time
-        </label>
+        )}
       </section>
 
       <section className="card p-6">
@@ -462,89 +497,107 @@ export default function NewRequestForm({
                 value={physicianSelection}
                 onChange={(e) => handlePhysicianSelect(e.target.value)}
               >
+                <option value="new">+ Add a new physician</option>
                 {savedPhysicians.map((p) => (
                   <option key={p.id} value={p.id}>
                     {p.name}{p.specialty ? ` — ${p.specialty}` : ""}
                   </option>
                 ))}
-                <option value="new">+ Add a new physician</option>
               </select>
             </div>
           )}
 
-          <div>
-            <label className="label" htmlFor="ordering_physician_name">Ordering physician name</label>
-            <input
-              className="input"
-              id="ordering_physician_name"
-              name="ordering_physician_name"
-              required
-              value={physicianFields.name}
-              onChange={(e) => setPhysicianFields((prev) => ({ ...prev, name: e.target.value }))}
-            />
-          </div>
-          <div>
-            <label className="label" htmlFor="ordering_physician_credentials">Credentials</label>
-            <input
-              className="input"
-              id="ordering_physician_credentials"
-              name="ordering_physician_credentials"
-              placeholder="MD, DO, ..."
-              value={physicianFields.credentials}
-              onChange={(e) => setPhysicianFields((prev) => ({ ...prev, credentials: e.target.value }))}
-            />
-          </div>
-          <div>
-            <label className="label" htmlFor="ordering_physician_npi">NPI <span style={{ color: "var(--danger-red)" }}>*</span></label>
-            <input
-              className="input"
-              id="ordering_physician_npi"
-              name="ordering_physician_npi"
-              placeholder="10-digit NPI"
-              required
-              value={physicianFields.npi}
-              onChange={(e) => setPhysicianFields((prev) => ({ ...prev, npi: e.target.value }))}
-            />
-          </div>
-          <div>
-            <label className="label" htmlFor="ordering_physician_direct_phone">Direct phone <span style={{ color: "var(--danger-red)" }}>*</span></label>
-            <input
-              className="input"
-              id="ordering_physician_direct_phone"
-              name="ordering_physician_direct_phone"
-              type="tel"
-              placeholder="For the peer-to-peer offer"
-              required
-              value={physicianFields.direct_phone}
-              onChange={(e) => setPhysicianFields((prev) => ({ ...prev, direct_phone: e.target.value }))}
-            />
-          </div>
-          <div>
-            <label className="label" htmlFor="ordering_physician_specialty">Specialty</label>
-            <input
-              className="input"
-              id="ordering_physician_specialty"
-              name="ordering_physician_specialty"
-              placeholder="e.g. Orthopedic Surgery"
-              value={physicianFields.specialty}
-              onChange={(e) => setPhysicianFields((prev) => ({ ...prev, specialty: e.target.value }))}
-            />
-          </div>
-          <div>
-            <label className="label" htmlFor="ordering_physician_fax">Fax</label>
-            <input
-              className="input"
-              id="ordering_physician_fax"
-              name="ordering_physician_fax"
-              placeholder="Optional but strengthens the letter"
-              value={physicianFields.fax}
-              onChange={(e) => setPhysicianFields((prev) => ({ ...prev, fax: e.target.value }))}
-            />
-          </div>
-          <label className="col-span-2 flex items-center gap-2 text-[13px] text-gray-600">
-            <input type="checkbox" name="save_physician" defaultChecked className="w-4 h-4" />
-            Save this physician for next time
-          </label>
+          {physicianSelection === "new" ? (
+            <>
+              <div>
+                <label className="label" htmlFor="ordering_physician_name">Ordering physician name</label>
+                <input
+                  className="input"
+                  id="ordering_physician_name"
+                  name="ordering_physician_name"
+                  required
+                  value={physicianFields.name}
+                  onChange={(e) => setPhysicianFields((prev) => ({ ...prev, name: e.target.value }))}
+                />
+              </div>
+              <div>
+                <label className="label" htmlFor="ordering_physician_credentials">Credentials</label>
+                <input
+                  className="input"
+                  id="ordering_physician_credentials"
+                  name="ordering_physician_credentials"
+                  placeholder="MD, DO, ..."
+                  value={physicianFields.credentials}
+                  onChange={(e) => setPhysicianFields((prev) => ({ ...prev, credentials: e.target.value }))}
+                />
+              </div>
+              <div>
+                <label className="label" htmlFor="ordering_physician_npi">NPI <span style={{ color: "var(--danger-red)" }}>*</span></label>
+                <input
+                  className="input"
+                  id="ordering_physician_npi"
+                  name="ordering_physician_npi"
+                  placeholder="10-digit NPI"
+                  required
+                  value={physicianFields.npi}
+                  onChange={(e) => setPhysicianFields((prev) => ({ ...prev, npi: e.target.value }))}
+                />
+              </div>
+              <div>
+                <label className="label" htmlFor="ordering_physician_direct_phone">Direct phone <span style={{ color: "var(--danger-red)" }}>*</span></label>
+                <input
+                  className="input"
+                  id="ordering_physician_direct_phone"
+                  name="ordering_physician_direct_phone"
+                  type="tel"
+                  placeholder="For the peer-to-peer offer"
+                  required
+                  value={physicianFields.direct_phone}
+                  onChange={(e) => setPhysicianFields((prev) => ({ ...prev, direct_phone: e.target.value }))}
+                />
+              </div>
+              <div>
+                <label className="label" htmlFor="ordering_physician_specialty">Specialty</label>
+                <input
+                  className="input"
+                  id="ordering_physician_specialty"
+                  name="ordering_physician_specialty"
+                  placeholder="e.g. Orthopedic Surgery"
+                  value={physicianFields.specialty}
+                  onChange={(e) => setPhysicianFields((prev) => ({ ...prev, specialty: e.target.value }))}
+                />
+              </div>
+              <div>
+                <label className="label" htmlFor="ordering_physician_fax">Fax</label>
+                <input
+                  className="input"
+                  id="ordering_physician_fax"
+                  name="ordering_physician_fax"
+                  placeholder="Optional but strengthens the letter"
+                  value={physicianFields.fax}
+                  onChange={(e) => setPhysicianFields((prev) => ({ ...prev, fax: e.target.value }))}
+                />
+              </div>
+              <label className="col-span-2 flex items-center gap-2 text-[13px] text-gray-600">
+                <input type="checkbox" name="save_physician" defaultChecked className="w-4 h-4" />
+                Save this physician for next time
+              </label>
+            </>
+          ) : (
+            <div className="col-span-2 rounded-lg px-3 py-2.5 text-[13px] text-gray-600" style={{ background: "var(--gray-50)", border: "1px solid var(--gray-200)" }}>
+              <span className="font-medium text-gray-900">{physicianFields.name}</span>
+              {physicianFields.credentials && <>, {physicianFields.credentials}</>}
+              {physicianFields.specialty && <> · {physicianFields.specialty}</>}
+              {physicianFields.npi && <> · NPI {physicianFields.npi}</>}
+              {physicianFields.direct_phone && <> · {physicianFields.direct_phone}</>}
+              <input type="hidden" name="ordering_physician_name" value={physicianFields.name} />
+              <input type="hidden" name="ordering_physician_credentials" value={physicianFields.credentials} />
+              <input type="hidden" name="ordering_physician_npi" value={physicianFields.npi} />
+              <input type="hidden" name="ordering_physician_direct_phone" value={physicianFields.direct_phone} />
+              <input type="hidden" name="ordering_physician_specialty" value={physicianFields.specialty} />
+              <input type="hidden" name="ordering_physician_fax" value={physicianFields.fax} />
+            </div>
+          )}
         </div>
       </section>
 
