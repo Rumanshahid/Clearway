@@ -45,16 +45,18 @@ export default async function ResourcesPage() {
             <thead>
               <tr className="text-left text-gray-400 text-[11px] uppercase tracking-wide" style={{ borderBottom: "1px solid var(--gray-200)" }}>
                 <th className="py-2 pr-4 font-semibold">Payer</th>
-                <th className="py-2 pr-4 font-semibold">Standard appeal</th>
+                <th className="py-2 pr-4 font-semibold">Imaging reviewer</th>
+                <th className="py-2 pr-4 font-semibold">Appeal deadline</th>
                 <th className="py-2 pr-4 font-semibold">Expedited</th>
                 <th className="py-2 pr-4 font-semibold">Peer-to-peer</th>
-                <th className="py-2 font-semibold">External review</th>
+                <th className="py-2 font-semibold">Further review</th>
               </tr>
             </thead>
             <tbody>
               {DEADLINE_REFERENCE.map((row) => (
                 <tr key={row.payer} style={{ borderBottom: "1px solid var(--gray-200)" }}>
                   <td className="py-3 pr-4 font-medium">{row.payer}</td>
+                  <td className="py-3 pr-4 text-gray-600">{row.imagingReviewer}</td>
                   <td className="py-3 pr-4 text-gray-600">{row.standard}</td>
                   <td className="py-3 pr-4 text-gray-600">{row.expedited}</td>
                   <td className="py-3 pr-4 text-gray-600">{row.peerToPeer}</td>

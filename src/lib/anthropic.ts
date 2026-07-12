@@ -1,5 +1,5 @@
 import Anthropic from "@anthropic-ai/sdk";
-import { CITATION_FORMAT_NOTE, EXCLUDED_PAYERS_NOTE, LETTER_COMPONENTS, PayerKey, ProcedureCriteria } from "@/lib/criteria";
+import { CITATION_FORMAT_NOTE, getOtherPayerGuidance, LETTER_COMPONENTS, PayerKey, ProcedureCriteria } from "@/lib/criteria";
 import { determineLetterApproach, checkSoftWarnings, buildAuthoringModeInstruction } from "@/lib/letter-logic";
 import { isEligibilityStale } from "@/lib/eligibility";
 import type { AuthoringMode, LetterMeta } from "@/lib/database.types";
@@ -77,8 +77,15 @@ export function renderSystemPrompt(
   template: string,
   procedure: ProcedureCriteria,
   approachInstruction: string,
-  authoringMode: AuthoringMode
+  authoringMode: AuthoringMode,
+  payer: PayerKey
 ): string {
+  // Aetna and Cigna/eviCore get procedure.aetna/.evicore's specific
+  // narrative regardless of which payer this case is actually for (the
+  // template always has both placeholders available) — but the
+  // "excluded_payers_note" slot is payer-aware, so a UHC/Humana/Anthem/
+  // Molina/Medicare case gets the right citation strategy for the payer
+  // actually named in this case rather than a generic disclaimer.
   const vars: Record<string, string> = {
     procedure_label: procedure.label,
     aetna: procedure.aetna,
@@ -86,7 +93,7 @@ export function renderSystemPrompt(
     sources: procedure.sources,
     red_flags_list: procedure.redFlags.map((f) => `- ${f}`).join("\n") || "- None documented for this procedure.",
     prompt_notes: procedure.promptNotes,
-    excluded_payers_note: EXCLUDED_PAYERS_NOTE,
+    excluded_payers_note: payer === "aetna" || payer === "cigna_evicore" ? "" : getOtherPayerGuidance(payer),
     citation_format_note: CITATION_FORMAT_NOTE,
     letter_components_list: LETTER_COMPONENTS.map((c, i) => `${i + 1}. ${c}`).join("\n"),
     approach_instruction: approachInstruction,
@@ -137,7 +144,7 @@ function assertCompleteSections(
 
 export async function generateLetter(input: LetterCaseInput): Promise<LetterOutput> {
   const { approach, instruction } = determineLetterApproach(input.redFlags, input.caseFields);
-  const system = renderSystemPrompt(input.promptTemplate, input.procedure, instruction, input.authoringMode);
+  const system = renderSystemPrompt(input.promptTemplate, input.procedure, instruction, input.authoringMode, input.payer);
   const computedWarnings = checkSoftWarnings(input.procedure, input.payer, input.caseFields, {
     insuranceGroupNumber: input.insuranceGroupNumber,
     orderingPhysicianSpecialty: input.orderingPhysicianSpecialty,

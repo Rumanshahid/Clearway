@@ -3,26 +3,96 @@
 // source. Shown on the Resources page and used to seed the tips rotator.
 
 export const DENIAL_GUIDE: { reason: string; fix: string; action: string }[] = [
-  { reason: "Not medically necessary", fix: "Formal appeal", action: "Add new clinical evidence and cite a specialty-society guideline directly." },
-  { reason: "Conservative care not documented", fix: "Formal appeal", action: "Document the specific treatments tried, exact doses, durations, and outcomes." },
-  { reason: "Step therapy required", fix: "Step-therapy exception request", action: "Prove the required step drug(s) were tried and failed, or are contraindicated — records from a prior insurer still count." },
-  { reason: "Missing documentation", fix: "Formal appeal", action: "Attach the missing record and briefly explain why it wasn't included originally." },
-  { reason: "Experimental / investigational", fix: "Formal appeal", action: "Cite peer-reviewed literature, an FDA approval, or a specialty-society guideline." },
-  { reason: "Wrong CPT code", fix: "Resubmission", action: "Correct the code and resubmit — this isn't a clinical appeal." },
-  { reason: "Member not eligible", fix: "Administrative fix", action: "Verify eligibility first — this isn't a clinical appeal." },
+  { reason: "Not medically necessary (CO-50)", fix: "Formal appeal", action: "Add new clinical evidence and cite a specialty-society guideline directly." },
+  { reason: "Conservative care not documented (CO-50)", fix: "Formal appeal", action: "Document the specific treatments tried, exact doses, durations, and outcomes." },
+  { reason: "Step therapy required (CO-96)", fix: "Step-therapy exception request", action: "Prove the required step drug(s) were tried and failed, or are contraindicated — records from a prior insurer still count." },
+  { reason: "Experimental / investigational (CO-96)", fix: "Formal appeal", action: "Cite peer-reviewed literature, an FDA approval, or a specialty-society guideline (e.g. an NCCN Category 1 recommendation)." },
+  { reason: "Missing documentation (CO-16)", fix: "Corrected claim, not an appeal", action: "Attach the missing record and resubmit — this is an administrative fix, not a clinical dispute." },
+  { reason: "Wrong CPT code (CO-4)", fix: "Corrected claim, not an appeal", action: "Correct the code and resubmit using UB-04 Frequency Code 7, or it will process as a duplicate and deny again." },
+  { reason: "Flagged as duplicate (CO-18)", fix: "Corrected claim, not an appeal", action: "Clarify the distinct date of service or unique claim identifier and resubmit." },
+  { reason: "Timely filing exceeded (CO-29)", fix: "Administrative appeal only", action: "Document the original submission date with proof (clearinghouse confirmation, portal timestamp) — no clinical argument applies here." },
+  { reason: "Member not eligible on date of service (CO-27)", fix: "Administrative fix", action: "Verify eligibility first — this isn't a clinical appeal." },
+  { reason: "Not a true emergency, retro denied (PR-40)", fix: "Retrospective authorization appeal", action: "Attach ER records and build a timeline showing PA was genuinely impossible beforehand — administrative-error retros rarely succeed." },
   { reason: "Urgent case processed on standard timeline", fix: "Request for expedited review", action: "Add a specific urgency certification with a clinical timeline for harm." },
-  { reason: "Concurrent care limit reached", fix: "Request for extension", action: "Document progress with objective measures, an updated plan, and a defined endpoint." },
-  { reason: "No prior authorization obtained (emergency)", fix: "Retrospective authorization request", action: "Emergency documentation is essential — verify the payer's filing window before submitting." },
+  { reason: "Concurrent care limit reached (CO-198)", fix: "Request for extension", action: "Document progress with objective measures, an updated plan, and a defined endpoint." },
+  { reason: "No prior authorization obtained, CO-197 (emergency)", fix: "Retrospective authorization request", action: "Emergency documentation is essential — verify the payer's filing window before submitting." },
 ];
 
-export const DEADLINE_REFERENCE: { payer: string; standard: string; expedited: string; peerToPeer: string; externalReview: string }[] = [
-  { payer: "Aetna", standard: "180 days", expedited: "72 hrs", peerToPeer: "Yes", externalReview: "After internal review is exhausted" },
-  { payer: "UnitedHealthcare", standard: "65 days (commercial) / 60 days (Medicare Adv.)", expedited: "72 hrs", peerToPeer: "Yes", externalReview: "Independent review, then further appeal if still denied" },
-  { payer: "Cigna", standard: "180 days", expedited: "72 hrs", peerToPeer: "Yes", externalReview: "After internal review is exhausted" },
-  { payer: "BCBS (varies by state)", standard: "180 days for most plans", expedited: "72 hrs", peerToPeer: "Yes", externalReview: "State-specific process" },
-  { payer: "Humana", standard: "60 days (Medicare Adv.)", expedited: "72 hrs", peerToPeer: "Yes", externalReview: "Independent review if Medicare Advantage" },
-  { payer: "Medicare Advantage (general)", standard: "60 days", expedited: "72 hrs", peerToPeer: "Yes", externalReview: "Independent review, then further appeal" },
-  { payer: "Medicaid MCO", standard: "Varies by state", expedited: "72 hrs", peerToPeer: "Yes", externalReview: "State fair hearing" },
+// Portal/UM-vendor/decision-timeline columns are informational context for
+// staff, not something Asaanbil auto-routes to yet — always confirm the
+// reviewing entity from the actual denial letterhead before filing.
+export const DEADLINE_REFERENCE: {
+  payer: string;
+  imagingReviewer: string;
+  standard: string;
+  expedited: string;
+  peerToPeer: string;
+  externalReview: string;
+}[] = [
+  {
+    payer: "Aetna",
+    imagingReviewer: "eviCore (commercial imaging)",
+    standard: "180 days (commercial) / 60 days (Medicare Adv.)",
+    expedited: "72 hrs",
+    peerToPeer: "Yes",
+    externalReview: "After internal review is exhausted",
+  },
+  {
+    payer: "Cigna",
+    imagingReviewer: "eviCore (all imaging)",
+    standard: "180 days (all plan types)",
+    expedited: "72 hrs",
+    peerToPeer: "Yes",
+    externalReview: "After internal review is exhausted",
+  },
+  {
+    payer: "UnitedHealthcare",
+    imagingReviewer: "UHC internal (InterQual) — Oxford plans route to eviCore",
+    standard: "65 days — every plan type, commercial and Medicare Advantage alike",
+    expedited: "72 hrs",
+    peerToPeer: "Yes",
+    externalReview: "Independent review, then further appeal if still denied",
+  },
+  {
+    payer: "Humana",
+    imagingReviewer: "MCG / InterQual + eviCore",
+    standard: "60-65 days (Medicare Adv.) / 180 days (commercial)",
+    expedited: "72 hrs",
+    peerToPeer: "Yes",
+    externalReview: "Independent review if Medicare Advantage",
+  },
+  {
+    payer: "Anthem / Elevance (BCBS)",
+    imagingReviewer: "Carelon (imaging/MSK/cardiology); eviCore (specialty)",
+    standard: "60 days (both the PDR billing-dispute track and the Clinical UM medical-necessity track)",
+    expedited: "72 hrs",
+    peerToPeer: "Yes",
+    externalReview: "State-specific process",
+  },
+  {
+    payer: "Molina Healthcare",
+    imagingReviewer: "Internal UM",
+    standard: "60 days (Medicare Adv.) / state-specific Medicaid (95 days TX to 365 days OH)",
+    expedited: "72 hrs",
+    peerToPeer: "Yes",
+    externalReview: "State Fair Hearing (Medicaid) or QIC → ALJ (Medicare Advantage)",
+  },
+  {
+    payer: "Medicare (Traditional / FFS)",
+    imagingReviewer: "CMS MACs (NCD/LCD) — MAC varies by state",
+    standard: "120 days (Level 1 MAC redetermination) — 5-level appeal ladder beyond that",
+    expedited: "72 hrs",
+    peerToPeer: "No — use the 5-level appeal ladder (QIC → ALJ → Medicare Appeals Council → Federal Court) instead",
+    externalReview: "Level 2 QIC, then Level 3 ALJ, Level 4 Medicare Appeals Council, Level 5 Federal District Court",
+  },
+  {
+    payer: "Medicaid MCO (general, non-Molina)",
+    imagingReviewer: "Varies by plan",
+    standard: "Varies by state — typically 60-180 days",
+    expedited: "72 hrs",
+    peerToPeer: "Yes",
+    externalReview: "State fair hearing",
+  },
 ];
 
 export const SOURCE_NOTES: string[] = [
