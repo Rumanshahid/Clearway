@@ -14,6 +14,7 @@ export type AppointmentStatus = "confirmed" | "checked_in" | "complete" | "no_sh
 export type WaitlistStatus = "waiting" | "offered" | "booked" | "expired" | "cancelled";
 export type IntakeQuestionKey = "reason" | "duration_since" | "new_or_returning" | "referral" | "urgent" | "insurance";
 export type InsuranceVerificationStatus = "verified" | "not_verified" | "unavailable";
+export type InboxCategory = "medical_question" | "patient_inquiry" | "faq" | "other";
 
 export interface LetterMeta {
   approachUsed: LetterApproach;
@@ -874,6 +875,59 @@ export interface Database {
           practice_id: string;
         };
         Update: Partial<Database["public"]["Tables"]["pre_appointment_intake"]["Row"]>;
+        Relationships: [];
+      };
+      email_connections: {
+        Row: {
+          id: string;
+          practice_id: string;
+          doctor_profile_id: string;
+          email_address: string;
+          access_token: string;
+          refresh_token: string;
+          token_expires_at: string;
+          last_synced_at: string | null;
+          created_at: string;
+        };
+        Insert: Partial<Database["public"]["Tables"]["email_connections"]["Row"]> & {
+          practice_id: string;
+          doctor_profile_id: string;
+          email_address: string;
+          access_token: string;
+          refresh_token: string;
+          token_expires_at: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["email_connections"]["Row"]>;
+        Relationships: [];
+      };
+      inbox_messages: {
+        Row: {
+          id: string;
+          practice_id: string;
+          doctor_profile_id: string;
+          gmail_message_id: string;
+          gmail_thread_id: string;
+          message_id_header: string | null;
+          from_address: string;
+          from_name: string | null;
+          subject: string | null;
+          snippet: string | null;
+          received_at: string;
+          category: InboxCategory;
+          is_relevant: boolean;
+          replied: boolean;
+          created_at: string;
+        };
+        Insert: Partial<Database["public"]["Tables"]["inbox_messages"]["Row"]> & {
+          practice_id: string;
+          doctor_profile_id: string;
+          gmail_message_id: string;
+          gmail_thread_id: string;
+          from_address: string;
+          received_at: string;
+          category: InboxCategory;
+        };
+        Update: Partial<Database["public"]["Tables"]["inbox_messages"]["Row"]>;
         Relationships: [];
       };
     };

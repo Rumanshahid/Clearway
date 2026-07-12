@@ -179,3 +179,16 @@ export async function deleteBlackoutDateAction(formData: FormData) {
 
   revalidatePath("/dashboard/profiles");
 }
+
+export async function disconnectGmailAction() {
+  const session = await getSessionProfile();
+  const supabase = await createClient();
+
+  const { data: doctorProfile } = await supabase.from("doctor_profiles").select("id").eq("profile_id", session.userId).maybeSingle();
+  if (doctorProfile) {
+    await supabase.from("email_connections").delete().eq("doctor_profile_id", doctorProfile.id);
+  }
+
+  revalidatePath("/dashboard/profiles");
+  redirect("/dashboard/profiles?saved=1");
+}

@@ -23,6 +23,7 @@ export const WIDGET_REGISTRY: WidgetDef[] = [
   { key: "billing", title: "Plan usage", size: "sm" },
   { key: "schedule", title: "Today's Schedule", size: "lg" },
   { key: "attention", title: "Needs Attention", size: "lg" },
+  { key: "inbox", title: "Inbox", size: "lg" },
   { key: "staff", title: "Staff", size: "lg" },
 ];
 

@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import Avatar from "@/components/Avatar";
-import { updateProfileAction, addBlackoutDateAction, deleteBlackoutDateAction } from "./actions";
+import { updateProfileAction, addBlackoutDateAction, deleteBlackoutDateAction, disconnectGmailAction } from "./actions";
 
 interface Member {
   id: string;
@@ -36,6 +36,7 @@ interface DoctorData {
   availability: { weekday: number; startTime: string; endTime: string }[];
   appointmentType: { id: string; durationMinutes: number; isTelehealth: boolean };
   blackoutDates: { id: string; date: string; reason: string | null }[];
+  connectedEmail: string | null;
 }
 
 const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
@@ -302,6 +303,30 @@ export default function ProfileCard({
                 </div>
               ))}
             </div>
+          </div>
+        )}
+
+        {isDoctor && doctorData && (
+          <div className="pt-3" style={{ borderTop: "1px solid var(--gray-200)" }}>
+            <div className="label mb-1">Inbox</div>
+            {doctorData.connectedEmail ? (
+              <div className="flex items-center justify-between gap-2">
+                <p className="text-[12.5px] text-gray-600">
+                  Connected to <span className="font-medium text-gray-900">{doctorData.connectedEmail}</span> — relevant patient
+                  emails show up on your dashboard.
+                </p>
+                <form action={disconnectGmailAction}>
+                  <button type="submit" className="btn btn-outline btn-sm flex-shrink-0">Disconnect</button>
+                </form>
+              </div>
+            ) : (
+              <>
+                <p className="text-[12px] text-gray-400 mb-2">
+                  Connect Gmail to see patient/medical emails filtered onto your dashboard and reply without leaving it.
+                </p>
+                <a href="/api/integrations/gmail/connect" className="btn btn-outline btn-sm">Connect Gmail</a>
+              </>
+            )}
           </div>
         )}
       </div>
