@@ -75,6 +75,7 @@ export interface Database {
           phone: string | null;
           flagged: boolean;
           flagged_reason: string | null;
+          dashboard_layout: { order?: string[]; hidden?: string[] } | null;
           created_at: string;
         };
         Insert: Partial<Database["public"]["Tables"]["profiles"]["Row"]> & {
