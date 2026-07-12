@@ -25,18 +25,16 @@ export default async function ProfilesPage({
   let doctorData = null;
   if (session.isAdmin && self) {
     const doctorProfile = await getOrCreateDoctorProfile(supabase, session.practiceId, session.userId, self.full_name || "Doctor");
-    const [{ data: availability }, appointmentType, { data: blackoutDates }, { data: emailConnection }] = await Promise.all([
+    const [{ data: availability }, appointmentType, { data: blackoutDates }] = await Promise.all([
       supabase.from("doctor_availability").select("weekday, start_time, end_time").eq("doctor_profile_id", doctorProfile.id).order("weekday"),
       getOrCreateSingleAppointmentType(supabase, session.practiceId, doctorProfile.id),
       supabase.from("blackout_dates").select("id, date, reason").eq("doctor_profile_id", doctorProfile.id).order("date"),
-      supabase.from("email_connections").select("email_address").eq("doctor_profile_id", doctorProfile.id).maybeSingle(),
     ]);
     doctorData = {
       profile: doctorProfile,
       availability: (availability || []).map((a) => ({ weekday: a.weekday, startTime: a.start_time.slice(0, 5), endTime: a.end_time.slice(0, 5) })),
       appointmentType: { id: appointmentType.id, durationMinutes: appointmentType.duration_minutes, isTelehealth: appointmentType.is_telehealth },
       blackoutDates: blackoutDates || [],
-      connectedEmail: emailConnection?.email_address || null,
     };
   }
 

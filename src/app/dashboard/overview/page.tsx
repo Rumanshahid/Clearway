@@ -5,9 +5,8 @@ import { requireAdmin } from "@/lib/permissions";
 import { getSiteContent, getProcedureLabelMap } from "@/lib/criteria-repo";
 import { getPageBySlug, makeFieldGetter } from "@/lib/content-schema";
 import { WIDGET_REGISTRY, resolveDashboardLayout } from "@/lib/dashboardWidgets";
-import { syncInboxForDoctor } from "@/lib/gmailSync";
 import DashboardCustomizer from "./DashboardCustomizer";
-import type { AppointmentStatus, InboxCategory } from "@/lib/database.types";
+import type { AppointmentStatus } from "@/lib/database.types";
 
 const DASHBOARD_PAGE = getPageBySlug("dashboard")!;
 
@@ -57,24 +56,6 @@ interface PracticeBilling {
   letters_used_this_period: number;
   billing_status: string;
 }
-
-interface InboxItem {
-  id: string;
-  from_address: string;
-  from_name: string | null;
-  subject: string | null;
-  snippet: string | null;
-  received_at: string;
-  category: InboxCategory;
-  gmail_thread_id: string;
-}
-
-const INBOX_CATEGORY_LABELS: Record<InboxCategory, string> = {
-  medical_question: "Medical question",
-  patient_inquiry: "Patient inquiry",
-  faq: "FAQ",
-  other: "Other",
-};
 
 export default async function OverviewPage({
   searchParams,
@@ -173,39 +154,6 @@ export default async function OverviewPage({
   const nameByDoctorProfileId = new Map((doctorProfiles || []).map((d) => [d.id, nameByProfileId.get(d.profile_id) || "Doctor"]));
   const multipleDoctors = (doctorProfiles || []).length > 1;
 
-  // Inbox is per-doctor (each doctor connects their own Gmail), so this
-  // dashboard only ever shows the signed-in doctor's own mail, never a
-  // colleague's -- resolved from doctor_profiles rather than trusting
-  // anything client-supplied.
-  const myDoctorProfileId = (doctorProfiles || []).find((d) => d.profile_id === session.userId)?.id || null;
-  let inboxConnected = false;
-  let inboxItems: InboxItem[] = [];
-  let inboxEmailAddress = "";
-  if (myDoctorProfileId) {
-    const { data: connection } = await supabase.from("email_connections").select("*").eq("doctor_profile_id", myDoctorProfileId).maybeSingle();
-    if (connection) {
-      inboxConnected = true;
-      inboxEmailAddress = connection.email_address;
-      try {
-        await syncInboxForDoctor(supabase, connection);
-      } catch (err) {
-        // A Gmail/Claude hiccup shouldn't take down the whole dashboard --
-        // worst case the inbox panel just shows slightly stale mail until
-        // the next successful sync.
-        console.error("Inbox sync failed", err);
-      }
-      const { data: messages } = await supabase
-        .from("inbox_messages")
-        .select("id, from_address, from_name, subject, snippet, received_at, category, gmail_thread_id")
-        .eq("doctor_profile_id", myDoctorProfileId)
-        .eq("is_relevant", true)
-        .eq("replied", false)
-        .order("received_at", { ascending: false })
-        .limit(15);
-      inboxItems = messages || [];
-    }
-  }
-
   const today = new Date(now);
   today.setHours(0, 0, 0, 0);
 
@@ -295,8 +243,6 @@ export default async function OverviewPage({
         );
       case "attention":
         return <AttentionWidget items={attentionItems} />;
-      case "inbox":
-        return <InboxWidget items={inboxItems} connected={inboxConnected} connectedEmail={inboxEmailAddress} />;
       case "staff":
         return (
           <StaffWidget
@@ -465,63 +411,6 @@ function AttentionWidget({ items }: { items: AttentionItem[] }) {
             </span>
             <span className="text-gray-600 flex-shrink-0">{item.detail}</span>
           </Link>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-const INBOX_CATEGORY_COLORS: Record<InboxCategory, { bg: string; fg: string }> = {
-  medical_question: { bg: "var(--danger-bg)", fg: "var(--danger-red)" },
-  patient_inquiry: { bg: "#EEF0FF", fg: "var(--indigo-600)" },
-  faq: { bg: "var(--gray-100)", fg: "var(--gray-600)" },
-  other: { bg: "var(--gray-100)", fg: "var(--gray-400)" },
-};
-
-function InboxWidget({ items, connected, connectedEmail }: { items: InboxItem[]; connected: boolean; connectedEmail: string }) {
-  return (
-    <div className="card p-4 h-full flex flex-col">
-      <div className="flex items-center justify-between mb-3 flex-shrink-0">
-        <h2 className="text-[14px] font-semibold">Inbox</h2>
-        {connected ? (
-          <span className="text-[12px] text-gray-400">{items.length}</span>
-        ) : (
-          <Link href="/dashboard/profiles" className="text-[12px] text-indigo-600 font-medium">Connect →</Link>
-        )}
-      </div>
-      <div className="flex-1 min-h-0 overflow-y-auto flex flex-col gap-1.5">
-        {!connected && (
-          <p className="text-[12.5px] text-gray-400">
-            Connect Gmail from your Profile to see patient and medical emails filtered onto your dashboard.
-          </p>
-        )}
-        {connected && items.length === 0 && <p className="text-[12.5px] text-gray-400">Inbox is quiet — nothing needs a reply.</p>}
-        {items.map((item) => (
-          // Reply happens in Gmail itself, not here -- the next sync notices
-          // once you've sent something in this thread and drops it off the
-          // list, so this link just needs to get you to the right place.
-          <a
-            key={item.id}
-            href={`https://mail.google.com/mail/?authuser=${encodeURIComponent(connectedEmail)}#all/${item.gmail_thread_id}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center justify-between gap-2 text-[12.5px] rounded-lg px-2.5 py-1.5 transition-colors hover:bg-gray-100"
-            style={{ background: "var(--gray-50)" }}
-          >
-            <div className="min-w-0">
-              <div className="font-medium text-gray-900 truncate flex items-center gap-1.5">
-                {item.from_name || item.from_address}
-                <span
-                  className="text-[10px] font-semibold uppercase tracking-wide rounded-full px-1.5 py-0.5 flex-shrink-0"
-                  style={{ background: INBOX_CATEGORY_COLORS[item.category].bg, color: INBOX_CATEGORY_COLORS[item.category].fg }}
-                >
-                  {INBOX_CATEGORY_LABELS[item.category]}
-                </span>
-              </div>
-              <div className="text-gray-400 truncate">{item.subject || "(no subject)"} — {item.snippet}</div>
-            </div>
-            <span className="text-[11.5px] text-indigo-600 font-medium flex-shrink-0">Open in Gmail →</span>
-          </a>
         ))}
       </div>
     </div>
