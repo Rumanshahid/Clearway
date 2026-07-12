@@ -31,6 +31,7 @@ export default async function SiteNav() {
             {c("nav_logo_text")}
           </div>
           <div className="nav-links" id="navLinks">
+            <Link href="/#platform">{c("nav_link_platform")}</Link>
             <Link href="/#how">{c("nav_link_how")}</Link>
             <Link href="/#insurers">{c("nav_link_coverage")}</Link>
             <Link href="/#pricing">{c("nav_link_pricing")}</Link>
@@ -57,6 +58,7 @@ export default async function SiteNav() {
         <span></span><span></span><span></span>
       </button>
       <div className="nav-dropdown" id="navDropdown">
+        <Link href="/#platform">{c("nav_link_platform")}</Link>
         <Link href="/#how">{c("nav_link_how")}</Link>
         <Link href="/#insurers">{c("nav_link_coverage")}</Link>
         <Link href="/#pricing">{c("nav_link_pricing")}</Link>
