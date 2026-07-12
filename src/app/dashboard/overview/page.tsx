@@ -144,7 +144,9 @@ export default async function OverviewPage({
 
   const admins = (profiles || []).filter((p) => p.role === "clinic_admin" || p.role === "super_admin");
   const staff = (profiles || []).filter((p) => p.role === "clinic_user");
-  const allMembers = profiles || [];
+  // Admins/doctors always lead the roster, regardless of the order the
+  // practice table happens to return.
+  const allMembers = [...admins, ...staff];
   const visibleMembers = allMembers.slice(0, MAX_STAFF_VISIBLE);
   const hiddenCount = allMembers.length - visibleMembers.length;
 
@@ -278,7 +280,7 @@ export default async function OverviewPage({
       )}
 
       {smKeys.length > 0 && (
-        <div className="grid gap-3 flex-shrink-0" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))" }}>
+        <div className="grid gap-3 flex-shrink-0 items-start" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))" }}>
           {smKeys.map((key) => (
             <div key={key}>{renderSmallWidget(key)}</div>
           ))}
@@ -306,13 +308,13 @@ export default async function OverviewPage({
 
 function SectionCard({ title, href, children }: { title: string; href: string; children: React.ReactNode }) {
   return (
-    <div className="card p-3">
+    <Link href={href} className="card p-3 block hover:bg-gray-50 transition-colors">
       <div className="flex items-center justify-between mb-2">
         <h2 className="text-[13px] font-semibold">{title}</h2>
-        <Link href={href} className="text-[11.5px] text-indigo-600 font-medium">Open →</Link>
+        <span className="text-[11.5px] text-indigo-600 font-medium">Open →</span>
       </div>
       <div className="flex flex-col gap-1">{children}</div>
-    </div>
+    </Link>
   );
 }
 
@@ -359,7 +361,12 @@ function ScheduleWidget({
       <div className="flex-1 min-h-0 overflow-y-auto flex flex-col gap-1.5">
         {appointments.length === 0 && <p className="text-[12.5px] text-gray-400">Nothing scheduled today.</p>}
         {appointments.map((a) => (
-          <div key={a.id} className="flex items-center justify-between gap-2 text-[12.5px] rounded-lg px-2.5 py-1.5" style={{ background: "var(--gray-50)" }}>
+          <Link
+            key={a.id}
+            href="/dashboard/appointments"
+            className="flex items-center justify-between gap-2 text-[12.5px] rounded-lg px-2.5 py-1.5 transition-colors hover:bg-gray-100"
+            style={{ background: "var(--gray-50)" }}
+          >
             <div className="min-w-0">
               <div className="font-medium text-gray-900 truncate">
                 {new Date(a.start_at).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })} — {a.patient_full_name}
@@ -376,7 +383,7 @@ function ScheduleWidget({
             >
               {APPT_STATUS_LABELS[a.status]}
             </span>
-          </div>
+          </Link>
         ))}
       </div>
     </div>
@@ -396,7 +403,7 @@ function AttentionWidget({ items }: { items: AttentionItem[] }) {
           <Link
             key={item.id}
             href={item.href}
-            className="flex items-center justify-between gap-2 text-[12.5px] rounded-lg px-2.5 py-1.5"
+            className="flex items-center justify-between gap-2 text-[12.5px] rounded-lg px-2.5 py-1.5 transition-opacity hover:opacity-70"
             style={{ background: item.urgent ? "var(--danger-bg)" : "var(--amber-bg)" }}
           >
             <span className="font-medium truncate" style={{ color: item.urgent ? "var(--danger-red)" : "var(--amber)" }}>
@@ -444,21 +451,32 @@ function StaffWidget({
         </div>
         <Link href="/dashboard/team" className="text-[12px] text-indigo-600 font-medium flex-shrink-0">Manage →</Link>
       </div>
-      <div className="flex-1 min-h-0 overflow-y-auto flex flex-col gap-2.5">
-        {visibleMembers.map((p) => (
-          <div key={p.id} className="flex items-center gap-2.5 text-[12.5px]">
-            <Avatar name={p.full_name} userId={p.id} avatarUrl={p.avatar_url} size={30} />
-            <div className="min-w-0">
-              <div className="text-gray-900 font-medium truncate">
-                {p.full_name || "(unnamed)"}
-                {p.title && <span className="text-gray-400 font-normal"> — {p.title}</span>}
+      <div className="flex-1 min-h-0 overflow-y-auto flex flex-col gap-1">
+        {visibleMembers.map((p) => {
+          const isAdmin = p.role === "clinic_admin" || p.role === "super_admin";
+          return (
+            <div key={p.id} className="flex items-center gap-2.5 text-[12.5px] rounded-lg px-1.5 py-1.5 transition-colors hover:bg-gray-50">
+              <Avatar name={p.full_name} userId={p.id} avatarUrl={p.avatar_url} size={30} />
+              <div className="min-w-0">
+                <div className="text-gray-900 font-medium truncate flex items-center gap-1.5">
+                  {p.full_name || "(unnamed)"}
+                  {isAdmin && (
+                    <span
+                      className="text-[10px] font-semibold uppercase tracking-wide rounded-full px-1.5 py-0.5 flex-shrink-0"
+                      style={{ background: "#EEF0FF", color: "var(--indigo-600)" }}
+                    >
+                      Admin
+                    </span>
+                  )}
+                  {p.title && <span className="text-gray-400 font-normal">— {p.title}</span>}
+                </div>
+                {p.bio && <div className="text-gray-400 truncate">{p.bio}</div>}
               </div>
-              {p.bio && <div className="text-gray-400 truncate">{p.bio}</div>}
             </div>
-          </div>
-        ))}
+          );
+        })}
         {hiddenCount > 0 && (
-          <Link href="/dashboard/team" className="text-[12.5px] text-indigo-600 font-medium">
+          <Link href="/dashboard/team" className="text-[12.5px] text-indigo-600 font-medium rounded-lg px-1.5 py-1.5 transition-colors hover:bg-gray-50">
             +{hiddenCount} more →
           </Link>
         )}
