@@ -1,17 +1,30 @@
+"use client";
+
+import { useEffect, useRef } from "react";
 import Link from "next/link";
 
 export default function SiteFooter() {
+  const footerRef = useRef<HTMLElement>(null);
+
+  // Fades/slides in as it scrolls into view from below, and reverses back
+  // out if you scroll back up past it -- IntersectionObserver's
+  // isIntersecting already flips both ways, so no scroll-direction
+  // tracking is needed, and this runs on every page that renders the
+  // footer, not just the homepage (unlike LandingScripts, which only
+  // loads on a few public pages).
+  useEffect(() => {
+    const footer = footerRef.current;
+    if (!footer) return;
+    const observer = new IntersectionObserver(([entry]) => footer.classList.toggle("visible", entry.isIntersecting), {
+      threshold: 0,
+    });
+    observer.observe(footer);
+    return () => observer.disconnect();
+  }, []);
+
   return (
-    <footer className="site-footer">
+    <footer className="site-footer" ref={footerRef}>
       <div className="wrap">
-        <div className="footer-top">
-          <div className="footer-logo">
-            <div className="footer-logo-mark">
-              <svg width="13" height="13" viewBox="0 0 14 14" fill="none"><path d="M2 7h10M7 2l5 5-5 5" stroke="#fff" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
-            </div>
-            asaanbil.com
-          </div>
-        </div>
         <div className="footer-links">
           <Link href="/privacy">Privacy Policy</Link>
           <Link href="/terms">Terms of Service</Link>
