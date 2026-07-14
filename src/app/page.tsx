@@ -69,34 +69,6 @@ export default async function LandingPage() {
         </section>
       )}
 
-      {visible("Platform section") && (
-        <section className="block center" id="platform">
-          <div className="wrap">
-            <div className="section-eyebrow">{c("platform_eyebrow")}</div>
-            <h2 className="section-h">{c("platform_h2")}</h2>
-            <p className="section-p">{c("platform_intro")}</p>
-            <div className="ins-grid">
-              <div className="ins-card">
-                <div className="ins-head"><div className="ins-name">{c("platform1_name")}</div><div className="status-pill" style={{ background: "#EEF0FF", color: "var(--indigo-600)" }}>Included</div></div>
-                <div className="ins-desc">{c("platform1_desc")}</div>
-              </div>
-              <div className="ins-card">
-                <div className="ins-head"><div className="ins-name">{c("platform2_name")}</div><div className="status-pill" style={{ background: "#EEF0FF", color: "var(--indigo-600)" }}>Included</div></div>
-                <div className="ins-desc">{c("platform2_desc")}</div>
-              </div>
-              <div className="ins-card">
-                <div className="ins-head"><div className="ins-name">{c("platform3_name")}</div><div className="status-pill" style={{ background: "#EEF0FF", color: "var(--indigo-600)" }}>Included</div></div>
-                <div className="ins-desc">{c("platform3_desc")}</div>
-              </div>
-              <div className="ins-card">
-                <div className="ins-head"><div className="ins-name">{c("platform4_name")}</div><div className="status-pill" style={{ background: "#EEF0FF", color: "var(--indigo-600)" }}>Included</div></div>
-                <div className="ins-desc">{c("platform4_desc")}</div>
-              </div>
-            </div>
-          </div>
-        </section>
-      )}
-
       <section className="block center" id="how">
         <div className="wrap">
           <div className="section-eyebrow">{c("how_eyebrow")}</div>
@@ -194,24 +166,12 @@ export default async function LandingPage() {
               <div className="ins-desc">{c("insurer2_desc")}</div>
             </div>
             <div className="ins-card">
-              <div className="ins-head"><div className="ins-name">{c("insurer3_name")}</div><div className="status-pill" style={{ background: "var(--success-bg)", color: "var(--success-green)" }}>LIVE</div></div>
+              <div className="ins-head"><div className="ins-name">{c("insurer3_name")}</div><div className="status-pill" style={{ background: "var(--amber-bg)", color: "var(--amber)" }}>SOON</div></div>
               <div className="ins-desc">{c("insurer3_desc")}</div>
             </div>
             <div className="ins-card">
-              <div className="ins-head"><div className="ins-name">{c("insurer4_name")}</div><div className="status-pill" style={{ background: "var(--success-bg)", color: "var(--success-green)" }}>LIVE</div></div>
+              <div className="ins-head"><div className="ins-name">{c("insurer4_name")}</div><div className="status-pill" style={{ background: "var(--amber-bg)", color: "var(--amber)" }}>SOON</div></div>
               <div className="ins-desc">{c("insurer4_desc")}</div>
-            </div>
-            <div className="ins-card">
-              <div className="ins-head"><div className="ins-name">{c("insurer5_name")}</div><div className="status-pill" style={{ background: "var(--success-bg)", color: "var(--success-green)" }}>LIVE</div></div>
-              <div className="ins-desc">{c("insurer5_desc")}</div>
-            </div>
-            <div className="ins-card">
-              <div className="ins-head"><div className="ins-name">{c("insurer6_name")}</div><div className="status-pill" style={{ background: "var(--success-bg)", color: "var(--success-green)" }}>LIVE</div></div>
-              <div className="ins-desc">{c("insurer6_desc")}</div>
-            </div>
-            <div className="ins-card">
-              <div className="ins-head"><div className="ins-name">{c("insurer7_name")}</div><div className="status-pill" style={{ background: "var(--success-bg)", color: "var(--success-green)" }}>LIVE</div></div>
-              <div className="ins-desc">{c("insurer7_desc")}</div>
             </div>
           </div>
         </div>
@@ -265,7 +225,6 @@ export default async function LandingPage() {
               <div className="price-sub">{c("pricing_pilot_sub")}</div>
               <div className="price-divider"></div>
               <div className="price-feat"><span className="chk">✓</span>10 prior auth drafts included</div>
-              <div className="price-feat"><span className="chk">✓</span>Full scheduling, claims & team tools from day one</div>
               <div className="price-feat"><span className="chk">✓</span>De-identified test cases</div>
               <div className="price-feat"><span className="chk">✓</span>Direct line to the founder</div>
               <div className="price-btn"><Link href="/sign-up">{c("pricing_pilot_cta")}</Link></div>
@@ -276,10 +235,10 @@ export default async function LandingPage() {
               <div className="price-num">{c("pricing_practice_price")}<span style={{ fontSize: "16px", color: "var(--gray-400)", fontWeight: 400 }}>/mo</span></div>
               <div className="price-sub">{c("pricing_practice_sub")}</div>
               <div className="price-divider"></div>
-              <div className="price-feat"><span className="chk">✓</span>Unlimited PA & appeal letter drafts</div>
-              <div className="price-feat"><span className="chk">✓</span>All 7 major payers covered</div>
-              <div className="price-feat"><span className="chk">✓</span>Online booking & scheduling</div>
-              <div className="price-feat"><span className="chk">✓</span>Claims, patients & team — one dashboard</div>
+              <div className="price-feat"><span className="chk">✓</span>Unlimited letter drafts</div>
+              <div className="price-feat"><span className="chk">✓</span>Aetna + Cigna/eviCore coverage</div>
+              <div className="price-feat"><span className="chk">✓</span>Missing-field flags before submit</div>
+              <div className="price-feat"><span className="chk">✓</span>Request tracking dashboard</div>
               <div className="price-btn"><Link href="/sign-up">{c("pricing_practice_cta")}</Link></div>
             </div>
             <div className="price-card">
