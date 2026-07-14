@@ -166,12 +166,24 @@ export default async function LandingPage() {
               <div className="ins-desc">{c("insurer2_desc")}</div>
             </div>
             <div className="ins-card">
-              <div className="ins-head"><div className="ins-name">{c("insurer3_name")}</div><div className="status-pill" style={{ background: "var(--amber-bg)", color: "var(--amber)" }}>SOON</div></div>
+              <div className="ins-head"><div className="ins-name">{c("insurer3_name")}</div><div className="status-pill" style={{ background: "var(--success-bg)", color: "var(--success-green)" }}>LIVE</div></div>
               <div className="ins-desc">{c("insurer3_desc")}</div>
             </div>
             <div className="ins-card">
-              <div className="ins-head"><div className="ins-name">{c("insurer4_name")}</div><div className="status-pill" style={{ background: "var(--amber-bg)", color: "var(--amber)" }}>SOON</div></div>
+              <div className="ins-head"><div className="ins-name">{c("insurer4_name")}</div><div className="status-pill" style={{ background: "var(--success-bg)", color: "var(--success-green)" }}>LIVE</div></div>
               <div className="ins-desc">{c("insurer4_desc")}</div>
+            </div>
+            <div className="ins-card">
+              <div className="ins-head"><div className="ins-name">{c("insurer5_name")}</div><div className="status-pill" style={{ background: "var(--success-bg)", color: "var(--success-green)" }}>LIVE</div></div>
+              <div className="ins-desc">{c("insurer5_desc")}</div>
+            </div>
+            <div className="ins-card">
+              <div className="ins-head"><div className="ins-name">{c("insurer6_name")}</div><div className="status-pill" style={{ background: "var(--success-bg)", color: "var(--success-green)" }}>LIVE</div></div>
+              <div className="ins-desc">{c("insurer6_desc")}</div>
+            </div>
+            <div className="ins-card">
+              <div className="ins-head"><div className="ins-name">{c("insurer7_name")}</div><div className="status-pill" style={{ background: "var(--success-bg)", color: "var(--success-green)" }}>LIVE</div></div>
+              <div className="ins-desc">{c("insurer7_desc")}</div>
             </div>
           </div>
         </div>
