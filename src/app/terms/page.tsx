@@ -40,10 +40,11 @@ export default function TermsPage() {
       <h2>5. Plans and billing</h2>
       <p>
         The Pilot plan is free for a limited number of letters and requires no payment method. Paid plans (Practice
-        and Multi-Site) are billed on a recurring monthly basis and are processed by Paddle.com, our merchant of
-        record, which handles checkout, invoicing, and tax collection on our behalf. By subscribing, you also agree
-        to Paddle&apos;s buyer terms. You can cancel a paid plan at any time from your Billing page; cancellation
-        stops future charges and access continues through the end of the period already paid for. See our{" "}
+        and Multi-Site) are billed on a recurring monthly basis. Payments are processed by Stripe, Inc., our payment
+        processor, which handles checkout and invoicing on our behalf; applicable sales tax is calculated and
+        collected at checkout through Stripe Tax. By subscribing, you also agree to Stripe&apos;s terms of service.
+        You can cancel a paid plan at any time from your Billing page; cancellation stops future charges and access
+        continues through the end of the period already paid for. See our{" "}
         <a href="/refund-policy">Refund Policy</a> for details.
       </p>
 

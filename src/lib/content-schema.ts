@@ -388,7 +388,7 @@ export const CONTENT_PAGES: ContentPageDef[] = [
             key: "billing_footer_note",
             label: "Footer disclaimer (shown after the live Practice plan price)",
             type: "textarea",
-            default: "billed monthly via Paddle. Invoices are emailed by Paddle after each charge.",
+            default: "billed monthly via Stripe. Invoices are emailed by Stripe after each charge.",
           },
         ],
       },

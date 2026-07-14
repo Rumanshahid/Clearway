@@ -26,8 +26,8 @@ export default function PrivacyPage() {
         we process it only to provide the Service.
       </p>
       <p>
-        <strong>Payment information</strong> — handled entirely by Paddle.com, our payment processor and merchant of
-        record. We do not receive or store full card numbers.
+        <strong>Payment information</strong> — handled entirely by Stripe, Inc., our payment processor. We do not
+        receive or store full card numbers.
       </p>
       <p>
         <strong>Usage information</strong> — basic technical data such as browser type and pages visited, and
@@ -60,7 +60,8 @@ export default function PrivacyPage() {
       <h2>5. Who we share data with</h2>
       <p>
         We use a small number of infrastructure providers (sub-processors) to run the Service: Supabase for database
-        hosting, authentication, and file storage, and Paddle for payment processing. These providers only receive
+        hosting, authentication, and file storage, and Stripe for payment processing and sales tax calculation.
+        These providers only receive
         the data needed to perform their function and are bound by their own confidentiality and security
         obligations. We do not sell practice or patient data, and we do not share it with insurers, employers, or
         data brokers.

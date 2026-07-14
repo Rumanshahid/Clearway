@@ -53,7 +53,7 @@ export default async function BillingPage({
 
       {upgraded && (
         <div className="mb-5 text-[13px] rounded-lg px-3 py-2" style={{ background: "var(--success-bg)", color: "var(--success-green)" }}>
-          Checkout complete — your plan will update once Paddle confirms the subscription (usually a few seconds).
+          Checkout complete — your plan will update once Stripe confirms the subscription (usually a few seconds).
         </div>
       )}
       {error && (
@@ -98,10 +98,10 @@ export default async function BillingPage({
           <UpgradeButton practiceId={practice.id} email={user!.email || ""} />
         )}
 
-        {practice.plan === "practice" && practice.paddle_subscription_id && practice.billing_status === "active" && (
+        {practice.plan === "practice" && practice.stripe_subscription_id && practice.billing_status === "active" && (
           <form action={cancelSubscriptionAction}>
             <input type="hidden" name="practice_id" value={practice.id} />
-            <input type="hidden" name="subscription_id" value={practice.paddle_subscription_id} />
+            <input type="hidden" name="subscription_id" value={practice.stripe_subscription_id} />
             <button className="btn btn-outline btn-sm" type="submit">Cancel subscription (ends at period end)</button>
           </form>
         )}

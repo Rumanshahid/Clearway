@@ -48,8 +48,8 @@ export interface Database {
           letters_included: number;
           letters_used_this_period: number;
           billing_period_start: string;
-          paddle_customer_id: string | null;
-          paddle_subscription_id: string | null;
+          stripe_customer_id: string | null;
+          stripe_subscription_id: string | null;
           baa_accepted_at: string | null;
           baa_accepted_by: string | null;
           retention_months: number;

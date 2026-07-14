@@ -16,9 +16,9 @@ export default function RefundPolicyPage() {
 
       <h2>2. Paid plans</h2>
       <p>
-        Practice and Multi-Site plans are billed monthly in advance through Paddle.com, our merchant of record.
-        Because each billing period grants a full month of access starting immediately, we generally don&apos;t
-        issue refunds for partial or unused portions of a billing period.
+        Practice and Multi-Site plans are billed monthly in advance through Stripe, our payment processor. Because
+        each billing period grants a full month of access starting immediately, we generally don&apos;t issue
+        refunds for partial or unused portions of a billing period.
       </p>
 
       <h2>3. Cancelling a subscription</h2>
@@ -35,10 +35,11 @@ export default function RefundPolicyPage() {
         and we&apos;ll investigate and correct it, including a refund where one is due.
       </p>
 
-      <h2>5. Paddle as merchant of record</h2>
+      <h2>5. Stripe as our payment processor</h2>
       <p>
-        Paddle processes the actual transaction and appears on your card statement. Your checkout receipt from
-        Paddle includes their own support contact, which you can also use for payment-specific questions.
+        Stripe processes the actual transaction on our behalf; our business name appears on your card statement.
+        Your checkout receipt includes Stripe&apos;s own support contact, which you can also use for
+        payment-specific questions.
       </p>
 
       <h2>6. Contact</h2>
