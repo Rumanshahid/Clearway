@@ -14,6 +14,7 @@ export type AppointmentStatus = "confirmed" | "checked_in" | "complete" | "no_sh
 export type WaitlistStatus = "waiting" | "offered" | "booked" | "expired" | "cancelled";
 export type IntakeQuestionKey = "reason" | "duration_since" | "new_or_returning" | "referral" | "urgent" | "insurance";
 export type InsuranceVerificationStatus = "verified" | "not_verified" | "unavailable";
+export type BlogPostStatus = "draft" | "published";
 
 export interface LetterMeta {
   approachUsed: LetterApproach;
@@ -874,6 +875,30 @@ export interface Database {
           practice_id: string;
         };
         Update: Partial<Database["public"]["Tables"]["pre_appointment_intake"]["Row"]>;
+        Relationships: [];
+      };
+      blog_posts: {
+        Row: {
+          id: string;
+          title: string;
+          slug: string;
+          excerpt: string | null;
+          content: string;
+          cover_image_url: string | null;
+          tags: string[];
+          status: BlogPostStatus;
+          seo_title: string | null;
+          seo_description: string | null;
+          author_id: string | null;
+          published_at: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: Partial<Database["public"]["Tables"]["blog_posts"]["Row"]> & {
+          title: string;
+          slug: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["blog_posts"]["Row"]>;
         Relationships: [];
       };
     };
