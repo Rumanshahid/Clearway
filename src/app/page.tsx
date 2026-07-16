@@ -20,6 +20,8 @@ export default async function LandingPage() {
     after: c(`cmp${n}_after`),
   }));
 
+  const payerNames = [1, 2, 3, 4, 5, 6, 7].map((n) => c(`insurer${n}_name`)).filter(Boolean);
+
   return (
     <div className="landing-root">
       <SiteNav />
@@ -44,6 +46,19 @@ export default async function LandingPage() {
           </div>
         </div>
       </section>
+
+      {visible("Payer strip") && payerNames.length > 0 && (
+        <section className="payer-strip">
+          <div className="wrap">
+            <p className="payer-strip-label">{c("payer_strip_label")}</p>
+            <div className="payer-strip-row">
+              {payerNames.map((name) => (
+                <span key={name}>{name}</span>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
 
       {visible("Stats section") && (
         <section className="stats">

@@ -78,6 +78,13 @@ export const CONTENT_PAGES: ContentPageDef[] = [
         ],
       },
       {
+        title: "Payer strip",
+        visibilityKey: "section_payer_strip",
+        fields: [
+          { key: "payer_strip_label", label: "Label", default: "Payer criteria supported for" },
+        ],
+      },
+      {
         title: "Stats section",
         visibilityKey: "section_stats",
         fields: [
