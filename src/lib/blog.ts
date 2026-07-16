@@ -6,8 +6,18 @@ import { marked } from "marked";
 // separate HTML-sanitizer dependency.
 marked.setOptions({ breaks: true });
 
+// CommonMark (what `marked` follows) requires a space after the #'s for a
+// heading -- "#Title" with no space is valid Markdown for a literal
+// paragraph starting with "#", not a heading. That's an easy typo to make
+// (or for an LLM to produce) and a confusing one to debug, since it fails
+// silently rather than erroring, so fix it up before parsing rather than
+// relying on every piece of content being typed perfectly.
+function fixHeadingSpacing(content: string): string {
+  return content.replace(/^(#{1,6})([^#\s])/gm, "$1 $2");
+}
+
 export function renderMarkdown(content: string): string {
-  return marked.parse(content, { async: false }) as string;
+  return marked.parse(fixHeadingSpacing(content), { async: false }) as string;
 }
 
 export function slugify(title: string): string {
