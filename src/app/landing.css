@@ -1,4 +1,10 @@
-.landing-root{background:var(--white);}
+/* Sticky footer: on short pages (e.g. a doctor directory with only one
+   result) the footer should still sit at the very bottom of the viewport
+   instead of floating right under sparse content, but without having to
+   wrap every page's content in an explicit flex-grow container -- margin-
+   top:auto on the footer does that by itself once the parent is a column
+   flexbox at least viewport-tall. */
+.landing-root{background:var(--white);display:flex;flex-direction:column;min-height:100vh;}
 .wrap{max-width:1240px;margin:0 auto;padding:0 40px;}
 @media(max-width:640px){.wrap{padding:0 20px;}}
 
@@ -72,10 +78,18 @@
 @keyframes floatB{0%,100%{transform:translateY(0);}50%{transform:translateY(6px);}}
 
 /* STATS */
-.payer-strip{padding:36px 0;text-align:center;border-top:1px solid var(--gray-200);border-bottom:1px solid var(--gray-200);}
+.payer-strip{padding:36px 0;text-align:center;background:var(--gray-100);}
 .payer-strip-label{font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--gray-400);font-weight:600;margin-bottom:18px;}
-.payer-strip-row{display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:28px 36px;}
-.payer-strip-row span{font-size:16px;font-weight:600;color:var(--gray-400);letter-spacing:-0.01em;}
+.payer-strip-viewport{
+  overflow:hidden;
+  -webkit-mask-image:linear-gradient(to right, transparent 0%, black 18%, black 82%, transparent 100%);
+  mask-image:linear-gradient(to right, transparent 0%, black 18%, black 82%, transparent 100%);
+}
+.payer-strip-track{display:flex;width:max-content;animation:payerScroll 26s linear infinite;}
+.payer-strip-row{display:flex;align-items:center;gap:48px;padding:0 24px;flex-shrink:0;}
+.payer-strip-row span{font-size:16px;font-weight:600;color:var(--gray-400);letter-spacing:-0.01em;white-space:nowrap;}
+@keyframes payerScroll{from{transform:translateX(0);}to{transform:translateX(-50%);}}
+@media(prefers-reduced-motion:reduce){.payer-strip-track{animation:none;}}
 
 .stats{padding:84px 0;background:var(--gray-50);}
 .stats-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;}
@@ -166,7 +180,7 @@ section.block.center .price-grid{text-align:left;}
 .cta-final p{font-size:16px;color:var(--gray-600);margin-bottom:32px;max-width:440px;margin-left:auto;margin-right:auto;}
 
 /* FOOTER */
-.site-footer{background:var(--navy-900);color:#fff;padding:14px 0;opacity:0;transform:translateY(16px);transition:opacity .5s ease,transform .5s ease;}
+.site-footer{background:var(--navy-900);color:#fff;padding:14px 0;opacity:0;transform:translateY(16px);transition:opacity .5s ease,transform .5s ease;margin-top:auto;}
 .site-footer.visible{opacity:1;transform:translateY(0);}
 .footer-links{display:flex;flex-wrap:wrap;gap:10px 20px;margin-bottom:8px;}
 .footer-links a{color:#A0A8C0;font-size:12.5px;}

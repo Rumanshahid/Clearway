@@ -51,10 +51,19 @@ export default async function LandingPage() {
         <section className="payer-strip">
           <div className="wrap">
             <p className="payer-strip-label">{c("payer_strip_label")}</p>
-            <div className="payer-strip-row">
-              {payerNames.map((name) => (
-                <span key={name}>{name}</span>
-              ))}
+          </div>
+          <div className="payer-strip-viewport">
+            <div className="payer-strip-track">
+              <div className="payer-strip-row">
+                {payerNames.map((name) => (
+                  <span key={name}>{name}</span>
+                ))}
+              </div>
+              <div className="payer-strip-row" aria-hidden="true">
+                {payerNames.map((name) => (
+                  <span key={`dup-${name}`}>{name}</span>
+                ))}
+              </div>
             </div>
           </div>
         </section>
