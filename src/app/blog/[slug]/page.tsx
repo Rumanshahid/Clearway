@@ -14,6 +14,36 @@ async function getPost(slug: string) {
   return data;
 }
 
+interface SuggestedPost {
+  id: string;
+  title: string;
+  slug: string;
+  excerpt: string | null;
+  content: string;
+  cover_image_url: string | null;
+  published_at: string | null;
+}
+
+// No view-count tracking exists yet, so "popular" isn't something we can
+// measure honestly -- this ranks by tag overlap with the current post first
+// (genuinely related reading), falling back to most recent, which is a
+// reasonable stand-in until real view data exists to rank by instead.
+async function getSuggestedPosts(currentId: string, tags: string[]): Promise<SuggestedPost[]> {
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("blog_posts")
+    .select("id, title, slug, excerpt, content, cover_image_url, tags, published_at")
+    .eq("status", "published")
+    .neq("id", currentId)
+    .order("published_at", { ascending: false })
+    .limit(20);
+
+  return (data || [])
+    .map((p) => ({ ...p, overlap: p.tags.filter((t) => tags.includes(t)).length }))
+    .sort((a, b) => b.overlap - a.overlap || (b.published_at || "").localeCompare(a.published_at || ""))
+    .slice(0, 3);
+}
+
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
   const post = await getPost(slug);
@@ -36,6 +66,8 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
   const { slug } = await params;
   const post = await getPost(slug);
   if (!post) notFound();
+
+  const suggested = await getSuggestedPosts(post.id, post.tags);
 
   return (
     <div className="landing-root">
@@ -64,6 +96,28 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
 
         <div className="blog-preview" dangerouslySetInnerHTML={{ __html: renderMarkdown(post.content) }} />
       </article>
+
+      {suggested.length > 0 && (
+        <section className="max-w-[860px] mx-auto px-5 pb-14">
+          <h2 className="text-[13px] font-semibold uppercase tracking-wide text-gray-400 mb-4">Keep reading</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
+            {suggested.map((s) => (
+              <Link key={s.id} href={`/blog/${s.slug}`} className="card p-4 flex flex-col gap-2 hover:bg-gray-50 transition-colors">
+                {s.cover_image_url && (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={s.cover_image_url} alt="" className="w-full h-[110px] object-cover rounded-lg" />
+                )}
+                <div className="text-[12px] text-gray-400">
+                  {s.published_at && new Date(s.published_at).toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" })}
+                </div>
+                <div className="text-[15px] font-semibold leading-snug">{s.title}</div>
+                <p className="text-[13px] text-gray-600 leading-relaxed line-clamp-2">{s.excerpt || excerptFrom(s.content, 110)}</p>
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
+
       <SiteFooter />
       <LandingScripts />
     </div>
