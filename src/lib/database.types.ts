@@ -15,6 +15,7 @@ export type WaitlistStatus = "waiting" | "offered" | "booked" | "expired" | "can
 export type IntakeQuestionKey = "reason" | "duration_since" | "new_or_returning" | "referral" | "urgent" | "insurance";
 export type InsuranceVerificationStatus = "verified" | "not_verified" | "unavailable";
 export type BlogPostStatus = "draft" | "published";
+export type BlogAuthorType = "staff" | "patient";
 
 export interface LetterMeta {
   approachUsed: LetterApproach;
@@ -890,6 +891,11 @@ export interface Database {
           seo_title: string | null;
           seo_description: string | null;
           author_id: string | null;
+          author_type: BlogAuthorType;
+          patient_author_id: string | null;
+          upvote_count: number;
+          ai_flagged: boolean;
+          ai_flag_reason: string | null;
           published_at: string | null;
           created_at: string;
           updated_at: string;
@@ -899,6 +905,51 @@ export interface Database {
           slug: string;
         };
         Update: Partial<Database["public"]["Tables"]["blog_posts"]["Row"]>;
+        Relationships: [];
+      };
+      blog_likes: {
+        Row: {
+          post_id: string;
+          user_id: string;
+          created_at: string;
+        };
+        Insert: Partial<Database["public"]["Tables"]["blog_likes"]["Row"]> & {
+          post_id: string;
+          user_id: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["blog_likes"]["Row"]>;
+        Relationships: [];
+      };
+      blog_upvotes: {
+        Row: {
+          post_id: string;
+          user_id: string;
+          created_at: string;
+        };
+        Insert: Partial<Database["public"]["Tables"]["blog_upvotes"]["Row"]> & {
+          post_id: string;
+          user_id: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["blog_upvotes"]["Row"]>;
+        Relationships: [];
+      };
+      blog_comments: {
+        Row: {
+          id: string;
+          post_id: string;
+          user_id: string;
+          content: string;
+          ai_flagged: boolean;
+          ai_flag_reason: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: Partial<Database["public"]["Tables"]["blog_comments"]["Row"]> & {
+          post_id: string;
+          user_id: string;
+          content: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["blog_comments"]["Row"]>;
         Relationships: [];
       };
       patient_accounts: {

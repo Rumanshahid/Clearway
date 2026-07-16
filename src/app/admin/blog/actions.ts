@@ -59,16 +59,13 @@ export async function createPostAction(formData: FormData) {
     }
   }
 
-  const { data: post, error } = await supabase
-    .from("blog_posts")
-    .insert({
-      ...fields,
-      cover_image_url: coverImageUrl,
-      author_id: session.userId,
-      published_at: fields.status === "published" ? new Date().toISOString() : null,
-    })
-    .select("id")
-    .single();
+  const { error } = await supabase.from("blog_posts").insert({
+    ...fields,
+    cover_image_url: coverImageUrl,
+    author_id: session.userId,
+    author_type: "staff",
+    published_at: fields.status === "published" ? new Date().toISOString() : null,
+  });
 
   if (error) {
     redirect(`/admin/blog/new?error=${encodeURIComponent(error.message.includes("duplicate") ? "That slug is already taken." : error.message)}`);
@@ -76,7 +73,7 @@ export async function createPostAction(formData: FormData) {
 
   revalidatePath("/admin/blog");
   revalidatePath("/blog");
-  redirect(`/admin/blog/${post!.id}?saved=1`);
+  redirect("/admin/blog?saved=1");
 }
 
 export async function updatePostAction(formData: FormData) {

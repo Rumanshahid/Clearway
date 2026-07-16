@@ -1,9 +1,10 @@
 import { marked } from "marked";
+import DOMPurify from "isomorphic-dompurify";
 
-// Content is Markdown from a single trusted author (super_admin only, gated
-// by RLS + the /admin layout's own role check) -- no untrusted user input
-// ever reaches this renderer, so plain marked output is fine without a
-// separate HTML-sanitizer dependency.
+// Posts are now authorable by any signed-in staff or patient account, not
+// just a single trusted super_admin (see 0040_blog_social.sql) -- so the
+// rendered HTML is untrusted and must be sanitized before it's ever put in
+// the DOM via dangerouslySetInnerHTML.
 marked.setOptions({ breaks: true });
 
 // CommonMark (what `marked` follows) requires a space after the #'s for a
@@ -17,7 +18,8 @@ function fixHeadingSpacing(content: string): string {
 }
 
 export function renderMarkdown(content: string): string {
-  return marked.parse(fixHeadingSpacing(content), { async: false }) as string;
+  const html = marked.parse(fixHeadingSpacing(content), { async: false }) as string;
+  return DOMPurify.sanitize(html);
 }
 
 export function slugify(title: string): string {
