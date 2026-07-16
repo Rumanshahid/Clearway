@@ -901,6 +901,63 @@ export interface Database {
         Update: Partial<Database["public"]["Tables"]["blog_posts"]["Row"]>;
         Relationships: [];
       };
+      patient_accounts: {
+        Row: {
+          id: string;
+          patient_ref_id: string;
+          first_name: string;
+          last_name: string;
+          dob: string;
+          mobile_phone: string;
+          email: string;
+          consent_share_info: boolean;
+          consent_terms_privacy: boolean;
+          consent_notifications: boolean;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: Partial<Database["public"]["Tables"]["patient_accounts"]["Row"]> & {
+          id: string;
+          first_name: string;
+          last_name: string;
+          dob: string;
+          mobile_phone: string;
+          email: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["patient_accounts"]["Row"]>;
+        Relationships: [];
+      };
+      patient_profiles: {
+        Row: {
+          patient_account_id: string;
+          address: string | null;
+          city: string | null;
+          state: string | null;
+          zip: string | null;
+          preferred_language: string | null;
+          emergency_contact_name: string | null;
+          emergency_contact_phone: string | null;
+          emergency_contact_relationship: string | null;
+          insurance_company: string | null;
+          plan_type: string | null;
+          member_id: string | null;
+          group_number: string | null;
+          plan_name: string | null;
+          has_secondary_insurance: boolean;
+          secondary_insurance_company: string | null;
+          secondary_member_id: string | null;
+          secondary_group_number: string | null;
+          known_drug_allergies: string | null;
+          current_medications: string | null;
+          preferred_contact_method: string | null;
+          updated_at: string;
+        };
+        Insert: Partial<Database["public"]["Tables"]["patient_profiles"]["Row"]> & {
+          patient_account_id: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["patient_profiles"]["Row"]>;
+        Relationships: [];
+      };
     };
     Views: Record<string, never>;
     Functions: Record<string, never>;
