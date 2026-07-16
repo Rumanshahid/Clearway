@@ -1009,6 +1009,84 @@ export interface Database {
         Update: Partial<Database["public"]["Tables"]["patient_profiles"]["Row"]>;
         Relationships: [];
       };
+      questions: {
+        Row: {
+          id: string;
+          title: string;
+          body: string;
+          tags: string[];
+          author_type: BlogAuthorType;
+          author_id: string | null;
+          patient_author_id: string | null;
+          upvote_count: number;
+          ai_flagged: boolean;
+          ai_flag_reason: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: Partial<Database["public"]["Tables"]["questions"]["Row"]> & {
+          title: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["questions"]["Row"]>;
+        Relationships: [];
+      };
+      answers: {
+        Row: {
+          id: string;
+          question_id: string;
+          author_type: BlogAuthorType;
+          author_id: string | null;
+          patient_author_id: string | null;
+          content: string;
+          upvote_count: number;
+          ai_flagged: boolean;
+          ai_flag_reason: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: Partial<Database["public"]["Tables"]["answers"]["Row"]> & {
+          question_id: string;
+          content: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["answers"]["Row"]>;
+        Relationships: [];
+      };
+      question_likes: {
+        Row: { question_id: string; user_id: string; created_at: string };
+        Insert: Partial<Database["public"]["Tables"]["question_likes"]["Row"]> & { question_id: string; user_id: string };
+        Update: Partial<Database["public"]["Tables"]["question_likes"]["Row"]>;
+        Relationships: [];
+      };
+      question_upvotes: {
+        Row: { question_id: string; user_id: string; created_at: string };
+        Insert: Partial<Database["public"]["Tables"]["question_upvotes"]["Row"]> & { question_id: string; user_id: string };
+        Update: Partial<Database["public"]["Tables"]["question_upvotes"]["Row"]>;
+        Relationships: [];
+      };
+      answer_likes: {
+        Row: { answer_id: string; user_id: string; created_at: string };
+        Insert: Partial<Database["public"]["Tables"]["answer_likes"]["Row"]> & { answer_id: string; user_id: string };
+        Update: Partial<Database["public"]["Tables"]["answer_likes"]["Row"]>;
+        Relationships: [];
+      };
+      answer_upvotes: {
+        Row: { answer_id: string; user_id: string; created_at: string };
+        Insert: Partial<Database["public"]["Tables"]["answer_upvotes"]["Row"]> & { answer_id: string; user_id: string };
+        Update: Partial<Database["public"]["Tables"]["answer_upvotes"]["Row"]>;
+        Relationships: [];
+      };
+      user_follows: {
+        Row: { follower_id: string; followed_id: string; created_at: string };
+        Insert: Partial<Database["public"]["Tables"]["user_follows"]["Row"]> & { follower_id: string; followed_id: string };
+        Update: Partial<Database["public"]["Tables"]["user_follows"]["Row"]>;
+        Relationships: [];
+      };
+      notification_preferences: {
+        Row: { user_id: string; follow_activity_enabled: boolean; updated_at: string };
+        Insert: Partial<Database["public"]["Tables"]["notification_preferences"]["Row"]> & { user_id: string };
+        Update: Partial<Database["public"]["Tables"]["notification_preferences"]["Row"]>;
+        Relationships: [];
+      };
     };
     Views: Record<string, never>;
     Functions: Record<string, never>;

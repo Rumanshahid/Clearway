@@ -8,6 +8,7 @@ import LandingScripts from "../../LandingScripts";
 import { createClient } from "@/lib/supabase/server";
 import { renderMarkdown, excerptFrom } from "@/lib/blog";
 import { getPublicIdentities } from "@/lib/blog-identity";
+import { toggleFollowAction } from "../../social-actions";
 import {
   toggleLikeAction,
   toggleUpvoteAction,
@@ -105,6 +106,11 @@ export default async function BlogPostPage({
     ...(comments || []).map((c) => c.user_id),
   ]);
   const authorIdentity = identities[post.author_id || post.patient_author_id || ""];
+  const authorUserId = post.author_id || post.patient_author_id;
+  const isFollowingAuthor =
+    !!user && !!authorUserId
+      ? !!(await supabase.from("user_follows").select("follower_id").eq("follower_id", user.id).eq("followed_id", authorUserId).maybeSingle()).data
+      : false;
 
   return (
     <div className="landing-root">
@@ -115,6 +121,15 @@ export default async function BlogPostPage({
         <h1 className="text-[32px] font-semibold mt-4 mb-3">{post.title}</h1>
         <div className="flex items-center gap-3 text-[13px] text-gray-400 mb-6 flex-wrap">
           {authorIdentity && <span className="text-gray-600 font-medium">{authorIdentity.displayName}</span>}
+          {user && authorUserId && authorUserId !== user.id && (
+            <form action={toggleFollowAction}>
+              <input type="hidden" name="target_user_id" value={authorUserId} />
+              <input type="hidden" name="redirect_to" value={`/blog/${post.slug}`} />
+              <button type="submit" className="text-[12.5px] font-medium" style={{ color: "var(--indigo-600)" }}>
+                {isFollowingAuthor ? "Following" : "+ Follow"}
+              </button>
+            </form>
+          )}
           {post.published_at && (
             <span>{new Date(post.published_at).toLocaleDateString(undefined, { year: "numeric", month: "long", day: "numeric" })}</span>
           )}

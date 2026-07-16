@@ -24,6 +24,8 @@ export default async function PatientLayout({ children }: { children: React.Reac
         <nav className="flex items-center gap-5 text-[13.5px] text-gray-600">
           <Link href="/patient">Home</Link>
           <Link href="/patient/profile">My Profile</Link>
+          <Link href="/questions">Q&amp;A</Link>
+          <Link href="/notifications/settings">Notifications</Link>
           <span className="text-gray-400">{account.patient_ref_id}</span>
           <form action={signOutAction}>
             <button type="submit" className="text-gray-600 hover:text-gray-900">Sign out</button>

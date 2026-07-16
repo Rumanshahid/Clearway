@@ -36,6 +36,7 @@ export default async function SiteNav() {
             <Link href="/#pricing">{c("nav_link_pricing")}</Link>
             <Link href="/doctors">Find a Doctor</Link>
             <Link href="/blog">{c("nav_link_blog")}</Link>
+            <Link href="/questions">Q&amp;A</Link>
             <Link href="/about">{c("nav_link_about")}</Link>
           </div>
           <div className="nav-right">
@@ -63,6 +64,7 @@ export default async function SiteNav() {
         <Link href="/#pricing">{c("nav_link_pricing")}</Link>
         <Link href="/doctors">Find a Doctor</Link>
         <Link href="/blog">{c("nav_link_blog")}</Link>
+        <Link href="/questions">Q&amp;A</Link>
         <Link href="/about">{c("nav_link_about")}</Link>
         <div className="dd-divider"></div>
         {user ? (

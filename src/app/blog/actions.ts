@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { requireBlogIdentity } from "@/lib/blog-identity";
 import { checkAlarmingContent, notifySuperAdminsOfFlag } from "@/lib/blog-moderation";
+import { notifyFollowersOfNewContent } from "@/lib/follows";
 import { slugify } from "@/lib/blog";
 
 function readPostFields(formData: FormData) {
@@ -65,6 +66,8 @@ export async function createBlogPostAction(formData: FormData) {
       link: `/blog/${post.slug}`,
     });
   }
+
+  await notifyFollowersOfNewContent(identity.userId, `${identity.displayName} published a new blog post: "${fields.title}"`, `/blog/${post.slug}`);
 
   revalidatePath("/blog");
   redirect("/blog");
