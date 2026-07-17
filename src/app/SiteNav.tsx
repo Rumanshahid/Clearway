@@ -22,17 +22,16 @@ export default async function SiteNav() {
     <>
       <nav className="site-nav" id="siteNav">
         <div className="wrap">
-          <div className="logo">
+          <Link href="/" className="logo">
             <div className="logo-mark">
               <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
                 <path d="M2 7h10M7 2l5 5-5 5" stroke="#fff" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
             </div>
             {c("nav_logo_text")}
-          </div>
+          </Link>
           <div className="nav-links" id="navLinks">
-            <Link href="/#how">{c("nav_link_how")}</Link>
-            <Link href="/#insurers">{c("nav_link_coverage")}</Link>
+            <Link href="/">Home</Link>
             <Link href="/#pricing">{c("nav_link_pricing")}</Link>
             <Link href="/doctors">Find a Doctor</Link>
             <Link href="/blog">{c("nav_link_blog")}</Link>
@@ -59,8 +58,7 @@ export default async function SiteNav() {
         <span></span><span></span><span></span>
       </button>
       <div className="nav-dropdown" id="navDropdown">
-        <Link href="/#how">{c("nav_link_how")}</Link>
-        <Link href="/#insurers">{c("nav_link_coverage")}</Link>
+        <Link href="/">Home</Link>
         <Link href="/#pricing">{c("nav_link_pricing")}</Link>
         <Link href="/doctors">Find a Doctor</Link>
         <Link href="/blog">{c("nav_link_blog")}</Link>
