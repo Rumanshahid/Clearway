@@ -50,6 +50,10 @@ export default async function BlogListPage({
     <div className="landing-root">
       <SiteNav />
       <div className="wrap" style={{ width: "100%", paddingTop: 56, paddingBottom: 56 }}>
+        <div className="mb-8">
+          <SiteSearchBar placeholder="Search blog posts…" />
+        </div>
+
         <div className="flex items-start justify-between gap-4 mb-2 flex-wrap">
           <div>
             <h1 className="text-[32px] font-semibold mb-2">Blog</h1>
@@ -58,10 +62,6 @@ export default async function BlogListPage({
           {user && (
             <Link href="/blog/new" className="btn btn-primary flex-shrink-0">Write a post →</Link>
           )}
-        </div>
-
-        <div className="mb-8">
-          <SiteSearchBar placeholder="Search blog posts…" />
         </div>
 
         <div className="flex gap-6 items-start mt-8">

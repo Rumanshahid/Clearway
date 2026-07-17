@@ -48,16 +48,16 @@ export default async function QuestionsListPage({
     <div className="landing-root">
       <SiteNav />
       <div className="wrap" style={{ width: "100%", paddingTop: 56, paddingBottom: 56 }}>
+        <div className="mb-8">
+          <SiteSearchBar placeholder="Search questions…" />
+        </div>
+
         <div className="flex items-start justify-between gap-4 mb-2 flex-wrap">
           <div>
             <h1 className="text-[32px] font-semibold mb-2">Questions &amp; Answers</h1>
             <p className="text-[15px] text-gray-600">Ask a question — doctors, staff, and other patients can answer.</p>
           </div>
           {user && <Link href="/questions/new" className="btn btn-primary flex-shrink-0">Ask a question →</Link>}
-        </div>
-
-        <div className="mb-8">
-          <SiteSearchBar placeholder="Search questions…" />
         </div>
 
         <div className="flex gap-6 items-start mt-8">
