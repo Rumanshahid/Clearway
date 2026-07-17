@@ -14,12 +14,27 @@ export default async function PatientLayout({ children }: { children: React.Reac
   // Admin client for this identity check -- see the comment in
   // lib/auth-redirect.ts for why the session-scoped client isn't used here.
   const admin = await createAdminClient();
-  const { data: account } = await admin
+  const { data: account, error: accountError } = await admin
     .from("patient_accounts")
     .select("first_name, patient_ref_id")
     .eq("id", user.id)
     .maybeSingle();
-  if (!account) redirect("/dashboard");
+  // TEMPORARY: show the raw failure on screen instead of silently
+  // redirecting, so the exact user id / error is visible in one shot
+  // instead of round-tripping through Vercel logs again.
+  if (!account) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 px-5">
+        <div className="card p-6 max-w-[560px] w-full text-[13px] font-mono whitespace-pre-wrap break-all">
+          <p className="font-sans font-semibold text-[15px] mb-3">Patient account lookup failed</p>
+          user.id: {user.id}{"\n"}
+          user.email: {user.email}{"\n"}
+          account: {JSON.stringify(account)}{"\n"}
+          error: {JSON.stringify(accountError)}
+        </div>
+      </div>
+    );
+  }
 
   const { data: notifications } = await supabase
     .from("notifications")
