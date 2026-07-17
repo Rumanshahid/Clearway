@@ -1,6 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { revalidatePath } from "next/cache";
 import { cookies } from "next/headers";
 import { createClient, createAdminClient } from "@/lib/supabase/server";
 
@@ -153,11 +154,16 @@ export async function signInAction(formData: FormData) {
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("practice_id")
+    .select("practice_id, role")
     .eq("id", data.user.id)
     .single();
 
-  redirect(profile?.practice_id ? "/dashboard" : "/onboarding");
+  if (!profile?.practice_id) redirect("/onboarding");
+  // clinic_admin ("Doctor / Admin") and super_admin land on the actual
+  // dashboard overview, not the PA-requests list that sits at the bare
+  // /dashboard route -- only plain staff (clinic_user) go there.
+  const isAdmin = profile.role === "clinic_admin" || profile.role === "super_admin";
+  redirect(isAdmin ? "/dashboard/overview" : "/dashboard");
 }
 
 export async function forgotPasswordAction(formData: FormData) {
@@ -191,5 +197,11 @@ export async function resetPasswordAction(formData: FormData) {
 export async function signOutAction() {
   const supabase = await createClient();
   await supabase.auth.signOut();
+  // Belt-and-suspenders: every page that reads the session (SiteNav,
+  // dashboard/patient layouts) is already dynamically rendered because it
+  // calls cookies(), so this shouldn't be needed for correctness -- but it
+  // guarantees no cached RSC payload from the still-signed-in render can
+  // ever be served after sign-out.
+  revalidatePath("/", "layout");
   redirect("/sign-in");
 }
