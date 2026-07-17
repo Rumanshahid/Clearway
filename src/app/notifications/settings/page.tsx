@@ -26,7 +26,8 @@ export default async function NotificationSettingsPage({
   return (
     <div className="landing-root">
       <SiteNav />
-      <div className="max-w-[560px] mx-auto px-5 sm:px-10 py-14">
+      <div className="wrap" style={{ paddingTop: 56, paddingBottom: 56 }}>
+      <div className="max-w-[560px] mx-auto">
         <Link href={identity.authorType === "patient" ? "/patient" : "/dashboard"} className="text-[13px] text-indigo-600 font-medium">← Back</Link>
         <h1 className="text-[24px] font-semibold mt-4 mb-1">Notification settings</h1>
         <p className="text-[14px] text-gray-600 mb-6">Control whether you&apos;re notified about activity from people you follow.</p>
@@ -48,6 +49,7 @@ export default async function NotificationSettingsPage({
           </label>
           <button type="submit" className="btn btn-primary mt-5">Save</button>
         </form>
+      </div>
       </div>
       <SiteFooter />
       <LandingScripts />

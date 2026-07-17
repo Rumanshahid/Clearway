@@ -69,7 +69,8 @@ export default async function QuestionDetailPage({
   return (
     <div className="landing-root">
       <SiteNav />
-      <div className="max-w-[720px] mx-auto px-5 sm:px-10 py-14">
+      <div className="wrap" style={{ paddingTop: 56, paddingBottom: 56 }}>
+      <div className="max-w-[720px] mx-auto">
         <Link href="/questions" className="text-[13px] text-indigo-600 font-medium">← Back to Questions</Link>
 
         <div className="flex items-center gap-3 text-[13px] text-gray-400 mt-4 mb-2 flex-wrap">
@@ -217,6 +218,7 @@ export default async function QuestionDetailPage({
             {(answers || []).length === 0 && <p className="text-gray-400 text-[13.5px]">No answers yet — be the first to help.</p>}
           </div>
         </section>
+      </div>
       </div>
       <SiteFooter />
       <LandingScripts />

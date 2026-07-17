@@ -115,7 +115,8 @@ export default async function BlogPostPage({
   return (
     <div className="landing-root">
       <SiteNav />
-      <article className="max-w-[720px] mx-auto px-5 sm:px-10 py-14">
+      <div className="wrap" style={{ paddingTop: 56, paddingBottom: 56 }}>
+      <article className="max-w-[720px] mx-auto">
         <Link href="/blog" className="text-[13px] text-indigo-600 font-medium">← Back to Blog</Link>
 
         <h1 className="text-[32px] font-semibold mt-4 mb-3">{post.title}</h1>
@@ -247,9 +248,11 @@ export default async function BlogPostPage({
           </div>
         </section>
       </article>
+      </div>
 
       {suggested.length > 0 && (
-        <section className="max-w-[860px] mx-auto px-5 sm:px-10 pb-14">
+        <div className="wrap" style={{ paddingBottom: 56 }}>
+        <section className="max-w-[860px] mx-auto">
           <h2 className="text-[13px] font-semibold uppercase tracking-wide text-gray-400 mb-4">Keep reading</h2>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
             {suggested.map((s) => (
@@ -267,6 +270,7 @@ export default async function BlogPostPage({
             ))}
           </div>
         </section>
+        </div>
       )}
 
       <SiteFooter />

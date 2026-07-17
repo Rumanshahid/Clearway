@@ -29,7 +29,8 @@ export default async function EditQuestionPage({
   return (
     <div className="landing-root">
       <SiteNav />
-      <div className="max-w-[720px] mx-auto px-5 sm:px-10 py-14">
+      <div className="wrap" style={{ paddingTop: 56, paddingBottom: 56 }}>
+      <div className="max-w-[720px] mx-auto">
         <Link href={`/questions/${id}`} className="text-[13px] text-indigo-600 font-medium">← Back to question</Link>
         <h1 className="text-[26px] font-semibold mt-4 mb-6">Edit question</h1>
 
@@ -55,6 +56,7 @@ export default async function EditQuestionPage({
           </div>
           <button type="submit" className="btn btn-primary w-full justify-center mt-2">Save changes →</button>
         </form>
+      </div>
       </div>
       <SiteFooter />
       <LandingScripts />
