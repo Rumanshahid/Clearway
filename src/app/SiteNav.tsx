@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { getSiteContent } from "@/lib/criteria-repo";
 import { getPageBySlug, makeFieldGetter } from "@/lib/content-schema";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, createAdminClient } from "@/lib/supabase/server";
 import NavSearch from "./NavSearch";
 
 const NAV_PAGE = getPageBySlug("nav")!;
@@ -24,7 +24,13 @@ export default async function SiteNav() {
   // (see resolvePostLoginPath), which is wrong for a signed-in patient.
   let dashboardHref = "/dashboard";
   if (user) {
-    const { data: patientAccount } = await supabase.from("patient_accounts").select("id").eq("id", user.id).maybeSingle();
+    // Admin client, not the session-scoped one -- this only ever reads back
+    // the already-verified caller's own id, but avoids a real-world case
+    // where a freshly authenticated session's own RLS-scoped read of its
+    // own row intermittently came back empty despite the row and its
+    // policy both being confirmed correct directly in Postgres.
+    const admin = await createAdminClient();
+    const { data: patientAccount } = await admin.from("patient_accounts").select("id").eq("id", user.id).maybeSingle();
     if (patientAccount) dashboardHref = "/patient";
   }
 

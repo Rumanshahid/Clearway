@@ -1,17 +1,30 @@
+import { createAdminClient } from "@/lib/supabase/server";
 import type { createClient } from "@/lib/supabase/server";
 
 // Shared by password sign-in and the OAuth callback -- both need the same
 // "where does this person actually belong" logic (patient vs staff vs
 // doctor/admin vs incomplete-onboarding), so it lives in one place rather
 // than drifting out of sync between the two entry points.
+//
+// Uses the service-role client for the patient_accounts/profiles lookups,
+// not the caller's session-scoped client -- this is a pure identity-routing
+// check ("does auth.uid() X have a patient or staff record"), always
+// filtered to the already-verified `userId` argument, so it can't leak
+// anyone else's data. Sidesteps a real-world case where a freshly
+// authenticated session's own RLS-scoped read of its own row intermittently
+// came back empty even though the row and policy were both confirmed
+// correct directly in Postgres -- using the admin client here removes that
+// entire class of failure for a check this important to get right.
 export async function resolvePostLoginPath(
   supabase: Awaited<ReturnType<typeof createClient>>,
   userId: string
 ): Promise<string> {
-  const { data: patientAccount } = await supabase.from("patient_accounts").select("id").eq("id", userId).maybeSingle();
+  const admin = await createAdminClient();
+
+  const { data: patientAccount } = await admin.from("patient_accounts").select("id").eq("id", userId).maybeSingle();
   if (patientAccount) return "/patient";
 
-  const { data: profile } = await supabase.from("profiles").select("practice_id, role").eq("id", userId).maybeSingle();
+  const { data: profile } = await admin.from("profiles").select("practice_id, role").eq("id", userId).maybeSingle();
   if (!profile?.practice_id) {
     // Password sign-up already forces an explicit physician/staff-vs-patient
     // choice (two separate forms at /sign-up), so a "staff" profile with no

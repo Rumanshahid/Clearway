@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, createAdminClient } from "@/lib/supabase/server";
 
 // Only reachable right after a brand-new Google/Microsoft sign-in with no
 // prior practice or patient account -- see resolvePostLoginPath() in
@@ -13,10 +13,13 @@ export default async function ChooseRolePage() {
   } = await supabase.auth.getUser();
   if (!user) redirect("/sign-in");
 
-  const { data: patientAccount } = await supabase.from("patient_accounts").select("id").eq("id", user.id).maybeSingle();
+  // Admin client for these identity checks -- see the comment in
+  // lib/auth-redirect.ts for why the session-scoped client isn't used here.
+  const admin = await createAdminClient();
+  const { data: patientAccount } = await admin.from("patient_accounts").select("id").eq("id", user.id).maybeSingle();
   if (patientAccount) redirect("/patient");
 
-  const { data: profile } = await supabase.from("profiles").select("practice_id").eq("id", user.id).maybeSingle();
+  const { data: profile } = await admin.from("profiles").select("practice_id").eq("id", user.id).maybeSingle();
   if (profile?.practice_id) redirect("/dashboard");
 
   return (

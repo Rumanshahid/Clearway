@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, createAdminClient } from "@/lib/supabase/server";
 import PatientUserMenu from "./PatientUserMenu";
 import PatientNotificationBell from "./PatientNotificationBell";
 
@@ -11,15 +11,15 @@ export default async function PatientLayout({ children }: { children: React.Reac
   } = await supabase.auth.getUser();
   if (!user) redirect("/sign-in");
 
-  const { data: account, error: accountError } = await supabase
+  // Admin client for this identity check -- see the comment in
+  // lib/auth-redirect.ts for why the session-scoped client isn't used here.
+  const admin = await createAdminClient();
+  const { data: account } = await admin
     .from("patient_accounts")
     .select("first_name, patient_ref_id")
     .eq("id", user.id)
     .maybeSingle();
-  if (!account) {
-    console.error("patient/layout: no patient_accounts row for user", user.id, "error:", accountError?.message, accountError?.code);
-    redirect("/dashboard");
-  }
+  if (!account) redirect("/dashboard");
 
   const { data: notifications } = await supabase
     .from("notifications")
