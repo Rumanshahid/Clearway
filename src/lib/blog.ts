@@ -1,11 +1,23 @@
 import { marked } from "marked";
-import DOMPurify from "isomorphic-dompurify";
+import sanitizeHtml from "sanitize-html";
 
 // Posts are now authorable by any signed-in staff or patient account, not
 // just a single trusted super_admin (see 0040_blog_social.sql) -- so the
 // rendered HTML is untrusted and must be sanitized before it's ever put in
-// the DOM via dangerouslySetInnerHTML.
+// the DOM via dangerouslySetInnerHTML. Uses sanitize-html rather than
+// isomorphic-dompurify -- dompurify's jsdom dependency chain fails to load
+// in Vercel's serverless runtime (ERR_REQUIRE_ESM from html-encoding-sniffer),
+// crashing every page that renders post content. sanitize-html has no jsdom
+// dependency and works the same in Node as in serverless.
 marked.setOptions({ breaks: true });
+
+const SANITIZE_OPTIONS: sanitizeHtml.IOptions = {
+  allowedTags: sanitizeHtml.defaults.allowedTags.concat(["img", "h1", "h2"]),
+  allowedAttributes: {
+    ...sanitizeHtml.defaults.allowedAttributes,
+    img: ["src", "alt"],
+  },
+};
 
 // CommonMark (what `marked` follows) requires a space after the #'s for a
 // heading -- "#Title" with no space is valid Markdown for a literal
@@ -19,7 +31,7 @@ function fixHeadingSpacing(content: string): string {
 
 export function renderMarkdown(content: string): string {
   const html = marked.parse(fixHeadingSpacing(content), { async: false }) as string;
-  return DOMPurify.sanitize(html);
+  return sanitizeHtml(html, SANITIZE_OPTIONS);
 }
 
 export function slugify(title: string): string {
