@@ -31,6 +31,9 @@ export default async function LandingPage() {
         <div className="wrap">
           <div className="hero-grid">
             <div>
+              <div className="mx-auto mb-6 flex justify-center">
+                <SiteSearchBar placeholder="Search blog posts, questions, doctors…" />
+              </div>
               <div className="hero-tag"><span className="tag-dot"></span>{c("hero_tag")}</div>
               <h1>{c("hero_headline")}</h1>
               <p className="hero-p">{c("hero_subheadline")}</p>
@@ -42,9 +45,6 @@ export default async function LandingPage() {
                 <span>{c("hero_meta_1")}</span><span className="meta-sep"></span>
                 <span>{c("hero_meta_2")}</span><span className="meta-sep"></span>
                 <span>{c("hero_meta_3")}</span>
-              </div>
-              <div className="mx-auto mt-6 flex justify-center">
-                <SiteSearchBar placeholder="Search blog posts, questions, doctors…" />
               </div>
             </div>
           </div>
