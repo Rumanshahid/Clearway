@@ -59,7 +59,7 @@ export default async function PatientHomePage() {
     <div className="max-w-[900px] mx-auto px-5 sm:px-10 py-10">
       <div className="flex items-start justify-between gap-4 flex-wrap mb-1">
         <div>
-          <h1 className="text-[20px] font-semibold">Dashboard</h1>
+          <h1 className="text-[20px] font-semibold">Home</h1>
           <p className="text-[13px] text-gray-500 mt-1">
             Welcome back, {account.first_name} · <span className="text-gray-400">{account.patient_ref_id}</span>
           </p>
