@@ -69,7 +69,7 @@ export default async function QuestionDetailPage({
   return (
     <div className="landing-root">
       <SiteNav />
-      <div className="max-w-[720px] mx-auto px-5 py-14">
+      <div className="max-w-[720px] mx-auto px-5 sm:px-10 py-14">
         <Link href="/questions" className="text-[13px] text-indigo-600 font-medium">← Back to Questions</Link>
 
         <div className="flex items-center gap-3 text-[13px] text-gray-400 mt-4 mb-2 flex-wrap">
@@ -172,7 +172,7 @@ export default async function QuestionDetailPage({
                         <input type="hidden" name="question_id" value={question.id} />
                         <button
                           type="submit"
-                          className="status-pill text-[12px]"
+                          className="btn btn-sm"
                           style={isLiked ? { background: "var(--indigo-600)", color: "#fff" } : { background: "var(--gray-100)", color: "var(--gray-600)" }}
                         >
                           {isLiked ? "♥" : "♡"} {likeCount}
@@ -183,7 +183,7 @@ export default async function QuestionDetailPage({
                         <input type="hidden" name="question_id" value={question.id} />
                         <button
                           type="submit"
-                          className="status-pill text-[12px]"
+                          className="btn btn-sm"
                           style={isUpvoted ? { background: "var(--indigo-600)", color: "#fff" } : { background: "var(--gray-100)", color: "var(--gray-600)" }}
                         >
                           ▲ {answer.upvote_count}

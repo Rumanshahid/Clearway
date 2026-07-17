@@ -5,6 +5,7 @@ import SiteNav from "./SiteNav";
 import SiteFooter from "./SiteFooter";
 import { getSiteContent } from "@/lib/criteria-repo";
 import { getPageBySlug, makeFieldGetter, sectionVisible } from "@/lib/content-schema";
+import SiteSearchBar from "./SiteSearchBar";
 
 const HOME_PAGE = getPageBySlug("home")!;
 const sectionByTitle = (title: string) => HOME_PAGE.sections.find((s) => s.title === title)!;
@@ -41,6 +42,9 @@ export default async function LandingPage() {
                 <span>{c("hero_meta_1")}</span><span className="meta-sep"></span>
                 <span>{c("hero_meta_2")}</span><span className="meta-sep"></span>
                 <span>{c("hero_meta_3")}</span>
+              </div>
+              <div className="mx-auto mt-6 flex justify-center">
+                <SiteSearchBar placeholder="Search blog posts, questions, doctors…" />
               </div>
             </div>
           </div>

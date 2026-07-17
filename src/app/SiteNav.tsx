@@ -2,6 +2,7 @@ import Link from "next/link";
 import { getSiteContent } from "@/lib/criteria-repo";
 import { getPageBySlug, makeFieldGetter } from "@/lib/content-schema";
 import { createClient } from "@/lib/supabase/server";
+import NavSearch from "./NavSearch";
 
 const NAV_PAGE = getPageBySlug("nav")!;
 
@@ -39,6 +40,7 @@ export default async function SiteNav() {
             <Link href="/about">{c("nav_link_about")}</Link>
           </div>
           <div className="nav-right">
+            <NavSearch />
             {user ? (
               <Link className="btn btn-primary" href="/dashboard" id="navCta">Go to Dashboard</Link>
             ) : (
@@ -58,6 +60,15 @@ export default async function SiteNav() {
         <span></span><span></span><span></span>
       </button>
       <div className="nav-dropdown" id="navDropdown">
+        <form action="/search" method="GET" className="flex gap-2 mb-3">
+          <input className="input" type="search" name="q" placeholder="Search…" aria-label="Search" />
+          <button type="submit" className="btn btn-outline flex-shrink-0" aria-label="Search">
+            <svg width="14" height="14" viewBox="0 0 15 15" fill="none">
+              <circle cx="6.5" cy="6.5" r="4.5" stroke="var(--gray-600)" strokeWidth="1.4" />
+              <path d="M10 10l3.5 3.5" stroke="var(--gray-600)" strokeWidth="1.4" strokeLinecap="round" />
+            </svg>
+          </button>
+        </form>
         <Link href="/">Home</Link>
         <Link href="/#pricing">{c("nav_link_pricing")}</Link>
         <Link href="/doctors">Find a Doctor</Link>

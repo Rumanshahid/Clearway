@@ -19,7 +19,7 @@ export default async function NewQuestionPage({
   return (
     <div className="landing-root">
       <SiteNav />
-      <div className="max-w-[720px] mx-auto px-5 py-14">
+      <div className="max-w-[720px] mx-auto px-5 sm:px-10 py-14">
         <Link href="/questions" className="text-[13px] text-indigo-600 font-medium">← Back to Questions</Link>
         <h1 className="text-[26px] font-semibold mt-4 mb-1">Ask a question</h1>
         <p className="text-[14px] text-gray-600 mb-8">Your question posts immediately — doctors, staff, and other patients can answer.</p>

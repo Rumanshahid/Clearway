@@ -25,7 +25,7 @@ export default async function PatientHomePage() {
   const completion = calculateProfileCompletion(profile);
 
   return (
-    <div className="max-w-2xl mx-auto px-6 py-10">
+    <div className="max-w-2xl mx-auto px-5 sm:px-10 py-10">
       <h1 className="text-[20px] font-semibold mb-6">Welcome back, {account?.first_name}</h1>
 
       <div className="rounded-2xl border border-gray-200 p-6 text-center mb-6">

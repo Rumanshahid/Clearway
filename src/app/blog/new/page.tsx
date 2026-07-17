@@ -19,7 +19,7 @@ export default async function NewBlogPostPage({
   return (
     <div className="landing-root">
       <SiteNav />
-      <div className="max-w-[720px] mx-auto px-5 py-14">
+      <div className="max-w-[720px] mx-auto px-5 sm:px-10 py-14">
         <Link href="/blog" className="text-[13px] text-indigo-600 font-medium">← Back to Blog</Link>
         <h1 className="text-[26px] font-semibold mt-4 mb-1">Write a post</h1>
         <p className="text-[14px] text-gray-600 mb-8">Your post publishes immediately and appears in the blog list right away.</p>

@@ -123,6 +123,14 @@ export default function NotificationBell({
             );
           })}
         </div>
+        <Link
+          href="/notifications/settings"
+          onClick={onClose}
+          className="block px-4 py-2.5 text-center text-[12.5px] text-indigo-600"
+          style={{ borderTop: "1px solid var(--gray-200)" }}
+        >
+          Notification settings
+        </Link>
       </div>
     </div>
   );

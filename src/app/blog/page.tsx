@@ -7,6 +7,7 @@ import { createClient } from "@/lib/supabase/server";
 import { excerptFrom } from "@/lib/blog";
 import FiltersSidebar from "./FiltersSidebar";
 import SuggestionsSidebar from "./SuggestionsSidebar";
+import SiteSearchBar from "../SiteSearchBar";
 
 export const metadata = {
   title: "Blog — asaanbil.com",
@@ -48,7 +49,7 @@ export default async function BlogListPage({
   return (
     <div className="landing-root">
       <SiteNav />
-      <div className="max-w-[1180px] mx-auto px-5 py-14">
+      <div className="max-w-[1180px] mx-auto px-5 sm:px-10 py-14">
         <div className="flex items-start justify-between gap-4 mb-2 flex-wrap">
           <div>
             <h1 className="text-[32px] font-semibold mb-2">Blog</h1>
@@ -57,6 +58,10 @@ export default async function BlogListPage({
           {user && (
             <Link href="/blog/new" className="btn btn-primary flex-shrink-0">Write a post →</Link>
           )}
+        </div>
+
+        <div className="mb-8">
+          <SiteSearchBar placeholder="Search blog posts…" />
         </div>
 
         <div className="flex gap-6 items-start mt-8">

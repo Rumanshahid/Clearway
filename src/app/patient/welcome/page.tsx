@@ -7,7 +7,7 @@ export default async function PatientWelcomePage() {
   const firstName = cookieStore.get("patient_signup_name")?.value;
 
   return (
-    <div className="max-w-lg mx-auto px-6 py-16">
+    <div className="max-w-lg mx-auto px-5 sm:px-10 py-16">
       <h1 className="text-[22px] font-semibold mb-1">
         {firstName ? `Welcome, ${firstName}!` : "Welcome!"}
       </h1>

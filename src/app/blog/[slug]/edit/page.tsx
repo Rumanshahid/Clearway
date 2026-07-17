@@ -29,7 +29,7 @@ export default async function EditBlogPostPage({
   return (
     <div className="landing-root">
       <SiteNav />
-      <div className="max-w-[720px] mx-auto px-5 py-14">
+      <div className="max-w-[720px] mx-auto px-5 sm:px-10 py-14">
         <Link href={`/blog/${slug}`} className="text-[13px] text-indigo-600 font-medium">← Back to post</Link>
         <h1 className="text-[26px] font-semibold mt-4 mb-6">Edit post</h1>
 

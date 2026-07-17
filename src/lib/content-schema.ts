@@ -32,14 +32,12 @@ export const CONTENT_PAGES: ContentPageDef[] = [
   {
     slug: "nav",
     label: "Navigation",
-    revalidatePaths: ["/", "/about", "/blog"],
+    revalidatePaths: ["/", "/about", "/blog", "/questions"],
     sections: [
       {
         title: "Logo & links",
         fields: [
           { key: "nav_logo_text", label: "Logo text", default: "asaanbil.com" },
-          { key: "nav_link_how", label: "\"How It Works\" link label", default: "How It Works" },
-          { key: "nav_link_coverage", label: "\"Coverage\" link label", default: "Coverage" },
           { key: "nav_link_pricing", label: "\"Pricing\" link label", default: "Pricing" },
           { key: "nav_link_blog", label: "\"Blog\" link label", default: "Blog" },
           { key: "nav_link_about", label: "\"About\" link label", default: "About" },

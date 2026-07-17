@@ -19,7 +19,7 @@ export default async function PatientLayout({ children }: { children: React.Reac
 
   return (
     <div className="min-h-screen flex flex-col">
-      <header className="border-b border-gray-200 px-6 py-3 flex items-center justify-between">
+      <header className="border-b border-gray-200 px-5 sm:px-10 py-3 flex items-center justify-between">
         <Link href="/patient" className="font-semibold text-[15px]">Asaanbil</Link>
         <nav className="flex items-center gap-5 text-[13.5px] text-gray-600">
           <Link href="/patient">Home</Link>
