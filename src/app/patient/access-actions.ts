@@ -24,5 +24,5 @@ export async function setPatientDoctorAccessAction(formData: FormData) {
     granted_at: grant ? new Date().toISOString() : null,
   });
 
-  revalidatePath("/patient");
+  revalidatePath("/patient/profile");
 }

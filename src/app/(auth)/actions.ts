@@ -91,7 +91,7 @@ export async function patientSignUpAction(formData: FormData) {
     email,
     password,
     options: {
-      emailRedirectTo: `${siteUrl()}/auth/callback?next=${encodeURIComponent("/patient")}`,
+      emailRedirectTo: `${siteUrl()}/auth/callback?next=${encodeURIComponent("/patient/profile")}`,
       data: { full_name: `${firstName} ${lastName}`, account_type: "patient" },
     },
   });

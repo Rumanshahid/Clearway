@@ -17,7 +17,7 @@ export default async function ChooseRolePage() {
   // lib/auth-redirect.ts for why the session-scoped client isn't used here.
   const admin = await createAdminClient();
   const { data: patientAccount } = await admin.from("patient_accounts").select("id").eq("id", user.id).maybeSingle();
-  if (patientAccount) redirect("/patient");
+  if (patientAccount) redirect("/patient/profile");
 
   const { data: profile } = await admin.from("profiles").select("practice_id").eq("id", user.id).maybeSingle();
   if (profile?.practice_id) redirect("/dashboard");

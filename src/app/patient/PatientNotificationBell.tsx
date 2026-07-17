@@ -83,7 +83,7 @@ export default function PatientNotificationBell({ notifications }: { notificatio
             return (
               <Link
                 key={n.id}
-                href={n.link || "/patient"}
+                href={n.link || "/patient/profile"}
                 className={`px-4 py-3 flex flex-col gap-1 transition-colors ${read ? "hover:bg-gray-50" : ""}`}
                 style={{ borderBottom: "1px solid var(--gray-200)", ...(read ? {} : { background: "var(--gray-50)" }) }}
                 onClick={() => {

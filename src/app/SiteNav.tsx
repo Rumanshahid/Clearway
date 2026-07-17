@@ -31,7 +31,7 @@ export default async function SiteNav() {
     // policy both being confirmed correct directly in Postgres.
     const admin = await createAdminClient();
     const { data: patientAccount } = await admin.from("patient_accounts").select("id").eq("id", user.id).maybeSingle();
-    if (patientAccount) dashboardHref = "/patient";
+    if (patientAccount) dashboardHref = "/patient/profile";
   }
 
   return (

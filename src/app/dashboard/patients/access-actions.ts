@@ -32,7 +32,7 @@ export async function requestPatientAccessAction(formData: FormData) {
     userId: patientAccountId,
     type: "doctor_access_request",
     message: `${myProfile?.full_name || "A doctor"} is requesting access to your health information.`,
-    link: "/patient",
+    link: "/patient/profile",
   });
 
   revalidatePath("/dashboard/patients", "layout");

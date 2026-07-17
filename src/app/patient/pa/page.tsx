@@ -58,7 +58,7 @@ export default async function PatientPaPage({
       {doctors.length === 0 ? (
         <div className="card p-6 text-[13.5px] text-gray-500">
           You don&apos;t have any allowed doctors yet. Grant a doctor access from your{" "}
-          <a href="/patient" className="text-indigo-600 font-medium">Home</a> before requesting a prior authorization.
+          <a href="/patient/profile" className="text-indigo-600 font-medium">Profile</a> before requesting a prior authorization.
         </div>
       ) : (
         <form action={createPatientPaRequestAction} className="card p-6 flex flex-col gap-4 mb-8">

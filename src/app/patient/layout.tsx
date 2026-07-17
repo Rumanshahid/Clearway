@@ -46,9 +46,9 @@ export default async function PatientLayout({ children }: { children: React.Reac
   return (
     <div className="min-h-screen flex flex-col">
       <header className="border-b border-gray-200 px-5 sm:px-10 py-3 flex items-center justify-between">
-        <Link href="/patient" className="font-semibold text-[15px]">Asaanbil</Link>
+        <Link href="/patient/profile" className="font-semibold text-[15px]">Asaanbil</Link>
         <nav className="hidden lg:flex items-center gap-5 text-[13.5px] text-gray-600">
-          <Link href="/patient" className="hover:text-gray-900">Home</Link>
+          <Link href="/patient/profile" className="hover:text-gray-900">Profile</Link>
           <Link href="/patient/pa" className="hover:text-gray-900">PA</Link>
           <Link href="/patient/appeals" className="hover:text-gray-900">Appeals</Link>
           <Link href="/blog" className="hover:text-gray-900">Blog</Link>
@@ -60,7 +60,7 @@ export default async function PatientLayout({ children }: { children: React.Reac
         </div>
       </header>
       <nav className="lg:hidden border-b border-gray-200 px-5 py-2 flex items-center gap-4 text-[13px] text-gray-600 overflow-x-auto">
-        <Link href="/patient" className="flex-shrink-0">Home</Link>
+        <Link href="/patient/profile" className="flex-shrink-0">Profile</Link>
         <Link href="/patient/pa" className="flex-shrink-0">PA</Link>
         <Link href="/patient/appeals" className="flex-shrink-0">Appeals</Link>
         <Link href="/blog" className="flex-shrink-0">Blog</Link>

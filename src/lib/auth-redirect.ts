@@ -22,7 +22,7 @@ export async function resolvePostLoginPath(
   const admin = await createAdminClient();
 
   const { data: patientAccount } = await admin.from("patient_accounts").select("id").eq("id", userId).maybeSingle();
-  if (patientAccount) return "/patient";
+  if (patientAccount) return "/patient/profile";
 
   const { data: profile } = await admin.from("profiles").select("practice_id, role").eq("id", userId).maybeSingle();
   if (!profile?.practice_id) {

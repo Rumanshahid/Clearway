@@ -19,5 +19,5 @@ export async function updatePatientDashboardLayoutAction(formData: FormData) {
   }
 
   await supabase.from("patient_accounts").update({ dashboard_hidden_sections: hiddenSections }).eq("id", user.id);
-  revalidatePath("/patient");
+  revalidatePath("/patient/profile");
 }

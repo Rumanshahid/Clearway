@@ -70,7 +70,7 @@ export async function middleware(request: NextRequest) {
     // while already signed in), not on every request.
     const { data: patientAccount } = await supabase.from("patient_accounts").select("id").eq("id", user.id).maybeSingle();
     const url = request.nextUrl.clone();
-    url.pathname = patientAccount ? "/patient" : "/dashboard";
+    url.pathname = patientAccount ? "/patient/profile" : "/dashboard";
     url.search = "";
     return NextResponse.redirect(url);
   }

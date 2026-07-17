@@ -19,7 +19,7 @@ export default async function ChooseRolePatientPage({
   // lib/auth-redirect.ts for why the session-scoped client isn't used here.
   const admin = await createAdminClient();
   const { data: patientAccount } = await admin.from("patient_accounts").select("id").eq("id", user.id).maybeSingle();
-  if (patientAccount) redirect("/patient");
+  if (patientAccount) redirect("/patient/profile");
 
   // Google/Microsoft populate this from the provider profile -- best-effort
   // split into first/last so the fields aren't blank, but still editable
