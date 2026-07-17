@@ -24,13 +24,16 @@ export async function getSessionProfile(): Promise<SessionProfile> {
   } = await supabase.auth.getUser();
   if (!user) redirect("/sign-in");
 
-  const { data: profile } = await supabase
+  const { data: profile, error: profileError } = await supabase
     .from("profiles")
     .select("practice_id, role, allowed_sections")
     .eq("id", user.id)
     .single();
 
-  if (!profile?.practice_id) redirect("/onboarding");
+  if (!profile?.practice_id) {
+    console.error("getSessionProfile: no profiles row/practice_id for user", user.id, "error:", profileError?.message, profileError?.code);
+    redirect("/onboarding");
+  }
 
   const role = profile.role as UserRole;
   return {

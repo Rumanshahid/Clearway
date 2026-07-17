@@ -11,12 +11,15 @@ export default async function PatientLayout({ children }: { children: React.Reac
   } = await supabase.auth.getUser();
   if (!user) redirect("/sign-in");
 
-  const { data: account } = await supabase
+  const { data: account, error: accountError } = await supabase
     .from("patient_accounts")
     .select("first_name, patient_ref_id")
     .eq("id", user.id)
     .maybeSingle();
-  if (!account) redirect("/dashboard");
+  if (!account) {
+    console.error("patient/layout: no patient_accounts row for user", user.id, "error:", accountError?.message, accountError?.code);
+    redirect("/dashboard");
+  }
 
   const { data: notifications } = await supabase
     .from("notifications")
