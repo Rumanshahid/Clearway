@@ -26,7 +26,7 @@ export default async function NotificationSettingsPage({
   return (
     <div className="landing-root">
       <SiteNav />
-      <div className="wrap" style={{ paddingTop: 56, paddingBottom: 56 }}>
+      <div className="wrap" style={{ width: "100%", paddingTop: 56, paddingBottom: 56 }}>
       <div className="max-w-[560px] mx-auto">
         <Link href={identity.authorType === "patient" ? "/patient" : "/dashboard"} className="text-[13px] text-indigo-600 font-medium">← Back</Link>
         <h1 className="text-[24px] font-semibold mt-4 mb-1">Notification settings</h1>

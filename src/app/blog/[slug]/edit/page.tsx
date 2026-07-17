@@ -29,7 +29,7 @@ export default async function EditBlogPostPage({
   return (
     <div className="landing-root">
       <SiteNav />
-      <div className="wrap" style={{ paddingTop: 56, paddingBottom: 56 }}>
+      <div className="wrap" style={{ width: "100%", paddingTop: 56, paddingBottom: 56 }}>
       <div className="max-w-[720px] mx-auto">
         <Link href={`/blog/${slug}`} className="text-[13px] text-indigo-600 font-medium">← Back to post</Link>
         <h1 className="text-[26px] font-semibold mt-4 mb-6">Edit post</h1>

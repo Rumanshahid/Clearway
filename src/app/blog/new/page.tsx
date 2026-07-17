@@ -19,7 +19,7 @@ export default async function NewBlogPostPage({
   return (
     <div className="landing-root">
       <SiteNav />
-      <div className="wrap" style={{ paddingTop: 56, paddingBottom: 56 }}>
+      <div className="wrap" style={{ width: "100%", paddingTop: 56, paddingBottom: 56 }}>
       <div className="max-w-[720px] mx-auto">
         <Link href="/blog" className="text-[13px] text-indigo-600 font-medium">← Back to Blog</Link>
         <h1 className="text-[26px] font-semibold mt-4 mb-1">Write a post</h1>

@@ -115,7 +115,7 @@ export default async function BlogPostPage({
   return (
     <div className="landing-root">
       <SiteNav />
-      <div className="wrap" style={{ paddingTop: 56, paddingBottom: 56 }}>
+      <div className="wrap" style={{ width: "100%", paddingTop: 56, paddingBottom: 56 }}>
       <article className="max-w-[720px] mx-auto">
         <Link href="/blog" className="text-[13px] text-indigo-600 font-medium">← Back to Blog</Link>
 
@@ -251,7 +251,7 @@ export default async function BlogPostPage({
       </div>
 
       {suggested.length > 0 && (
-        <div className="wrap" style={{ paddingBottom: 56 }}>
+        <div className="wrap" style={{ width: "100%", paddingBottom: 56 }}>
         <section className="max-w-[860px] mx-auto">
           <h2 className="text-[13px] font-semibold uppercase tracking-wide text-gray-400 mb-4">Keep reading</h2>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
