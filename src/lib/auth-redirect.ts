@@ -12,7 +12,21 @@ export async function resolvePostLoginPath(
   if (patientAccount) return "/patient";
 
   const { data: profile } = await supabase.from("profiles").select("practice_id, role").eq("id", userId).maybeSingle();
-  if (!profile?.practice_id) return "/onboarding";
+  if (!profile?.practice_id) {
+    // Password sign-up already forces an explicit physician/staff-vs-patient
+    // choice (two separate forms at /sign-up), so a "staff" profile with no
+    // practice yet just means onboarding isn't finished -- expected. OAuth
+    // sign-in has no such form: Supabase's own new-user trigger defaults
+    // every account_type-less signup to "staff", so a Google/Microsoft
+    // sign-in with no practice AND no prior choice is genuinely ambiguous
+    // and needs to ask, rather than silently assuming staff.
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    const provider = user?.app_metadata?.provider;
+    if (provider && provider !== "email") return "/auth/choose-role";
+    return "/onboarding";
+  }
 
   // clinic_admin ("Doctor / Admin") and super_admin land on the actual
   // dashboard overview, not the PA-requests list that sits at the bare
