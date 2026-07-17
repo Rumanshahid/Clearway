@@ -964,6 +964,7 @@ export interface Database {
           consent_share_info: boolean;
           consent_terms_privacy: boolean;
           consent_notifications: boolean;
+          dashboard_hidden_sections: string[];
           created_at: string;
           updated_at: string;
         };
@@ -1000,6 +1001,7 @@ export interface Database {
           secondary_group_number: string | null;
           known_drug_allergies: string | null;
           current_medications: string | null;
+          medical_history: string | null;
           preferred_contact_method: string | null;
           updated_at: string;
         };
@@ -1007,6 +1009,22 @@ export interface Database {
           patient_account_id: string;
         };
         Update: Partial<Database["public"]["Tables"]["patient_profiles"]["Row"]>;
+        Relationships: [];
+      };
+      patient_doctor_access: {
+        Row: {
+          patient_account_id: string;
+          doctor_profile_id: string;
+          access_granted: boolean;
+          requested_at: string | null;
+          granted_at: string | null;
+          created_at: string;
+        };
+        Insert: Partial<Database["public"]["Tables"]["patient_doctor_access"]["Row"]> & {
+          patient_account_id: string;
+          doctor_profile_id: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["patient_doctor_access"]["Row"]>;
         Relationships: [];
       };
       questions: {
@@ -1085,6 +1103,46 @@ export interface Database {
         Row: { user_id: string; follow_activity_enabled: boolean; updated_at: string };
         Insert: Partial<Database["public"]["Tables"]["notification_preferences"]["Row"]> & { user_id: string };
         Update: Partial<Database["public"]["Tables"]["notification_preferences"]["Row"]>;
+        Relationships: [];
+      };
+      patient_pa_requests: {
+        Row: {
+          id: string;
+          patient_account_id: string;
+          doctor_profile_id: string;
+          procedure_description: string;
+          notes: string | null;
+          status: "submitted" | "in_review" | "resolved";
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: Partial<Database["public"]["Tables"]["patient_pa_requests"]["Row"]> & {
+          patient_account_id: string;
+          doctor_profile_id: string;
+          procedure_description: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["patient_pa_requests"]["Row"]>;
+        Relationships: [];
+      };
+      patient_appeal_requests: {
+        Row: {
+          id: string;
+          patient_account_id: string;
+          doctor_profile_id: string;
+          claim_number: string | null;
+          date_of_service: string | null;
+          denial_reason: string;
+          notes: string | null;
+          status: "submitted" | "in_review" | "resolved";
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: Partial<Database["public"]["Tables"]["patient_appeal_requests"]["Row"]> & {
+          patient_account_id: string;
+          doctor_profile_id: string;
+          denial_reason: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["patient_appeal_requests"]["Row"]>;
         Relationships: [];
       };
     };

@@ -34,9 +34,10 @@ export async function updatePatientProfileAction(formData: FormData) {
     secondary_group_number: hasSecondary ? field("secondary_group_number") : null,
     known_drug_allergies: field("known_drug_allergies"),
     current_medications: field("current_medications"),
+    medical_history: field("medical_history"),
     preferred_contact_method: field("preferred_contact_method"),
     updated_at: new Date().toISOString(),
   });
 
-  redirect("/patient?saved=1");
+  redirect("/patient/profile?saved=1");
 }
