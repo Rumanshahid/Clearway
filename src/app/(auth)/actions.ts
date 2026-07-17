@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { cookies } from "next/headers";
 import { createClient, createAdminClient } from "@/lib/supabase/server";
+import { resolvePostLoginPath } from "@/lib/auth-redirect";
 
 function siteUrl() {
   return process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
@@ -149,21 +150,34 @@ export async function signInAction(formData: FormData) {
 
   if (next) redirect(next);
 
-  const { data: patientAccount } = await supabase.from("patient_accounts").select("id").eq("id", data.user.id).maybeSingle();
-  if (patientAccount) redirect("/patient");
+  redirect(await resolvePostLoginPath(supabase, data.user.id));
+}
 
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("practice_id, role")
-    .eq("id", data.user.id)
-    .single();
+// Google/Microsoft sign-in -- signInWithOAuth() returns a provider URL to
+// send the browser to (it doesn't sign anyone in itself), so this is a
+// Server Action purely to get a server-side redirect() to that URL. The
+// provider then bounces back to /auth/callback, which exchanges the code
+// for a session the same way the email-confirmation link flow already does.
+export async function signInWithOAuthAction(formData: FormData) {
+  const provider = String(formData.get("provider") || "");
+  if (provider !== "google" && provider !== "azure") {
+    redirect("/sign-in?error=Unsupported+sign-in+method");
+  }
 
-  if (!profile?.practice_id) redirect("/onboarding");
-  // clinic_admin ("Doctor / Admin") and super_admin land on the actual
-  // dashboard overview, not the PA-requests list that sits at the bare
-  // /dashboard route -- only plain staff (clinic_user) go there.
-  const isAdmin = profile.role === "clinic_admin" || profile.role === "super_admin";
-  redirect(isAdmin ? "/dashboard/overview" : "/dashboard");
+  const next = String(formData.get("next") || "");
+  const supabase = await createClient();
+  const { data, error } = await supabase.auth.signInWithOAuth({
+    provider,
+    options: {
+      redirectTo: `${siteUrl()}/auth/callback${next ? `?next=${encodeURIComponent(next)}` : ""}`,
+    },
+  });
+
+  if (error || !data.url) {
+    redirect(`/sign-in?error=${encodeURIComponent(error?.message || "Could not start sign-in.")}`);
+  }
+
+  redirect(data.url);
 }
 
 export async function forgotPasswordAction(formData: FormData) {
