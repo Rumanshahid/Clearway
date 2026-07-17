@@ -7,6 +7,11 @@ import { useEffect, useRef, useState } from "react";
 // rather than navigating straight to /search -- lets someone start typing
 // without a full page transition first, closer to how a native app search
 // affordance behaves.
+//
+// The input is conditionally rendered (not animated via a fixed-width +
+// overflow:hidden container) -- that combination clipped the input's own
+// 1px border during/after the transition. A plain opacity/scale fade has
+// no such clipping risk.
 export default function NavSearch() {
   const [open, setOpen] = useState(false);
   const [value, setValue] = useState("");
@@ -39,25 +44,27 @@ export default function NavSearch() {
 
   return (
     <div ref={containerRef} className="relative flex items-center">
-      <form
-        onSubmit={(e) => {
-          e.preventDefault();
-          submit();
-        }}
-        className="flex items-center overflow-hidden"
-        style={{ transition: "width 0.28s cubic-bezier(0.16,1,0.3,1)", width: open ? 200 : 0 }}
-      >
-        <input
-          ref={inputRef}
-          type="search"
-          value={value}
-          onChange={(e) => setValue(e.target.value)}
-          placeholder="Search…"
-          aria-label="Search"
-          className="input"
-          style={{ width: 200, marginRight: 8 }}
-        />
-      </form>
+      {open && (
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            submit();
+          }}
+          className="flex items-center mr-2"
+          style={{ animation: "navSearchIn 0.22s cubic-bezier(0.16,1,0.3,1)" }}
+        >
+          <input
+            ref={inputRef}
+            type="search"
+            value={value}
+            onChange={(e) => setValue(e.target.value)}
+            placeholder="Search…"
+            aria-label="Search"
+            className="site-search-input"
+            style={{ width: 200, opacity: 1 }}
+          />
+        </form>
+      )}
       <button
         type="button"
         onClick={() => (open ? submit() : setOpen(true))}
