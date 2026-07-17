@@ -2,12 +2,25 @@
 
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { createClient, createAdminClient } from "@/lib/supabase/server";
 import { resolvePostLoginPath } from "@/lib/auth-redirect";
 
 function siteUrl() {
   return process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
+}
+
+// The PKCE code_verifier cookie signInWithOAuth() sets is scoped to
+// whichever host actually served this request -- asaanbil.com and
+// www.asaanbil.com are both valid domains on this site but don't share
+// cookies, so an OAuth redirectTo must come back to that *same* host or
+// the callback fails with "PKCE code verifier not found in storage". Using
+// the actual request's Host header (rather than a fixed NEXT_PUBLIC_SITE_URL)
+// guarantees that, regardless of which domain the visitor is on.
+async function requestOrigin() {
+  const h = await headers();
+  const host = h.get("host");
+  return host ? `https://${host}` : siteUrl();
 }
 
 export async function signUpAction(formData: FormData) {
@@ -169,7 +182,7 @@ export async function signInWithOAuthAction(formData: FormData) {
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider,
     options: {
-      redirectTo: `${siteUrl()}/auth/callback${next ? `?next=${encodeURIComponent(next)}` : ""}`,
+      redirectTo: `${await requestOrigin()}/auth/callback${next ? `?next=${encodeURIComponent(next)}` : ""}`,
     },
   });
 
