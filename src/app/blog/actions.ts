@@ -28,6 +28,10 @@ function readPostFields(formData: FormData) {
 // blog" link was clicked from), per the product spec.
 export async function createBlogPostAction(formData: FormData) {
   const identity = await requireBlogIdentity("/blog/new");
+  // Patients can read/like/upvote/comment but not author posts -- enforced
+  // here too (not just hiding the button/page) since this is a directly
+  // postable Server Action.
+  if (identity.authorType === "patient") redirect("/blog");
   const fields = readPostFields(formData);
   if (!fields.title || !fields.content.trim()) {
     redirect(`/blog/new?error=${encodeURIComponent("Title and content are required.")}`);

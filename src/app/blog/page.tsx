@@ -26,6 +26,14 @@ export default async function BlogListPage({
     data: { user },
   } = await supabase.auth.getUser();
 
+  // Patients can read/like/upvote/comment but not author posts -- only
+  // staff (and the super_admin/company voice) write blog content.
+  let canWrite = false;
+  if (user) {
+    const { data: patientAccount } = await supabase.from("patient_accounts").select("id").eq("id", user.id).maybeSingle();
+    canWrite = !patientAccount;
+  }
+
   let query = supabase
     .from("blog_posts")
     .select("id, title, slug, excerpt, content, cover_image_url, tags, author_type, upvote_count, published_at")
@@ -59,7 +67,7 @@ export default async function BlogListPage({
             <h1 className="text-[32px] font-semibold mb-2">Blog</h1>
             <p className="text-[15px] text-gray-600">Notes on prior authorization, claims, and running a specialty practice — from our team, physicians, and patients.</p>
           </div>
-          {user && (
+          {canWrite && (
             <Link href="/blog/new" className="btn btn-primary flex-shrink-0">Write a post →</Link>
           )}
         </div>

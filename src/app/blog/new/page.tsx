@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import "../../landing.css";
 import SiteNav from "../../SiteNav";
 import SiteFooter from "../../SiteFooter";
@@ -13,7 +14,9 @@ export default async function NewBlogPostPage({
 }: {
   searchParams: Promise<{ error?: string }>;
 }) {
-  await requireBlogIdentity("/blog/new");
+  const identity = await requireBlogIdentity("/blog/new");
+  // Patients can read/like/upvote/comment but not author posts.
+  if (identity.authorType === "patient") redirect("/blog");
   const { error } = await searchParams;
 
   return (

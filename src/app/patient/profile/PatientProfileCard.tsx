@@ -37,15 +37,6 @@ interface PatientProfileData {
   medical_history: string | null;
 }
 
-function Field({ label, value }: { label: string; value: string | null | undefined }) {
-  return (
-    <div>
-      <div className="text-[11.5px] uppercase tracking-wide text-gray-400 font-semibold mb-1">{label}</div>
-      <div className="text-[14px] text-gray-900">{value?.trim() ? value : <span className="text-gray-400">Not provided</span>}</div>
-    </div>
-  );
-}
-
 // Mirrors dashboard/profiles/ProfileCard.tsx's view/edit toggle pattern:
 // opens straight into editing the first time (nothing to show yet), and
 // closes back to a read-only summary right after a save via the
@@ -65,72 +56,104 @@ export default function PatientProfileCard({
   const [editing, setEditing] = useState(!hasAnyData && !justSaved);
 
   if (!editing) {
+    // Mirrors the public doctor-profile page's layout (doctors/[slug]/page.tsx)
+    // -- avatar + name/subtitle row, pill tags, plain two-column info
+    // sections with simple lists rather than boxed form-style fields.
+    const insuranceLines = [profile?.insurance_company, profile?.plan_type].filter(Boolean) as string[];
+    const secondaryLines = profile?.has_secondary_insurance ? [profile?.secondary_insurance_company].filter(Boolean) as string[] : [];
+
     return (
-      <div className="flex flex-col gap-6">
-        <div className="card p-6 flex items-center gap-4">
+      <div>
+        <div className="flex items-center justify-end mb-2">
+          <button type="button" className="btn btn-primary btn-sm" onClick={() => setEditing(true)}>
+            Edit Profile
+          </button>
+        </div>
+
+        <div className="flex gap-6 mb-8 flex-wrap">
           <div
-            className="w-14 h-14 rounded-full flex items-center justify-center text-[18px] font-semibold text-white flex-shrink-0"
+            className="w-24 h-24 rounded-full flex items-center justify-center text-[26px] font-semibold text-white flex-shrink-0"
             style={{ background: "var(--indigo-600)" }}
           >
             {identity.first_name.charAt(0).toUpperCase()}
             {identity.last_name.charAt(0).toUpperCase()}
           </div>
-          <div className="flex-1 min-w-0">
-            <div className="text-[17px] font-semibold text-gray-900">{identity.first_name} {identity.last_name}</div>
-            <div className="text-[13px] text-gray-500">{identity.email} · {identity.mobile_phone}</div>
-            <div className="text-[12.5px] text-gray-400 mt-0.5">{identity.patient_ref_id} · DOB {identity.dob}</div>
-          </div>
-          <button type="button" className="btn btn-outline btn-sm flex-shrink-0" onClick={() => setEditing(true)}>
-            Edit profile
-          </button>
-        </div>
-
-        <div className="card p-6">
-          <h2 className="text-[13.5px] font-semibold text-gray-700 mb-4">Contact Information</h2>
-          <div className="grid grid-cols-2 gap-4">
-            <Field label="Address" value={profile?.address} />
-            <Field label="City" value={profile?.city} />
-            <Field label="State" value={profile?.state} />
-            <Field label="Zip" value={profile?.zip} />
-            <Field label="Preferred language" value={profile?.preferred_language} />
-            <Field label="Preferred contact method" value={profile?.preferred_contact_method} />
+          <div className="flex-1 min-w-[240px]">
+            <h1 className="text-[26px] font-bold text-gray-900">{identity.first_name} {identity.last_name}</h1>
+            <p className="text-[15px] text-gray-600 mt-1">{identity.email} · {identity.mobile_phone}</p>
+            <p className="text-[13px] text-gray-400 mt-0.5">{identity.patient_ref_id} · DOB {identity.dob}</p>
+            <div className="flex gap-2 mt-3 flex-wrap">
+              <span className="status-pill" style={{ background: "#EEF0FF", color: "var(--indigo-600)" }}>{identity.patient_ref_id}</span>
+              {profile?.has_secondary_insurance && (
+                <span className="status-pill" style={{ background: "var(--success-bg)", color: "var(--success-green)" }}>Secondary insurance on file</span>
+              )}
+            </div>
           </div>
         </div>
 
-        <div className="card p-6">
-          <h2 className="text-[13.5px] font-semibold text-gray-700 mb-4">Emergency Contact</h2>
-          <div className="grid grid-cols-2 gap-4">
-            <Field label="Name" value={profile?.emergency_contact_name} />
-            <Field label="Phone" value={profile?.emergency_contact_phone} />
-            <Field label="Relationship" value={profile?.emergency_contact_relationship} />
-          </div>
+        {profile?.medical_history?.trim() && (
+          <section className="mb-8">
+            <h2 className="text-[17px] font-semibold mb-2.5">Medical History</h2>
+            <p className="text-[14.5px] text-gray-600 leading-relaxed whitespace-pre-wrap">{profile.medical_history}</p>
+          </section>
+        )}
+
+        {(profile?.known_drug_allergies?.trim() || profile?.current_medications?.trim()) && (
+          <section className="mb-8">
+            <h2 className="text-[17px] font-semibold mb-2.5">Allergies &amp; Medications</h2>
+            <div className="flex flex-wrap gap-2">
+              {profile?.known_drug_allergies?.trim()?.split(",").map((a) => (
+                <span key={a} className="status-pill" style={{ background: "var(--danger-bg)", color: "var(--danger-red)" }}>{a.trim()}</span>
+              ))}
+              {profile?.current_medications?.trim()?.split(",").map((m) => (
+                <span key={m} className="status-pill" style={{ background: "var(--gray-100)", color: "var(--gray-600)" }}>{m.trim()}</span>
+              ))}
+            </div>
+          </section>
+        )}
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-8 mb-8">
+          {insuranceLines.length > 0 && (
+            <section>
+              <h2 className="text-[17px] font-semibold mb-2.5">Insurance</h2>
+              <ul className="text-[14px] text-gray-600 leading-loose">
+                {insuranceLines.map((l) => <li key={l}>{l}</li>)}
+                {profile?.member_id && <li>Member ID: {profile.member_id}</li>}
+                {profile?.group_number && <li>Group #: {profile.group_number}</li>}
+              </ul>
+            </section>
+          )}
+          {secondaryLines.length > 0 && (
+            <section>
+              <h2 className="text-[17px] font-semibold mb-2.5">Secondary Insurance</h2>
+              <ul className="text-[14px] text-gray-600 leading-loose">
+                {secondaryLines.map((l) => <li key={l}>{l}</li>)}
+                {profile?.secondary_member_id && <li>Member ID: {profile.secondary_member_id}</li>}
+                {profile?.secondary_group_number && <li>Group #: {profile.secondary_group_number}</li>}
+              </ul>
+            </section>
+          )}
         </div>
 
-        <div className="card p-6">
-          <h2 className="text-[13.5px] font-semibold text-gray-700 mb-4">Insurance</h2>
-          <div className="grid grid-cols-2 gap-4">
-            <Field label="Primary insurance company" value={profile?.insurance_company} />
-            <Field label="Plan type" value={profile?.plan_type} />
-            <Field label="Member ID" value={profile?.member_id} />
-            <Field label="Group number" value={profile?.group_number} />
-            <Field label="Plan name" value={profile?.plan_name} />
-            {profile?.has_secondary_insurance && (
-              <>
-                <Field label="Secondary insurance company" value={profile?.secondary_insurance_company} />
-                <Field label="Secondary member ID" value={profile?.secondary_member_id} />
-                <Field label="Secondary group number" value={profile?.secondary_group_number} />
-              </>
-            )}
-          </div>
-        </div>
-
-        <div className="card p-6">
-          <h2 className="text-[13.5px] font-semibold text-gray-700 mb-4">Clinical</h2>
-          <div className="grid grid-cols-1 gap-4">
-            <Field label="Medical history" value={profile?.medical_history} />
-            <Field label="Known drug allergies" value={profile?.known_drug_allergies} />
-            <Field label="Current medications" value={profile?.current_medications} />
-          </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
+          {(profile?.emergency_contact_name || profile?.emergency_contact_phone) && (
+            <section>
+              <h2 className="text-[17px] font-semibold mb-2.5">Emergency Contact</h2>
+              <ul className="text-[14px] text-gray-600 leading-loose">
+                {profile?.emergency_contact_name && <li>{profile.emergency_contact_name}{profile.emergency_contact_relationship ? ` (${profile.emergency_contact_relationship})` : ""}</li>}
+                {profile?.emergency_contact_phone && <li>{profile.emergency_contact_phone}</li>}
+              </ul>
+            </section>
+          )}
+          {(profile?.address || profile?.city) && (
+            <section>
+              <h2 className="text-[17px] font-semibold mb-2.5">Location</h2>
+              <p className="text-[14px] text-gray-600 leading-relaxed">
+                {profile?.address && <>{profile.address}<br /></>}
+                {[profile?.city, profile?.state, profile?.zip].filter(Boolean).join(", ")}
+              </p>
+            </section>
+          )}
         </div>
       </div>
     );
