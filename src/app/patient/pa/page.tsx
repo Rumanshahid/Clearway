@@ -27,7 +27,7 @@ export default async function PatientPaPage({
 
   const { data: requests } = await supabase
     .from("patient_pa_requests")
-    .select("id, procedure_description, notes, status, created_at, doctor_profile_id")
+    .select("id, procedure_description, notes, letter_content, status, created_at, doctor_profile_id")
     .eq("patient_account_id", user.id)
     .order("created_at", { ascending: false });
 
@@ -85,13 +85,23 @@ export default async function PatientPaPage({
       <h2 className="text-[14px] font-semibold text-gray-900 mb-3">Your requests</h2>
       <div className="flex flex-col gap-3">
         {(requests || []).map((r) => (
-          <div key={r.id} className="card p-4 flex items-center justify-between gap-3">
-            <div>
-              <div className="text-[13.5px] font-medium text-gray-900">{r.procedure_description}</div>
-              <div className="text-[12px] text-gray-500">{nameById.get(r.doctor_profile_id) || "Doctor"} · {new Date(r.created_at).toLocaleDateString()}</div>
-            </div>
-            <span className="status-pill" style={{ background: "var(--gray-100)", color: "var(--gray-600)" }}>{r.status.replace("_", " ")}</span>
-          </div>
+          <details key={r.id} className="card p-4">
+            <summary className="flex items-center justify-between gap-3 cursor-pointer list-none">
+              <div>
+                <div className="text-[13.5px] font-medium text-gray-900">{r.procedure_description}</div>
+                <div className="text-[12px] text-gray-500">{nameById.get(r.doctor_profile_id) || "Doctor"} · {new Date(r.created_at).toLocaleDateString()}</div>
+              </div>
+              <span className="status-pill flex-shrink-0" style={{ background: "var(--gray-100)", color: "var(--gray-600)" }}>{r.status.replace("_", " ")}</span>
+            </summary>
+            {r.letter_content ? (
+              <div className="mt-4 pt-4" style={{ borderTop: "1px solid var(--gray-200)" }}>
+                <p className="text-[11px] uppercase tracking-wide text-gray-400 font-semibold mb-2">Your draft letter — for your doctor&apos;s office to review</p>
+                <p className="text-[13.5px] text-gray-700 whitespace-pre-wrap leading-relaxed">{r.letter_content}</p>
+              </div>
+            ) : (
+              <p className="mt-3 text-[12.5px] text-gray-400">No draft letter available for this request.</p>
+            )}
+          </details>
         ))}
         {(!requests || requests.length === 0) && <p className="text-[13.5px] text-gray-400">No requests yet.</p>}
       </div>

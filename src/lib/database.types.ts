@@ -1112,6 +1112,7 @@ export interface Database {
           doctor_profile_id: string;
           procedure_description: string;
           notes: string | null;
+          letter_content: string | null;
           status: "submitted" | "in_review" | "resolved";
           created_at: string;
           updated_at: string;
@@ -1133,6 +1134,7 @@ export interface Database {
           date_of_service: string | null;
           denial_reason: string;
           notes: string | null;
+          letter_content: string | null;
           status: "submitted" | "in_review" | "resolved";
           created_at: string;
           updated_at: string;
