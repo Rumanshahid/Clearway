@@ -33,6 +33,8 @@ export async function GET(request: Request) {
     if (!error) {
       return NextResponse.redirect(`${origin}${await destination()}`);
     }
+    console.error("auth/callback verifyOtp failed:", error.message);
+    return NextResponse.redirect(`${origin}/sign-in?error=${encodeURIComponent(error.message)}`);
   }
 
   // Fallback path: PKCE code exchange (default Supabase confirmation link,
@@ -43,6 +45,21 @@ export async function GET(request: Request) {
     if (!error) {
       return NextResponse.redirect(`${origin}${await destination()}`);
     }
+    // A real, distinct failure (not just "no code param at all") -- surface
+    // the actual Supabase error instead of the generic hash-callback
+    // message, which was misleading here (e.g. provider misconfiguration,
+    // not "opened in a different browser").
+    console.error("auth/callback exchangeCodeForSession failed:", error.message);
+    return NextResponse.redirect(`${origin}/sign-in?error=${encodeURIComponent(error.message)}`);
+  }
+
+  const authError = searchParams.get("error_description") || searchParams.get("error");
+  if (authError) {
+    // The OAuth provider (or Supabase) redirected straight back with an
+    // error and no code at all -- e.g. the provider isn't fully configured,
+    // or the user denied the consent screen.
+    console.error("auth/callback received provider error:", authError);
+    return NextResponse.redirect(`${origin}/sign-in?error=${encodeURIComponent(authError)}`);
   }
 
   // Neither query-param path matched. Admin-generated links (invite /
