@@ -1,7 +1,7 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
-const PROTECTED_PREFIXES = ["/dashboard", "/onboarding", "/admin", "/patient"];
+const PROTECTED_PREFIXES = ["/dashboard", "/onboarding", "/admin"];
 const AUTH_PAGES = ["/sign-in", "/sign-up", "/forgot-password"];
 
 /**
@@ -64,13 +64,8 @@ export async function middleware(request: NextRequest) {
   }
 
   if (isAuthPage && user) {
-    // A patient account has no `profiles` row/practice, so it must never be
-    // sent to /dashboard (which would just bounce it again, to /onboarding).
-    // Only queried on this rare path (revisiting a sign-in/sign-up page
-    // while already signed in), not on every request.
-    const { data: patientAccount } = await supabase.from("patient_accounts").select("id").eq("id", user.id).maybeSingle();
     const url = request.nextUrl.clone();
-    url.pathname = patientAccount ? "/patient/profile" : "/dashboard";
+    url.pathname = "/dashboard";
     url.search = "";
     return NextResponse.redirect(url);
   }

@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { getSiteContent } from "@/lib/criteria-repo";
 import { getPageBySlug, makeFieldGetter } from "@/lib/content-schema";
-import { createClient, createAdminClient } from "@/lib/supabase/server";
+import { createClient } from "@/lib/supabase/server";
 import NavSearch from "./NavSearch";
 
 const NAV_PAGE = getPageBySlug("nav")!;
@@ -18,21 +18,6 @@ export default async function SiteNav() {
   const {
     data: { user },
   } = await supabase.auth.getUser();
-
-  // A patient_accounts identity has no `profiles` row/practice_id -- sending
-  // one to /dashboard bounces them straight to the practice-setup wizard
-  // (see resolvePostLoginPath), which is wrong for a signed-in patient.
-  let dashboardHref = "/dashboard";
-  if (user) {
-    // Admin client, not the session-scoped one -- this only ever reads back
-    // the already-verified caller's own id, but avoids a real-world case
-    // where a freshly authenticated session's own RLS-scoped read of its
-    // own row intermittently came back empty despite the row and its
-    // policy both being confirmed correct directly in Postgres.
-    const admin = await createAdminClient();
-    const { data: patientAccount } = await admin.from("patient_accounts").select("id").eq("id", user.id).maybeSingle();
-    if (patientAccount) dashboardHref = "/patient/profile";
-  }
 
   return (
     <>
@@ -57,7 +42,7 @@ export default async function SiteNav() {
           <div className="nav-right">
             <NavSearch />
             {user ? (
-              <Link className="btn btn-primary" href={dashboardHref} id="navCta">Go to Dashboard</Link>
+              <Link className="btn btn-primary" href="/dashboard" id="navCta">Go to Dashboard</Link>
             ) : (
               <>
                 <Link className="btn btn-text" href="/sign-in" id="navSignIn">{c("nav_signin_label")}</Link>
@@ -92,7 +77,7 @@ export default async function SiteNav() {
         <Link href="/about">{c("nav_link_about")}</Link>
         <div className="dd-divider"></div>
         {user ? (
-          <Link className="btn btn-primary dd-cta" href={dashboardHref} style={{ display: "block", textAlign: "center" }}>Go to Dashboard</Link>
+          <Link className="btn btn-primary dd-cta" href="/dashboard" style={{ display: "block", textAlign: "center" }}>Go to Dashboard</Link>
         ) : (
           <>
             <Link className="btn btn-outline dd-cta" href="/sign-in" style={{ display: "block", textAlign: "center", marginBottom: "8px" }}>{c("nav_signin_label")}</Link>

@@ -9,7 +9,7 @@ export async function GET(request: Request) {
   // confirmation, invite links) always wins, but a bare OAuth sign-in
   // (Google/Microsoft, no `next` set by signInWithOAuthAction) should land
   // on the same role-aware destination password sign-in resolves to, not
-  // an unconditional /dashboard that ignores patient/doctor/staff routing.
+  // an unconditional /dashboard that ignores doctor/staff routing.
   const explicitNext = searchParams.get("next");
   const tokenHash = searchParams.get("token_hash");
   const type = searchParams.get("type") as EmailOtpType | null;
@@ -22,7 +22,7 @@ export async function GET(request: Request) {
     const {
       data: { user },
     } = await supabase.auth.getUser();
-    return user ? resolvePostLoginPath(supabase, user.id) : "/dashboard";
+    return user ? resolvePostLoginPath(user.id) : "/dashboard";
   }
 
   // Preferred path: token_hash + type (from a custom email template link).

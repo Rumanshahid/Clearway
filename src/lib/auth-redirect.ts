@@ -1,45 +1,22 @@
 import { createAdminClient } from "@/lib/supabase/server";
-import type { createClient } from "@/lib/supabase/server";
 
 // Shared by password sign-in and the OAuth callback -- both need the same
-// "where does this person actually belong" logic (patient vs staff vs
-// doctor/admin vs incomplete-onboarding), so it lives in one place rather
+// "where does this staff member actually belong" logic (doctor/admin vs
+// plain staff vs incomplete-onboarding), so it lives in one place rather
 // than drifting out of sync between the two entry points.
 //
-// Uses the service-role client for the patient_accounts/profiles lookups,
-// not the caller's session-scoped client -- this is a pure identity-routing
-// check ("does auth.uid() X have a patient or staff record"), always
-// filtered to the already-verified `userId` argument, so it can't leak
-// anyone else's data. Sidesteps a real-world case where a freshly
-// authenticated session's own RLS-scoped read of its own row intermittently
-// came back empty even though the row and policy were both confirmed
-// correct directly in Postgres -- using the admin client here removes that
-// entire class of failure for a check this important to get right.
-export async function resolvePostLoginPath(
-  supabase: Awaited<ReturnType<typeof createClient>>,
-  userId: string
-): Promise<string> {
+// Uses the service-role client for the profiles lookup, not the caller's
+// session-scoped client -- this is a pure identity-routing check ("does
+// auth.uid() X have a practice"), always filtered to the already-verified
+// `userId` argument, so it can't leak anyone else's data. Sidesteps a
+// real-world case where a freshly authenticated session's own RLS-scoped
+// read of its own row intermittently came back empty even though the row
+// and policy were both confirmed correct directly in Postgres.
+export async function resolvePostLoginPath(userId: string): Promise<string> {
   const admin = await createAdminClient();
 
-  const { data: patientAccount } = await admin.from("patient_accounts").select("id").eq("id", userId).maybeSingle();
-  if (patientAccount) return "/patient/profile";
-
   const { data: profile } = await admin.from("profiles").select("practice_id, role").eq("id", userId).maybeSingle();
-  if (!profile?.practice_id) {
-    // Password sign-up already forces an explicit physician/staff-vs-patient
-    // choice (two separate forms at /sign-up), so a "staff" profile with no
-    // practice yet just means onboarding isn't finished -- expected. OAuth
-    // sign-in has no such form: Supabase's own new-user trigger defaults
-    // every account_type-less signup to "staff", so a Google/Microsoft
-    // sign-in with no practice AND no prior choice is genuinely ambiguous
-    // and needs to ask, rather than silently assuming staff.
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-    const provider = user?.app_metadata?.provider;
-    if (provider && provider !== "email") return "/auth/choose-role";
-    return "/onboarding";
-  }
+  if (!profile?.practice_id) return "/onboarding";
 
   // clinic_admin ("Doctor / Admin") and super_admin land on the actual
   // dashboard overview, not the PA-requests list that sits at the bare

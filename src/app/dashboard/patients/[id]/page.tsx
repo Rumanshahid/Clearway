@@ -1,11 +1,10 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { createClient, createAdminClient } from "@/lib/supabase/server";
+import { createClient } from "@/lib/supabase/server";
 import { requireSectionAccess } from "@/lib/permissions";
 import { getProcedureLabelMap } from "@/lib/criteria-repo";
 import PatientDetailClient from "./PatientDetailClient";
 import EligibilityCard from "./EligibilityCard";
-import PatientPortalAccessCard from "./PatientPortalAccessCard";
 
 export default async function PatientDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -27,33 +26,6 @@ export default async function PatientDetailPage({ params }: { params: Promise<{ 
     .single();
 
   if (!patient) notFound();
-
-  // Practice EHR patient records (`patients`) and self-service patient
-  // portal accounts (`patient_accounts`) are two separate identities with
-  // no direct link -- matched here by email at query time rather than a
-  // stored FK, since a patient may sign up for the portal before or after
-  // a practice ever creates their EHR record.
-  let portalAccess: { patientAccountId: string; accessGranted: boolean; alreadyRequested: boolean; profile: NonNullable<Awaited<ReturnType<typeof getPortalProfile>>> | null } | null = null;
-  if (patient.email) {
-    const admin = await createAdminClient();
-    const { data: patientAccount } = await admin.from("patient_accounts").select("id").ilike("email", patient.email).maybeSingle();
-    if (patientAccount) {
-      const { data: access } = await admin
-        .from("patient_doctor_access")
-        .select("access_granted, requested_at")
-        .eq("patient_account_id", patientAccount.id)
-        .eq("doctor_profile_id", user!.id)
-        .maybeSingle();
-      const accessGranted = access?.access_granted ?? false;
-      const profile = accessGranted ? await getPortalProfile(admin, patientAccount.id) : null;
-      portalAccess = {
-        patientAccountId: patientAccount.id,
-        accessGranted,
-        alreadyRequested: !!access?.requested_at && !accessGranted,
-        profile,
-      };
-    }
-  }
 
   const [{ data: physicians }, { data: usualPhysician }, { data: requests }, procedureLabels, { data: eligibilityChecks }] =
     await Promise.all([
@@ -101,15 +73,6 @@ export default async function PatientDetailPage({ params }: { params: Promise<{ 
         <StatCard label="Open" value={stats.open} accent="var(--indigo-600)" />
         <StatCard label="Denied" value={stats.denied} accent="var(--danger-red)" />
       </div>
-
-      {portalAccess && (
-        <PatientPortalAccessCard
-          patientAccountId={portalAccess.patientAccountId}
-          accessGranted={portalAccess.accessGranted}
-          alreadyRequested={portalAccess.alreadyRequested}
-          profile={portalAccess.profile}
-        />
-      )}
 
       <PatientDetailClient
         patientId={patient.id}
@@ -219,15 +182,6 @@ export default async function PatientDetailPage({ params }: { params: Promise<{ 
       </div>
     </div>
   );
-}
-
-async function getPortalProfile(admin: Awaited<ReturnType<typeof createAdminClient>>, patientAccountId: string) {
-  const { data } = await admin
-    .from("patient_profiles")
-    .select("address, city, state, zip, emergency_contact_name, emergency_contact_phone, insurance_company, member_id, known_drug_allergies, current_medications, medical_history")
-    .eq("patient_account_id", patientAccountId)
-    .maybeSingle();
-  return data;
 }
 
 function StatCard({ label, value, accent }: { label: string; value: number; accent?: string }) {

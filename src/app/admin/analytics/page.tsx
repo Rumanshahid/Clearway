@@ -65,7 +65,6 @@ export default async function AdminAnalyticsPage() {
   const [
     practiceCount,
     staffCount,
-    patientAccountCount,
     practicePatientCount,
     paRequestCount,
     claimAppealCount,
@@ -75,13 +74,11 @@ export default async function AdminAnalyticsPage() {
     questionCount,
     answerCount,
     { data: practices },
-    { data: patientAccounts },
     { data: blogPosts },
     { data: questions },
   ] = await Promise.all([
     countOf(supabase, "practices"),
     countOf(supabase, "profiles"),
-    countOf(supabase, "patient_accounts"),
     countOf(supabase, "patients"),
     countOf(supabase, "pa_requests"),
     countOf(supabase, "claim_appeal_letters"),
@@ -91,7 +88,6 @@ export default async function AdminAnalyticsPage() {
     countOf(supabase, "questions"),
     countOf(supabase, "answers"),
     supabase.from("practices").select("id, plan, billing_status, created_at"),
-    supabase.from("patient_accounts").select("id, created_at"),
     supabase.from("blog_posts").select("id, created_at, status").eq("status", "published"),
     supabase.from("questions").select("id, created_at"),
   ]);
@@ -100,7 +96,6 @@ export default async function AdminAnalyticsPage() {
   const mrr = activePractices * PRACTICE_MONTHLY_PRICE_USD;
 
   const practiceSignups = bucketByMonth(practices || [], months);
-  const patientSignups = bucketByMonth(patientAccounts || [], months);
   const blogActivity = bucketByMonth(blogPosts || [], months);
   const qaActivity = bucketByMonth(questions || [], months);
 
@@ -114,7 +109,6 @@ export default async function AdminAnalyticsPage() {
         <StatTile label="MRR" value={`$${mrr.toLocaleString()}`} sub={`${activePractices} active subscriptions`} />
         <StatTile label="Practices" value={practiceCount} />
         <StatTile label="Staff accounts" value={staffCount} />
-        <StatTile label="Patient accounts" value={patientAccountCount} />
       </div>
 
       <h2 className="text-[13px] font-semibold uppercase tracking-wide text-gray-400 mb-3">Clinical activity</h2>
@@ -135,7 +129,6 @@ export default async function AdminAnalyticsPage() {
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
         <BarChart title="New practices (6 mo)" data={practiceSignups} color="var(--indigo-600)" />
-        <BarChart title="New patient accounts (6 mo)" data={patientSignups} color="var(--blue-500)" />
         <BarChart title="Blog posts published (6 mo)" data={blogActivity} color="var(--success-green)" />
         <BarChart title="Questions asked (6 mo)" data={qaActivity} color="var(--amber)" />
       </div>
