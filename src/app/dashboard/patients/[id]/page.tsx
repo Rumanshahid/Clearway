@@ -1,14 +1,15 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, createAdminClient } from "@/lib/supabase/server";
 import { requireSectionAccess } from "@/lib/permissions";
 import { getProcedureLabelMap } from "@/lib/criteria-repo";
 import PatientDetailClient from "./PatientDetailClient";
 import EligibilityCard from "./EligibilityCard";
+import PatientAccessCard, { type PatientProfileAccess } from "./PatientAccessCard";
 
 export default async function PatientDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  await requireSectionAccess("patients");
+  const sessionProfile = await requireSectionAccess("patients");
   const supabase = await createClient();
   const {
     data: { user },
@@ -26,6 +27,37 @@ export default async function PatientDetailPage({ params }: { params: Promise<{ 
     .single();
 
   if (!patient) notFound();
+
+  // Patients who've also signed up for the self-service portal are matched
+  // by email -- there's no FK between the practice-scoped `patients` table
+  // and `patient_accounts`, so this is a best-effort lookup, not a guarantee.
+  // Admin client: patient_accounts has no staff-facing RLS policy at all.
+  let patientAccess: PatientProfileAccess | null = null;
+  if (patient.email) {
+    const admin = await createAdminClient();
+    const { data: patientAccount } = await admin.from("patient_accounts").select("id").ilike("email", patient.email).maybeSingle();
+    if (patientAccount) {
+      const { data: accessRow } = await admin
+        .from("patient_doctor_access")
+        .select("access_granted, requested_at")
+        .eq("patient_account_id", patientAccount.id)
+        .eq("doctor_profile_id", sessionProfile.userId)
+        .maybeSingle();
+
+      const accessGranted = accessRow?.access_granted || false;
+      const { data: patientProfileRow } = accessGranted
+        ? await admin.from("patient_profiles").select("*").eq("patient_account_id", patientAccount.id).maybeSingle()
+        : { data: null };
+
+      patientAccess = {
+        patientAccountId: patientAccount.id,
+        patientId: id,
+        accessGranted,
+        requested: !!accessRow?.requested_at,
+        profile: patientProfileRow,
+      };
+    }
+  }
 
   const [{ data: physicians }, { data: usualPhysician }, { data: requests }, procedureLabels, { data: eligibilityChecks }] =
     await Promise.all([
@@ -150,6 +182,12 @@ export default async function PatientDetailPage({ params }: { params: Promise<{ 
           defaultPlanType={patient.plan_type}
         />
       </div>
+
+      {patientAccess && (
+        <div className="mt-6">
+          <PatientAccessCard access={patientAccess} />
+        </div>
+      )}
 
       <div className="card p-6 mt-6">
         <h2 className="text-[15px] font-semibold mb-4">PA request history</h2>

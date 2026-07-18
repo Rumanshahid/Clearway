@@ -3,6 +3,9 @@ import { redirect } from "next/navigation";
 import { createClient, createAdminClient } from "@/lib/supabase/server";
 import { calculateProfileCompletion } from "@/lib/patient-profile";
 import PatientProfileForm from "./PatientProfileForm";
+import RecentAppointmentsWidget from "./RecentAppointmentsWidget";
+import MedicalHistoryWidget from "./MedicalHistoryWidget";
+import AllowedDoctorsWidget, { type DoctorAccessRow } from "./AllowedDoctorsWidget";
 
 export default async function PatientProfilePage({
   searchParams,
@@ -75,6 +78,22 @@ export default async function PatientProfilePage({
 
   const fullName = `${account.first_name} ${account.last_name}`;
   const insurancePills = [profile?.insurance_company, profile?.plan_type].filter(Boolean) as string[];
+
+  const { data: accessRows } = await admin
+    .from("patient_doctor_access")
+    .select("doctor_profile_id, access_granted, requested_at")
+    .eq("patient_account_id", user.id);
+  const doctorIds = [...new Set((accessRows || []).map((r) => r.doctor_profile_id))];
+  const { data: doctorProfileRows } = doctorIds.length
+    ? await admin.from("profiles").select("id, full_name").in("id", doctorIds)
+    : { data: [] as { id: string; full_name: string | null }[] };
+  const doctorNameById = new Map((doctorProfileRows || []).map((p) => [p.id, p.full_name || "Doctor"]));
+  const doctorAccessRows: DoctorAccessRow[] = (accessRows || []).map((r) => ({
+    doctorProfileId: r.doctor_profile_id,
+    doctorName: doctorNameById.get(r.doctor_profile_id) || "Doctor",
+    accessGranted: r.access_granted,
+    requested: !!r.requested_at,
+  }));
 
   const sectionLabel: React.CSSProperties = { fontSize: 10.5, fontWeight: 700, color: "var(--gray-400)", textTransform: "uppercase", letterSpacing: 0.3, marginBottom: 4 };
   const rowText: React.CSSProperties = { fontSize: 12.5, color: "var(--gray-600)", lineHeight: 1.6 };
@@ -163,20 +182,16 @@ export default async function PatientProfilePage({
             </div>
           )}
 
-          {(profile?.known_drug_allergies || profile?.current_medications || profile?.medical_history) && (
-            <div style={section}>
-              <div style={sectionLabel}>Medical history</div>
-              {profile?.known_drug_allergies && <p style={rowText}>Allergies: {profile.known_drug_allergies}</p>}
-              {profile?.current_medications && <p style={rowText}>Meds: {profile.current_medications}</p>}
-              {profile?.medical_history && <p style={rowText}>{profile.medical_history}</p>}
-            </div>
-          )}
         </div>
 
-        {/* Reserved for future widgets (upcoming appointments, recent PA/appeal
-            status, etc.) -- intentionally left empty for now. */}
-        <div style={{ flex: 1, minWidth: 0, minHeight: 400, borderRadius: 12, border: "1px dashed var(--gray-200)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-          <p style={{ fontSize: 13, color: "var(--gray-300)" }}>More widgets coming soon</p>
+        <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: 16 }}>
+          <RecentAppointmentsWidget email={account.email} />
+          <MedicalHistoryWidget
+            knownDrugAllergies={profile?.known_drug_allergies}
+            currentMedications={profile?.current_medications}
+            medicalHistory={profile?.medical_history}
+          />
+          <AllowedDoctorsWidget rows={doctorAccessRows} />
         </div>
       </div>
     </div>
