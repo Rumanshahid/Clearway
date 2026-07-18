@@ -3,6 +3,7 @@ import { getSiteContent } from "@/lib/criteria-repo";
 import { getPageBySlug, makeFieldGetter } from "@/lib/content-schema";
 import { createClient, createAdminClient } from "@/lib/supabase/server";
 import NavSearch from "./NavSearch";
+import PatientNavExtras from "./PatientNavExtras";
 
 const NAV_PAGE = getPageBySlug("nav")!;
 
@@ -23,11 +24,22 @@ export default async function SiteNav() {
   // Admin client for this identity check, same as every other
   // post-login routing decision (see lib/auth-redirect.ts).
   let dashboardHref = "/dashboard";
+  let patientNotifications: { id: string; type: string; message: string; link: string | null; read: boolean; created_at: string }[] = [];
   if (user) {
     const admin = await createAdminClient();
     const { data: patientAccount } = await admin.from("patient_accounts").select("id").eq("id", user.id).maybeSingle();
-    if (patientAccount) dashboardHref = "/patient/profile";
+    if (patientAccount) {
+      dashboardHref = "/patient/profile";
+      const { data } = await admin
+        .from("notifications")
+        .select("id, type, message, link, read, created_at")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false })
+        .limit(30);
+      patientNotifications = data || [];
+    }
   }
+  const isPatient = dashboardHref === "/patient/profile";
 
   return (
     <>
@@ -51,6 +63,7 @@ export default async function SiteNav() {
           </div>
           <div className="nav-right">
             <NavSearch />
+            {isPatient && <PatientNavExtras notifications={patientNotifications} />}
             {user ? (
               <Link className="btn btn-primary" href={dashboardHref} id="navCta">{dashboardHref === "/dashboard" ? "Go to Dashboard" : "Profile"}</Link>
             ) : (
@@ -85,6 +98,12 @@ export default async function SiteNav() {
         <Link href="/blog">{c("nav_link_blog")}</Link>
         <Link href="/questions">Q&amp;A</Link>
         <Link href="/about">{c("nav_link_about")}</Link>
+        {isPatient && (
+          <>
+            <Link href="/patient/pa">PA</Link>
+            <Link href="/patient/appeals">Appeals</Link>
+          </>
+        )}
         <div className="dd-divider"></div>
         {user ? (
           <Link className="btn btn-primary dd-cta" href={dashboardHref} style={{ display: "block", textAlign: "center" }}>{dashboardHref === "/dashboard" ? "Go to Dashboard" : "Profile"}</Link>

@@ -20,6 +20,8 @@ export default function NotificationBell({
   onMouseLeave,
   onToggle,
   onClose,
+  markOneReadAction = markNotificationReadAction,
+  markAllReadAction = markAllNotificationsReadAction,
 }: {
   notifications: NotificationRow[];
   open: boolean;
@@ -27,6 +29,12 @@ export default function NotificationBell({
   onMouseLeave: () => void;
   onToggle: () => void;
   onClose: () => void;
+  // Defaults to the staff dashboard's own actions -- callers outside
+  // /dashboard (e.g. the patient nav) pass their own, since this file's
+  // relative import above always points at dashboard/notification-actions.ts
+  // regardless of where the component is rendered from.
+  markOneReadAction?: (formData: FormData) => void | Promise<void>;
+  markAllReadAction?: () => void | Promise<void>;
 }) {
   // Optimistic overlay on top of the server-provided prop so read-state
   // updates feel instant instead of waiting on a full server round trip.
@@ -41,14 +49,14 @@ export default function NotificationBell({
     startTransition(() => {
       const fd = new FormData();
       fd.append("id", id);
-      markNotificationReadAction(fd);
+      markOneReadAction(fd);
     });
   }
 
   function markAllRead() {
     setLocallyRead(new Set(notifications.map((n) => n.id)));
     startTransition(() => {
-      markAllNotificationsReadAction();
+      markAllReadAction();
     });
   }
 
