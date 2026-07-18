@@ -965,6 +965,7 @@ export interface Database {
           consent_terms_privacy: boolean;
           consent_notifications: boolean;
           dashboard_hidden_sections: string[];
+          avatar_url: string | null;
           created_at: string;
           updated_at: string;
         };

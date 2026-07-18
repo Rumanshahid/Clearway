@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useFormStatus } from "react-dom";
 import {
   INSURANCE_COMPANIES,
@@ -8,9 +9,15 @@ import {
   PREFERRED_CONTACT_METHODS,
   RELATIONSHIPS,
 } from "@/lib/patients";
+import DateInput from "@/components/DateInput";
 import { savePatientProfileAction } from "./actions";
 
 export interface PatientProfileFormInitial {
+  avatar_url?: string;
+  first_name?: string;
+  last_name?: string;
+  dob?: string;
+  mobile_phone?: string;
   address?: string;
   city?: string;
   state?: string;
@@ -45,9 +52,59 @@ function SubmitButton() {
 
 export default function PatientProfileForm({ initial }: { initial?: PatientProfileFormInitial }) {
   const [hasSecondary, setHasSecondary] = useState(initial?.has_secondary_insurance || false);
+  const [avatarPreview, setAvatarPreview] = useState<string | undefined>(initial?.avatar_url);
 
   return (
     <form action={savePatientProfileAction} className="flex flex-col gap-6">
+      <section className="card p-6">
+        <h2 className="text-[15px] font-semibold mb-4">Identity</h2>
+        <div className="flex items-center gap-4 mb-4">
+          <div
+            className="rounded-full flex-shrink-0"
+            style={{
+              width: 64,
+              height: 64,
+              background: "var(--gray-100)",
+              backgroundImage: avatarPreview ? `url(${avatarPreview})` : undefined,
+              backgroundSize: "cover",
+              backgroundPosition: "center",
+            }}
+          />
+          <div>
+            <label className="label" htmlFor="avatar">Profile picture</label>
+            <input
+              className="input"
+              id="avatar"
+              name="avatar"
+              type="file"
+              accept="image/*"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) setAvatarPreview(URL.createObjectURL(file));
+              }}
+            />
+          </div>
+        </div>
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className="label" htmlFor="first_name">First name</label>
+            <input className="input" id="first_name" name="first_name" defaultValue={initial?.first_name} required />
+          </div>
+          <div>
+            <label className="label" htmlFor="last_name">Last name</label>
+            <input className="input" id="last_name" name="last_name" defaultValue={initial?.last_name} required />
+          </div>
+          <div>
+            <label className="label" htmlFor="dob">Date of birth</label>
+            <DateInput id="dob" name="dob" defaultValue={initial?.dob} required />
+          </div>
+          <div>
+            <label className="label" htmlFor="mobile_phone">Mobile phone</label>
+            <input className="input" id="mobile_phone" name="mobile_phone" type="tel" defaultValue={initial?.mobile_phone} required />
+          </div>
+        </div>
+      </section>
+
       <section className="card p-6">
         <h2 className="text-[15px] font-semibold mb-4">Contact Information</h2>
         <div className="grid grid-cols-2 gap-4">
@@ -186,7 +243,10 @@ export default function PatientProfileForm({ initial }: { initial?: PatientProfi
         </div>
       </section>
 
-      <SubmitButton />
+      <div className="flex gap-3">
+        <Link href="/patient/profile" className="btn btn-outline">Cancel</Link>
+        <SubmitButton />
+      </div>
     </form>
   );
 }

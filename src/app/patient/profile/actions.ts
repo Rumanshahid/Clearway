@@ -18,7 +18,41 @@ export async function savePatientProfileAction(formData: FormData) {
 
   const hasSecondary = formData.get("has_secondary_insurance") === "on";
 
+  let avatarUrl: string | undefined;
+  const avatarFile = formData.get("avatar") as File | null;
+  if (avatarFile && avatarFile.size > 0) {
+    if (avatarFile.size > 5 * 1024 * 1024) {
+      redirect("/patient/profile?edit=1&error=Profile+picture+must+be+under+5MB.");
+    }
+    const ext = avatarFile.name.split(".").pop() || "jpg";
+    const path = `patients/${user.id}-${Date.now()}.${ext}`;
+    // Session client, not admin -- storage RLS (0049) already scopes this
+    // path to the caller's own auth.uid(), same pattern staff avatar
+    // uploads use for their own practice-scoped folder.
+    const { error: uploadError } = await supabase.storage.from("avatars").upload(path, avatarFile, { upsert: true });
+    if (uploadError) {
+      redirect(`/patient/profile?edit=1&error=${encodeURIComponent(uploadError.message)}`);
+    }
+    avatarUrl = supabase.storage.from("avatars").getPublicUrl(path).data.publicUrl;
+  }
+
   const admin = await createAdminClient();
+
+  const { error: accountError } = await admin
+    .from("patient_accounts")
+    .update({
+      first_name: str(formData, "first_name") || undefined,
+      last_name: str(formData, "last_name") || undefined,
+      dob: str(formData, "dob") || undefined,
+      mobile_phone: str(formData, "mobile_phone") || undefined,
+      ...(avatarUrl ? { avatar_url: avatarUrl } : {}),
+    })
+    .eq("id", user.id);
+
+  if (accountError) {
+    redirect(`/patient/profile?edit=1&error=${encodeURIComponent(accountError.message)}`);
+  }
+
   const { error } = await admin.from("patient_profiles").upsert({
     patient_account_id: user.id,
     address: str(formData, "address"),
@@ -45,7 +79,7 @@ export async function savePatientProfileAction(formData: FormData) {
   });
 
   if (error) {
-    redirect(`/patient/profile?error=${encodeURIComponent(error.message)}`);
+    redirect(`/patient/profile?edit=1&error=${encodeURIComponent(error.message)}`);
   }
 
   revalidatePath("/patient/profile");
