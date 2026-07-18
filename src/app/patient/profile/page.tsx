@@ -78,23 +78,22 @@ export default async function PatientProfilePage({
 
   return (
     <div className="wrap" style={{ padding: "48px 40px 80px", maxWidth: 900, margin: "0 auto" }}>
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end" }}>
-        <Link href="/patient/profile?edit=1" className="btn btn-primary btn-sm">Edit Profile</Link>
-      </div>
-
       {saved && (
-        <div className="mt-4 text-[13px] rounded-lg px-3 py-2" style={{ background: "var(--success-bg)", color: "var(--success-green)" }}>
+        <div className="mb-4 text-[13px] rounded-lg px-3 py-2" style={{ background: "var(--success-bg)", color: "var(--success-green)" }}>
           Profile saved.
         </div>
       )}
 
-      <div style={{ display: "flex", gap: 24, marginTop: 20, marginBottom: 32, flexWrap: "wrap" }}>
+      <div style={{ display: "flex", gap: 24, marginBottom: 32, flexWrap: "wrap" }}>
         <div
           className="rounded-full flex-shrink-0"
           style={{ width: 96, height: 96, background: "var(--gray-100)", backgroundImage: account.avatar_url ? `url(${account.avatar_url})` : undefined, backgroundSize: "cover", backgroundPosition: "center" }}
         />
         <div style={{ flex: 1, minWidth: 240 }}>
-          <h1 style={{ fontSize: 26, fontWeight: 700 }}>{fullName}</h1>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
+            <h1 style={{ fontSize: 26, fontWeight: 700 }}>{fullName}</h1>
+            <Link href="/patient/profile?edit=1" className="btn btn-primary btn-sm">Edit Profile</Link>
+          </div>
           <p style={{ fontSize: 15, color: "var(--gray-600)", marginTop: 4 }}>{account.patient_ref_id}</p>
           <p style={{ fontSize: 13, color: "var(--gray-400)", marginTop: 2 }}>
             {account.dob} · {account.mobile_phone}
