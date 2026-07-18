@@ -2,18 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient, createAdminClient } from "@/lib/supabase/server";
 import { calculateProfileCompletion } from "@/lib/patient-profile";
-import ProfileProgressBar from "../ProfileProgressBar";
 import PatientProfileForm from "./PatientProfileForm";
-
-function Field({ label, value }: { label: string; value?: string | number | null }) {
-  if (!value) return null;
-  return (
-    <div>
-      <div className="text-[11.5px] uppercase tracking-wide text-gray-400 font-semibold mb-0.5">{label}</div>
-      <div className="text-[13.5px] text-gray-900">{value}</div>
-    </div>
-  );
-}
 
 export default async function PatientProfilePage({
   searchParams,
@@ -35,30 +24,21 @@ export default async function PatientProfilePage({
   const percent = calculateProfileCompletion(account, profile);
   const editing = edit === "1";
 
-  return (
-    <div className="max-w-[760px] mx-auto py-8 px-5">
-      <div className="flex items-center justify-between mb-1">
-        <h1 className="text-[24px] font-semibold">{account.first_name} {account.last_name}</h1>
-        <span className="text-[13px] text-gray-400">{account.patient_ref_id}</span>
-      </div>
-      <p className="text-[13.5px] text-gray-600 mb-6">Your Profile</p>
-
-      {saved && (
-        <div className="mb-4 text-[13px] rounded-lg px-3 py-2" style={{ background: "var(--success-bg)", color: "var(--success-green)" }}>
-          Profile saved.
+  if (editing) {
+    return (
+      <div className="max-w-[760px] mx-auto py-8 px-5">
+        <div className="flex items-center justify-between mb-1">
+          <h1 className="text-[24px] font-semibold">{account.first_name} {account.last_name}</h1>
+          <span className="text-[13px] text-gray-400">{account.patient_ref_id}</span>
         </div>
-      )}
-      {error && (
-        <div className="mb-4 text-[13px] rounded-lg px-3 py-2" style={{ background: "var(--danger-bg)", color: "var(--danger-red)" }}>
-          {error}
-        </div>
-      )}
+        <p className="text-[13.5px] text-gray-600 mb-6">Editing your profile</p>
 
-      <div className="card p-6 mb-6">
-        <ProfileProgressBar percent={percent} />
-      </div>
+        {error && (
+          <div className="mb-4 text-[13px] rounded-lg px-3 py-2" style={{ background: "var(--danger-bg)", color: "var(--danger-red)" }}>
+            {error}
+          </div>
+        )}
 
-      {editing ? (
         <PatientProfileForm
           initial={{
             avatar_url: account.avatar_url || undefined,
@@ -89,90 +69,112 @@ export default async function PatientProfilePage({
             medical_history: profile?.medical_history || undefined,
           }}
         />
-      ) : (
-        <div className="flex flex-col gap-6">
-          <section className="card p-6">
-            <div className="flex items-center gap-4 mb-4">
-              <div
-                className="rounded-full flex-shrink-0"
-                style={{
-                  width: 72,
-                  height: 72,
-                  background: "var(--gray-100)",
-                  backgroundImage: account.avatar_url ? `url(${account.avatar_url})` : undefined,
-                  backgroundSize: "cover",
-                  backgroundPosition: "center",
-                }}
-              />
-              <div>
-                <div className="text-[16px] font-semibold">{account.first_name} {account.last_name}</div>
-                <div className="text-[12.5px] text-gray-400">{account.patient_ref_id}</div>
-              </div>
-              <Link href="/patient/profile?edit=1" className="btn btn-primary ml-auto">Edit profile</Link>
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <Field label="Date of birth" value={account.dob} />
-              <Field label="Mobile phone" value={account.mobile_phone} />
-              <Field label="Email" value={account.email} />
-            </div>
-          </section>
+      </div>
+    );
+  }
 
-          <section className="card p-6">
-            <h2 className="text-[15px] font-semibold mb-4">Contact Information</h2>
-            <div className="grid grid-cols-2 gap-4">
-              <Field label="Street address" value={profile?.address} />
-              <Field label="City" value={profile?.city} />
-              <Field label="State" value={profile?.state} />
-              <Field label="ZIP code" value={profile?.zip} />
-              <Field label="Preferred language" value={profile?.preferred_language} />
-              <Field label="Preferred contact method" value={profile?.preferred_contact_method} />
-            </div>
-          </section>
+  const fullName = `${account.first_name} ${account.last_name}`;
+  const insurancePills = [profile?.insurance_company, profile?.plan_type].filter(Boolean) as string[];
 
-          <section className="card p-6">
-            <h2 className="text-[15px] font-semibold mb-4">Emergency Contact</h2>
-            <div className="grid grid-cols-2 gap-4">
-              <Field label="Name" value={profile?.emergency_contact_name} />
-              <Field label="Phone" value={profile?.emergency_contact_phone} />
-              <Field label="Relationship" value={profile?.emergency_contact_relationship} />
-            </div>
-          </section>
+  return (
+    <div className="wrap" style={{ padding: "48px 40px 80px", maxWidth: 900, margin: "0 auto" }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+        <Link href="/patient" style={{ fontSize: 13, color: "var(--gray-400)" }}>← Back to Home</Link>
+        <Link href="/patient/profile?edit=1" className="btn btn-primary btn-sm">Edit Profile</Link>
+      </div>
 
-          <section className="card p-6">
-            <h2 className="text-[15px] font-semibold mb-4">Primary Insurance</h2>
-            <div className="grid grid-cols-2 gap-4">
-              <Field label="Insurance company" value={profile?.insurance_company} />
-              <Field label="Plan type" value={profile?.plan_type} />
-              <Field label="Member / Insurance ID" value={profile?.member_id} />
-              <Field label="Group number" value={profile?.group_number} />
-              <Field label="Plan name" value={profile?.plan_name} />
-            </div>
-          </section>
-
-          {profile?.has_secondary_insurance && (
-            <section className="card p-6">
-              <h2 className="text-[15px] font-semibold mb-4">Secondary Insurance</h2>
-              <div className="grid grid-cols-2 gap-4">
-                <Field label="Insurance company" value={profile?.secondary_insurance_company} />
-                <Field label="Member ID" value={profile?.secondary_member_id} />
-                <Field label="Group number" value={profile?.secondary_group_number} />
-              </div>
-            </section>
-          )}
-
-          <section className="card p-6">
-            <h2 className="text-[15px] font-semibold mb-4">Medical History</h2>
-            <div className="flex flex-col gap-4">
-              <Field label="Known drug allergies" value={profile?.known_drug_allergies} />
-              <Field label="Current medications" value={profile?.current_medications} />
-              <Field label="Relevant medical history" value={profile?.medical_history} />
-              {!profile?.known_drug_allergies && !profile?.current_medications && !profile?.medical_history && (
-                <p className="text-gray-400 text-[13.5px]">Nothing on file yet.</p>
-              )}
-            </div>
-          </section>
+      {saved && (
+        <div className="mt-4 text-[13px] rounded-lg px-3 py-2" style={{ background: "var(--success-bg)", color: "var(--success-green)" }}>
+          Profile saved.
         </div>
       )}
+
+      <div style={{ display: "flex", gap: 24, marginTop: 20, marginBottom: 32, flexWrap: "wrap" }}>
+        <div
+          className="rounded-full flex-shrink-0"
+          style={{ width: 96, height: 96, background: "var(--gray-100)", backgroundImage: account.avatar_url ? `url(${account.avatar_url})` : undefined, backgroundSize: "cover", backgroundPosition: "center" }}
+        />
+        <div style={{ flex: 1, minWidth: 240 }}>
+          <h1 style={{ fontSize: 26, fontWeight: 700 }}>{fullName}</h1>
+          <p style={{ fontSize: 15, color: "var(--gray-600)", marginTop: 4 }}>{account.patient_ref_id}</p>
+          <p style={{ fontSize: 13, color: "var(--gray-400)", marginTop: 2 }}>
+            {account.dob} · {account.mobile_phone}
+          </p>
+          <div style={{ display: "flex", gap: 8, marginTop: 12, flexWrap: "wrap" }}>
+            <span
+              className="status-pill"
+              style={percent >= 100 ? { background: "var(--success-bg)", color: "var(--success-green)" } : { background: "#EEF0FF", color: "var(--indigo-600)" }}
+            >
+              Profile {percent}% complete
+            </span>
+            {profile?.has_secondary_insurance && (
+              <span className="status-pill" style={{ background: "var(--gray-100)", color: "var(--gray-600)" }}>Secondary insurance on file</span>
+            )}
+          </div>
+        </div>
+      </div>
+
+      <section style={{ marginBottom: 32 }}>
+        <h2 style={{ fontSize: 17, fontWeight: 600, marginBottom: 10 }}>Contact</h2>
+        <p style={{ fontSize: 14.5, color: "var(--gray-600)", lineHeight: 1.7 }}>
+          {account.email}
+          {profile?.preferred_contact_method && ` · Prefers ${profile.preferred_contact_method.toLowerCase()}`}
+        </p>
+      </section>
+
+      {insurancePills.length > 0 && (
+        <section style={{ marginBottom: 32 }}>
+          <h2 style={{ fontSize: 17, fontWeight: 600, marginBottom: 10 }}>Insurance</h2>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+            {insurancePills.map((p) => (
+              <span key={p} className="status-pill" style={{ background: "var(--gray-100)", color: "var(--gray-600)" }}>{p}</span>
+            ))}
+          </div>
+        </section>
+      )}
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-8" style={{ marginBottom: 32 }}>
+        <section>
+          <h2 style={{ fontSize: 17, fontWeight: 600, marginBottom: 10 }}>Insurance details</h2>
+          <ul style={{ fontSize: 14, color: "var(--gray-600)", lineHeight: 1.9 }}>
+            {profile?.member_id && <li>Member ID: {profile.member_id}</li>}
+            {profile?.group_number && <li>Group #: {profile.group_number}</li>}
+            {profile?.plan_name && <li>{profile.plan_name}</li>}
+            {!profile?.member_id && !profile?.group_number && !profile?.plan_name && <li style={{ color: "var(--gray-400)" }}>Nothing on file yet.</li>}
+          </ul>
+        </section>
+        <section>
+          <h2 style={{ fontSize: 17, fontWeight: 600, marginBottom: 10 }}>Emergency contact</h2>
+          <ul style={{ fontSize: 14, color: "var(--gray-600)", lineHeight: 1.9 }}>
+            {profile?.emergency_contact_name && <li>{profile.emergency_contact_name}{profile.emergency_contact_relationship ? ` (${profile.emergency_contact_relationship})` : ""}</li>}
+            {profile?.emergency_contact_phone && <li>{profile.emergency_contact_phone}</li>}
+            {!profile?.emergency_contact_name && !profile?.emergency_contact_phone && <li style={{ color: "var(--gray-400)" }}>Nothing on file yet.</li>}
+          </ul>
+        </section>
+      </div>
+
+      {(profile?.address || profile?.city) && (
+        <section style={{ marginBottom: 32 }}>
+          <h2 style={{ fontSize: 17, fontWeight: 600, marginBottom: 10 }}>Address</h2>
+          <p style={{ fontSize: 14.5, color: "var(--gray-600)" }}>
+            {profile?.address}{profile?.address && <br />}
+            {[profile?.city, profile?.state, profile?.zip].filter(Boolean).join(", ")}
+          </p>
+        </section>
+      )}
+
+      <section style={{ marginBottom: 32 }}>
+        <h2 style={{ fontSize: 17, fontWeight: 600, marginBottom: 10 }}>Medical history</h2>
+        {profile?.known_drug_allergies || profile?.current_medications || profile?.medical_history ? (
+          <ul style={{ fontSize: 14, color: "var(--gray-600)", lineHeight: 1.9 }}>
+            {profile?.known_drug_allergies && <li>Allergies: {profile.known_drug_allergies}</li>}
+            {profile?.current_medications && <li>Medications: {profile.current_medications}</li>}
+            {profile?.medical_history && <li>{profile.medical_history}</li>}
+          </ul>
+        ) : (
+          <p style={{ fontSize: 14.5, color: "var(--gray-400)" }}>Nothing on file yet.</p>
+        )}
+      </section>
     </div>
   );
 }
