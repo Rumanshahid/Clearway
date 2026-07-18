@@ -7,8 +7,17 @@ import { requireBlogIdentity } from "@/lib/blog-identity";
 import { checkAlarmingContent, notifySuperAdminsOfFlag } from "@/lib/blog-moderation";
 import { notifyFollowersOfNewContent } from "@/lib/follows";
 
+// redirect_base lets the same action serve both /questions and
+// /patient/questions -- those two mounts share this one action, and each
+// needs its post-submit redirect to land back under its own prefix rather
+// than always the public one.
+function redirectBase(formData: FormData): string {
+  return String(formData.get("redirect_base") || "/questions");
+}
+
 export async function createQuestionAction(formData: FormData) {
-  const identity = await requireBlogIdentity("/questions/new");
+  const base = redirectBase(formData);
+  const identity = await requireBlogIdentity(`${base}/new`);
   const title = String(formData.get("title") || "").trim();
   const body = String(formData.get("body") || "").trim();
   const tags = String(formData.get("tags") || "")
@@ -16,7 +25,7 @@ export async function createQuestionAction(formData: FormData) {
     .map((t) => t.trim())
     .filter(Boolean);
 
-  if (!title) redirect(`/questions/new?error=${encodeURIComponent("A title is required.")}`);
+  if (!title) redirect(`${base}/new?error=${encodeURIComponent("A title is required.")}`);
 
   const supabase = await createClient();
   const { flagged, reason } = await checkAlarmingContent(`${title}\n\n${body}`);
@@ -37,24 +46,25 @@ export async function createQuestionAction(formData: FormData) {
     .single();
 
   if (error || !question) {
-    redirect(`/questions/new?error=${encodeURIComponent(error?.message || "Could not post your question.")}`);
+    redirect(`${base}/new?error=${encodeURIComponent(error?.message || "Could not post your question.")}`);
   }
 
   if (flagged) {
     await notifySuperAdminsOfFlag({
       message: `A new question by ${identity.displayName} was flagged by AI review: ${reason || "no reason given"}`,
-      link: `/questions/${question.id}`,
+      link: `${base}/${question.id}`,
     });
   }
 
-  await notifyFollowersOfNewContent(identity.userId, `${identity.displayName} asked a new question: "${title}"`, `/questions/${question.id}`);
+  await notifyFollowersOfNewContent(identity.userId, `${identity.displayName} asked a new question: "${title}"`, `${base}/${question.id}`);
 
-  revalidatePath("/questions");
-  redirect(`/questions/${question.id}`);
+  revalidatePath(base);
+  redirect(`${base}/${question.id}`);
 }
 
 export async function updateOwnQuestionAction(formData: FormData) {
-  await requireBlogIdentity("/questions");
+  const base = redirectBase(formData);
+  await requireBlogIdentity(base);
   const questionId = String(formData.get("question_id") || "");
   const title = String(formData.get("title") || "").trim();
   const body = String(formData.get("body") || "").trim();
@@ -63,7 +73,7 @@ export async function updateOwnQuestionAction(formData: FormData) {
     .map((t) => t.trim())
     .filter(Boolean);
 
-  if (!title) redirect(`/questions/${questionId}/edit?error=${encodeURIComponent("A title is required.")}`);
+  if (!title) redirect(`${base}/${questionId}/edit?error=${encodeURIComponent("A title is required.")}`);
 
   const supabase = await createClient();
   const { flagged, reason } = await checkAlarmingContent(`${title}\n\n${body}`);
@@ -73,19 +83,20 @@ export async function updateOwnQuestionAction(formData: FormData) {
     .update({ title, body, tags, ai_flagged: flagged, ai_flag_reason: reason, updated_at: new Date().toISOString() })
     .eq("id", questionId);
 
-  revalidatePath("/questions");
-  revalidatePath(`/questions/${questionId}`);
-  redirect(`/questions/${questionId}`);
+  revalidatePath(base);
+  revalidatePath(`${base}/${questionId}`);
+  redirect(`${base}/${questionId}`);
 }
 
 export async function deleteOwnQuestionAction(formData: FormData) {
-  await requireBlogIdentity("/questions");
+  const base = redirectBase(formData);
+  await requireBlogIdentity(base);
   const questionId = String(formData.get("question_id") || "");
   const supabase = await createClient();
   await supabase.from("questions").delete().eq("id", questionId);
 
-  revalidatePath("/questions");
-  redirect("/questions");
+  revalidatePath(base);
+  redirect(base);
 }
 
 export async function addAnswerAction(formData: FormData) {

@@ -8,9 +8,10 @@ interface FiltersSidebarProps {
   authorType?: string;
   sort?: string;
   tagOptions: string[];
+  basePath?: string;
 }
 
-export default function FiltersSidebar({ tag, authorType, sort, tagOptions }: FiltersSidebarProps) {
+export default function FiltersSidebar({ tag, authorType, sort, tagOptions, basePath = "/questions" }: FiltersSidebarProps) {
   const router = useRouter();
   const [open, setOpen] = useState(true);
 
@@ -23,7 +24,7 @@ export default function FiltersSidebar({ tag, authorType, sort, tagOptions }: Fi
     Object.entries(next).forEach(([k, v]) => {
       if (v) params.set(k, v);
     });
-    router.push(`/questions${params.toString() ? `?${params.toString()}` : ""}`);
+    router.push(`${basePath}${params.toString() ? `?${params.toString()}` : ""}`);
   }
 
   const chips: { key: keyof typeof current; label: string }[] = [];
@@ -86,7 +87,7 @@ export default function FiltersSidebar({ tag, authorType, sort, tagOptions }: Fi
                 {chip.label}
               </span>
             ))}
-            <button type="button" className="text-btn text-[12.5px] text-gray-400" onClick={() => router.push("/questions")}>
+            <button type="button" className="text-btn text-[12.5px] text-gray-400" onClick={() => router.push(basePath)}>
               Clear filters
             </button>
           </div>

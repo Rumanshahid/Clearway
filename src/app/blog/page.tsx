@@ -14,10 +14,17 @@ export const metadata = {
   description: "Notes on prior authorization, claims, and running a specialty practice — from our team, physicians, and patients.",
 };
 
-export default async function BlogListPage({
+// Extracted so /patient/blog can render the same list under its own URL
+// prefix, without the marketing chrome -- PatientLayout already supplies
+// its own nav there.
+export async function BlogListContent({
   searchParams,
+  basePath = "/blog",
+  showChrome = true,
 }: {
   searchParams: Promise<{ tag?: string; author_type?: string; sort?: string }>;
+  basePath?: string;
+  showChrome?: boolean;
 }) {
   const { tag, author_type: authorType, sort } = await searchParams;
   const supabase = await createClient();
@@ -54,66 +61,80 @@ export default async function BlogListPage({
     .order("published_at", { ascending: false })
     .limit(5);
 
-  return (
-    <div className="landing-root">
-      <SiteNav />
-      <div className="wrap" style={{ width: "100%", paddingTop: 56, paddingBottom: 56 }}>
-        <div className="mb-8">
-          <SiteSearchBar placeholder="Search blog posts…" />
-        </div>
+  const content = (
+    <div className="wrap" style={{ width: "100%", paddingTop: 56, paddingBottom: 56 }}>
+      <div className="mb-8">
+        <SiteSearchBar placeholder="Search blog posts…" />
+      </div>
 
-        <div className="flex items-start justify-between gap-4 mb-2 flex-wrap">
-          <div>
-            <h1 className="text-[32px] font-semibold mb-2">Blog</h1>
-            <p className="text-[15px] text-gray-600">Notes on prior authorization, claims, and running a specialty practice — from our team, physicians, and patients.</p>
-          </div>
-          {canWrite && (
-            <Link href="/blog/new" className="btn btn-primary flex-shrink-0">Write a post →</Link>
+      <div className="flex items-start justify-between gap-4 mb-2 flex-wrap">
+        <div>
+          <h1 className="text-[32px] font-semibold mb-2">Blog</h1>
+          <p className="text-[15px] text-gray-600">Notes on prior authorization, claims, and running a specialty practice — from our team, physicians, and patients.</p>
+        </div>
+        {canWrite && (
+          <Link href={`${basePath}/new`} className="btn btn-primary flex-shrink-0">Write a post →</Link>
+        )}
+      </div>
+
+      <div className="flex gap-6 items-start mt-8">
+        <FiltersSidebar tag={tag} authorType={authorType} sort={sort} tagOptions={allTags} basePath={basePath} />
+
+        <div className="flex-1 min-w-0 flex flex-col gap-8">
+          {(posts || []).map((post) => (
+            <Link key={post.id} href={`${basePath}/${post.slug}`} className="flex flex-col sm:flex-row gap-5 group">
+              {post.cover_image_url && (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={post.cover_image_url} alt="" className="w-full sm:w-[220px] h-[140px] object-cover rounded-lg flex-shrink-0" />
+              )}
+              <div className="min-w-0">
+                <div className="flex items-center gap-2 text-[12px] text-gray-400 mb-1">
+                  {post.published_at && <span>{new Date(post.published_at).toLocaleDateString(undefined, { year: "numeric", month: "long", day: "numeric" })}</span>}
+                  <span>·</span>
+                  <span>{post.author_type === "patient" ? "Patient" : "Doctor/Staff"}</span>
+                  <span>·</span>
+                  <span>▲ {post.upvote_count}</span>
+                </div>
+                <h2 className="text-[19px] font-semibold mb-1.5 group-hover:text-indigo-600 transition-colors">{post.title}</h2>
+                <p className="text-[14px] text-gray-600 leading-relaxed">{post.excerpt || excerptFrom(post.content)}</p>
+                {post.tags.length > 0 && (
+                  <div className="flex flex-wrap gap-1.5 mt-2">
+                    {post.tags.map((t) => (
+                      <span key={t} className="text-[11.5px] text-gray-400">#{t}</span>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </Link>
+          ))}
+          {(!posts || posts.length === 0) && (
+            <p className="text-gray-400 text-center py-16">
+              {tag ? `No posts tagged "${tag}" yet.` : "No posts yet — check back soon."}
+            </p>
           )}
         </div>
 
-        <div className="flex gap-6 items-start mt-8">
-          <FiltersSidebar tag={tag} authorType={authorType} sort={sort} tagOptions={allTags} />
-
-          <div className="flex-1 min-w-0 flex flex-col gap-8">
-            {(posts || []).map((post) => (
-              <Link key={post.id} href={`/blog/${post.slug}`} className="flex flex-col sm:flex-row gap-5 group">
-                {post.cover_image_url && (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={post.cover_image_url} alt="" className="w-full sm:w-[220px] h-[140px] object-cover rounded-lg flex-shrink-0" />
-                )}
-                <div className="min-w-0">
-                  <div className="flex items-center gap-2 text-[12px] text-gray-400 mb-1">
-                    {post.published_at && <span>{new Date(post.published_at).toLocaleDateString(undefined, { year: "numeric", month: "long", day: "numeric" })}</span>}
-                    <span>·</span>
-                    <span>{post.author_type === "patient" ? "Patient" : "Doctor/Staff"}</span>
-                    <span>·</span>
-                    <span>▲ {post.upvote_count}</span>
-                  </div>
-                  <h2 className="text-[19px] font-semibold mb-1.5 group-hover:text-indigo-600 transition-colors">{post.title}</h2>
-                  <p className="text-[14px] text-gray-600 leading-relaxed">{post.excerpt || excerptFrom(post.content)}</p>
-                  {post.tags.length > 0 && (
-                    <div className="flex flex-wrap gap-1.5 mt-2">
-                      {post.tags.map((t) => (
-                        <span key={t} className="text-[11.5px] text-gray-400">#{t}</span>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </Link>
-            ))}
-            {(!posts || posts.length === 0) && (
-              <p className="text-gray-400 text-center py-16">
-                {tag ? `No posts tagged "${tag}" yet.` : "No posts yet — check back soon."}
-              </p>
-            )}
-          </div>
-
-          <SuggestionsSidebar posts={suggested || []} />
-        </div>
+        <SuggestionsSidebar posts={suggested || []} basePath={basePath} />
       </div>
+    </div>
+  );
+
+  if (!showChrome) return content;
+
+  return (
+    <div className="landing-root">
+      <SiteNav />
+      {content}
       <SiteFooter />
       <LandingScripts />
     </div>
   );
+}
+
+export default async function BlogListPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ tag?: string; author_type?: string; sort?: string }>;
+}) {
+  return <BlogListContent searchParams={searchParams} />;
 }

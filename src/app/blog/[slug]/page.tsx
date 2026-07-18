@@ -72,15 +72,22 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   };
 }
 
-export default async function BlogPostPage({
-  params,
-  searchParams,
+// Extracted so /patient/blog/[slug] can render the same post under its own
+// URL prefix, without the marketing chrome -- PatientLayout already
+// supplies its own nav there. All the like/comment/upvote server actions
+// are reused as-is (they re-render the invoking page directly, without
+// depending on which basePath it was reached from).
+export async function BlogPostContent({
+  slug,
+  error,
+  basePath = "/blog",
+  showChrome = true,
 }: {
-  params: Promise<{ slug: string }>;
-  searchParams: Promise<{ error?: string }>;
+  slug: string;
+  error?: string;
+  basePath?: string;
+  showChrome?: boolean;
 }) {
-  const { slug } = await params;
-  const { error } = await searchParams;
   const post = await getPost(slug);
   if (!post) notFound();
 
@@ -112,12 +119,10 @@ export default async function BlogPostPage({
       ? !!(await supabase.from("user_follows").select("follower_id").eq("follower_id", user.id).eq("followed_id", authorUserId).maybeSingle()).data
       : false;
 
-  return (
-    <div className="landing-root">
-      <SiteNav />
+  const content = (
       <div className="wrap" style={{ width: "100%", paddingTop: 56, paddingBottom: 56 }}>
       <article className="max-w-[720px] mx-auto">
-        <Link href="/blog" className="text-[13px] text-indigo-600 font-medium">← Back to Blog</Link>
+        <Link href={basePath} className="text-[13px] text-indigo-600 font-medium">← Back to Blog</Link>
 
         <h1 className="text-[32px] font-semibold mt-4 mb-3">{post.title}</h1>
         <div className="flex items-center gap-3 text-[13px] text-gray-400 mb-6 flex-wrap">
@@ -125,7 +130,7 @@ export default async function BlogPostPage({
           {user && authorUserId && authorUserId !== user.id && (
             <form action={toggleFollowAction}>
               <input type="hidden" name="target_user_id" value={authorUserId} />
-              <input type="hidden" name="redirect_to" value={`/blog/${post.slug}`} />
+              <input type="hidden" name="redirect_to" value={`${basePath}/${post.slug}`} />
               <button type="submit" className="text-[12.5px] font-medium" style={{ color: "var(--indigo-600)" }}>
                 {isFollowingAuthor ? "Following" : "+ Follow"}
               </button>
@@ -137,13 +142,13 @@ export default async function BlogPostPage({
           {post.tags.length > 0 && (
             <div className="flex flex-wrap gap-1.5">
               {post.tags.map((t) => (
-                <Link key={t} href={`/blog?tag=${encodeURIComponent(t)}`} className="hover:text-indigo-600">#{t}</Link>
+                <Link key={t} href={`${basePath}?tag=${encodeURIComponent(t)}`} className="hover:text-indigo-600">#{t}</Link>
               ))}
             </div>
           )}
           {(isOwner || isSuperAdmin) && (
             <div className="flex items-center gap-3 ml-auto">
-              <Link href={`/blog/${post.slug}/edit`} className="text-indigo-600 font-medium">Edit</Link>
+              <Link href={`${basePath}/${post.slug}/edit`} className="text-indigo-600 font-medium">Edit</Link>
               <form action={deleteOwnBlogPostAction}>
                 <input type="hidden" name="post_id" value={post.id} />
                 <button type="submit" className="text-btn text-[13px]" style={{ color: "var(--danger-red)" }}>Delete</button>
@@ -196,7 +201,7 @@ export default async function BlogPostPage({
             </form>
           ) : (
             <p className="text-[13.5px] text-gray-500 mb-6">
-              <Link href={`/sign-in?next=${encodeURIComponent(`/blog/${post.slug}`)}`} className="text-indigo-600 font-medium">Sign in</Link> to like or comment.
+              <Link href={`/sign-in?next=${encodeURIComponent(`${basePath}/${post.slug}`)}`} className="text-indigo-600 font-medium">Sign in</Link> to like or comment.
             </p>
           )}
 
@@ -249,32 +254,59 @@ export default async function BlogPostPage({
         </section>
       </article>
       </div>
+  );
 
-      {suggested.length > 0 && (
-        <div className="wrap" style={{ width: "100%", paddingBottom: 56 }}>
-        <section className="max-w-[860px] mx-auto">
-          <h2 className="text-[13px] font-semibold uppercase tracking-wide text-gray-400 mb-4">Keep reading</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
-            {suggested.map((s) => (
-              <Link key={s.id} href={`/blog/${s.slug}`} className="card p-4 flex flex-col gap-2 hover:bg-gray-50 transition-colors">
-                {s.cover_image_url && (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={s.cover_image_url} alt="" className="w-full h-[110px] object-cover rounded-lg" />
-                )}
-                <div className="text-[12px] text-gray-400">
-                  {s.published_at && new Date(s.published_at).toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" })}
-                </div>
-                <div className="text-[15px] font-semibold leading-snug">{s.title}</div>
-                <p className="text-[13px] text-gray-600 leading-relaxed line-clamp-2">{s.excerpt || excerptFrom(s.content, 110)}</p>
-              </Link>
-            ))}
-          </div>
-        </section>
+  const suggestedSection = suggested.length > 0 && (
+    <div className="wrap" style={{ width: "100%", paddingBottom: 56 }}>
+      <section className="max-w-[860px] mx-auto">
+        <h2 className="text-[13px] font-semibold uppercase tracking-wide text-gray-400 mb-4">Keep reading</h2>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
+          {suggested.map((s) => (
+            <Link key={s.id} href={`${basePath}/${s.slug}`} className="card p-4 flex flex-col gap-2 hover:bg-gray-50 transition-colors">
+              {s.cover_image_url && (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={s.cover_image_url} alt="" className="w-full h-[110px] object-cover rounded-lg" />
+              )}
+              <div className="text-[12px] text-gray-400">
+                {s.published_at && new Date(s.published_at).toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" })}
+              </div>
+              <div className="text-[15px] font-semibold leading-snug">{s.title}</div>
+              <p className="text-[13px] text-gray-600 leading-relaxed line-clamp-2">{s.excerpt || excerptFrom(s.content, 110)}</p>
+            </Link>
+          ))}
         </div>
-      )}
+      </section>
+    </div>
+  );
 
+  if (!showChrome) {
+    return (
+      <>
+        {content}
+        {suggestedSection}
+      </>
+    );
+  }
+
+  return (
+    <div className="landing-root">
+      <SiteNav />
+      {content}
+      {suggestedSection}
       <SiteFooter />
       <LandingScripts />
     </div>
   );
+}
+
+export default async function BlogPostPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ slug: string }>;
+  searchParams: Promise<{ error?: string }>;
+}) {
+  const { slug } = await params;
+  const { error } = await searchParams;
+  return <BlogPostContent slug={slug} error={error} />;
 }

@@ -29,9 +29,9 @@ export default function PatientNavBar({
             <NavLink href="/patient/profile">Profile</NavLink>
             <NavLink href="/patient/pa">PA</NavLink>
             <NavLink href="/patient/appeals">Appeals</NavLink>
-            <NavLink href="/doctors">Find a Doctor</NavLink>
-            <NavLink href="/blog">Blog</NavLink>
-            <NavLink href="/questions">Q&amp;A</NavLink>
+            <NavLink href="/patient/doctors">Find a Doctor</NavLink>
+            <NavLink href="/patient/blog">Blog</NavLink>
+            <NavLink href="/patient/questions">Q&amp;A</NavLink>
           </div>
         </div>
         <div className="flex items-center gap-1">

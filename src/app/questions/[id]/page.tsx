@@ -18,16 +18,20 @@ import {
   deleteAnswerAction,
 } from "../actions";
 
-export default async function QuestionDetailPage({
-  params,
-  searchParams,
+// Extracted so /patient/questions/[id] can render the same thread under
+// its own URL prefix, without the marketing chrome -- PatientLayout
+// already supplies its own nav there.
+export async function QuestionDetailContent({
+  id,
+  error,
+  basePath = "/questions",
+  showChrome = true,
 }: {
-  params: Promise<{ id: string }>;
-  searchParams: Promise<{ error?: string }>;
+  id: string;
+  error?: string;
+  basePath?: string;
+  showChrome?: boolean;
 }) {
-  const { id } = await params;
-  const { error } = await searchParams;
-
   const supabase = await createClient();
   const { data: question } = await supabase.from("questions").select("*").eq("id", id).maybeSingle();
   if (!question) notFound();
@@ -66,12 +70,10 @@ export default async function QuestionDetailPage({
       ? !!(await supabase.from("user_follows").select("follower_id").eq("follower_id", user.id).eq("followed_id", questionAuthorUserId).maybeSingle()).data
       : false;
 
-  return (
-    <div className="landing-root">
-      <SiteNav />
+  const content = (
       <div className="wrap" style={{ width: "100%", paddingTop: 56, paddingBottom: 56 }}>
       <div className="max-w-[720px] mx-auto">
-        <Link href="/questions" className="text-[13px] text-indigo-600 font-medium">← Back to Questions</Link>
+        <Link href={basePath} className="text-[13px] text-indigo-600 font-medium">← Back to Questions</Link>
 
         <div className="flex items-center gap-3 text-[13px] text-gray-400 mt-4 mb-2 flex-wrap">
           {questionAuthorIdentity && <span className="text-gray-600 font-medium">{questionAuthorIdentity.displayName}</span>}
@@ -79,7 +81,7 @@ export default async function QuestionDetailPage({
           {user && questionAuthorUserId && questionAuthorUserId !== user.id && (
             <form action={toggleFollowAction}>
               <input type="hidden" name="target_user_id" value={questionAuthorUserId} />
-              <input type="hidden" name="redirect_to" value={`/questions/${question.id}`} />
+              <input type="hidden" name="redirect_to" value={`${basePath}/${question.id}`} />
               <button type="submit" className="text-[12.5px] font-medium" style={{ color: "var(--indigo-600)" }}>
                 {isFollowingAuthor ? "Following" : "+ Follow"}
               </button>
@@ -87,9 +89,10 @@ export default async function QuestionDetailPage({
           )}
           {(isQuestionOwner || isSuperAdmin) && (
             <div className="flex items-center gap-3 ml-auto">
-              <Link href={`/questions/${question.id}/edit`} className="text-indigo-600 font-medium">Edit</Link>
+              <Link href={`${basePath}/${question.id}/edit`} className="text-indigo-600 font-medium">Edit</Link>
               <form action={deleteOwnQuestionAction}>
                 <input type="hidden" name="question_id" value={question.id} />
+                <input type="hidden" name="redirect_base" value={basePath} />
                 <button type="submit" className="text-btn text-[13px]" style={{ color: "var(--danger-red)" }}>Delete</button>
               </form>
             </div>
@@ -100,7 +103,7 @@ export default async function QuestionDetailPage({
         {question.tags.length > 0 && (
           <div className="flex flex-wrap gap-1.5 mb-4">
             {question.tags.map((t) => (
-              <Link key={t} href={`/questions?tag=${encodeURIComponent(t)}`} className="text-[12px] text-gray-400 hover:text-indigo-600">#{t}</Link>
+              <Link key={t} href={`${basePath}?tag=${encodeURIComponent(t)}`} className="text-[12px] text-gray-400 hover:text-indigo-600">#{t}</Link>
             ))}
           </div>
         )}
@@ -138,7 +141,7 @@ export default async function QuestionDetailPage({
             </form>
           ) : (
             <p className="text-[13.5px] text-gray-500 mb-8">
-              <Link href={`/sign-in?next=${encodeURIComponent(`/questions/${question.id}`)}`} className="text-indigo-600 font-medium">Sign in</Link> to like, upvote, or answer.
+              <Link href={`/sign-in?next=${encodeURIComponent(`${basePath}/${question.id}`)}`} className="text-indigo-600 font-medium">Sign in</Link> to like, upvote, or answer.
             </p>
           )}
 
@@ -220,8 +223,28 @@ export default async function QuestionDetailPage({
         </section>
       </div>
       </div>
+  );
+
+  if (!showChrome) return content;
+
+  return (
+    <div className="landing-root">
+      <SiteNav />
+      {content}
       <SiteFooter />
       <LandingScripts />
     </div>
   );
+}
+
+export default async function QuestionDetailPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{ error?: string }>;
+}) {
+  const { id } = await params;
+  const { error } = await searchParams;
+  return <QuestionDetailContent id={id} error={error} />;
 }

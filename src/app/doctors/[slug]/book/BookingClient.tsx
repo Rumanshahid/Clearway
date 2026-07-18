@@ -32,10 +32,12 @@ export default function BookingClient({
   doctorSlug,
   doctorName,
   telehealthAvailable,
+  backHref = "/doctors",
 }: {
   doctorSlug: string;
   doctorName: string;
   telehealthAvailable: boolean;
+  backHref?: string;
 }) {
   const [step, setStep] = useState<Step>("purpose");
   const [chatLog, setChatLog] = useState<ChatEntry[]>([{ role: "assistant", text: "What's the purpose of your visit?" }]);
@@ -170,7 +172,7 @@ export default function BookingClient({
     return (
       <div className="card p-6 text-center">
         <p style={{ fontSize: 14.5, color: "var(--gray-600)", marginBottom: 16 }}>{errorMessage}</p>
-        <Link href={`/doctors`} className="btn btn-outline">Back to directory</Link>
+        <Link href={backHref} className="btn btn-outline">Back to directory</Link>
       </div>
     );
   }

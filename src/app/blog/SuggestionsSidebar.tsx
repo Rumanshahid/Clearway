@@ -5,7 +5,7 @@ export interface SuggestionItem {
   title: string;
 }
 
-export default function SuggestionsSidebar({ posts }: { posts: SuggestionItem[] }) {
+export default function SuggestionsSidebar({ posts, basePath = "/blog" }: { posts: SuggestionItem[]; basePath?: string }) {
   if (posts.length === 0) return null;
 
   return (
@@ -16,7 +16,7 @@ export default function SuggestionsSidebar({ posts }: { posts: SuggestionItem[] 
           {posts.map((post) => (
             <Link
               key={post.slug}
-              href={`/blog/${post.slug}`}
+              href={`${basePath}/${post.slug}`}
               className="text-[13.5px] text-gray-700 leading-snug hover:text-indigo-600 transition-colors"
             >
               {post.title}

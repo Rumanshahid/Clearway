@@ -5,7 +5,7 @@ export interface RecentQuestionItem {
   title: string;
 }
 
-export default function RecentQuestionsSidebar({ questions }: { questions: RecentQuestionItem[] }) {
+export default function RecentQuestionsSidebar({ questions, basePath = "/questions" }: { questions: RecentQuestionItem[]; basePath?: string }) {
   if (questions.length === 0) return null;
 
   return (
@@ -16,7 +16,7 @@ export default function RecentQuestionsSidebar({ questions }: { questions: Recen
           {questions.map((q) => (
             <Link
               key={q.id}
-              href={`/questions/${q.id}`}
+              href={`${basePath}/${q.id}`}
               className="text-[13.5px] text-gray-700 leading-snug hover:text-indigo-600 transition-colors"
             >
               {q.title}

@@ -15,10 +15,17 @@ export const metadata = {
 const INSURANCE_OPTIONS = ["Aetna", "Cigna / eviCore", "UnitedHealthcare", "Humana", "BCBS / Anthem", "Medicare", "Medicaid"];
 const LANGUAGE_OPTIONS = ["English", "Spanish", "Mandarin", "Vietnamese", "Arabic", "Tagalog", "French", "Urdu/Hindi"];
 
-export default async function DoctorsDirectoryPage({
+// Extracted so /patient/doctors can render the same directory (same data,
+// same filters) under its own URL prefix and without the marketing chrome
+// -- PatientLayout already supplies its own nav there.
+export async function DoctorsDirectoryContent({
   searchParams,
+  basePath = "/doctors",
+  showChrome = true,
 }: {
   searchParams: Promise<{ q?: string; specialty?: string; insurance?: string; language?: string; city?: string; new_patients?: string; telehealth?: string }>;
+  basePath?: string;
+  showChrome?: boolean;
 }) {
   const { q, specialty, insurance, language, city, new_patients, telehealth } = await searchParams;
   // Admin client: anonymous visitors have no session, and the profiles
@@ -69,61 +76,73 @@ export default async function DoctorsDirectoryPage({
     })
   );
 
+  const content = (
+    <div className="wrap" style={{ padding: "48px 40px 80px" }}>
+      <div className="flex items-center justify-between mb-8 flex-wrap gap-3">
+        <h1 style={{ fontSize: 32, fontWeight: 700 }}>Doctors</h1>
+        <DoctorSearchButton
+          insuranceOptions={INSURANCE_OPTIONS}
+          languageOptions={LANGUAGE_OPTIONS}
+          defaults={{ q, city, insurance, language, new_patients, telehealth }}
+        />
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        {doctors.length === 0 && (
+          <p style={{ color: "var(--gray-400)", fontSize: 14 }}>No doctors match those filters yet.</p>
+        )}
+        {doctors.map((d, i) => (
+          <Link
+            key={d.id}
+            href={`${basePath}/${d.slug}`}
+            className="card p-5 flex items-center gap-4 hover:shadow-sm"
+            style={{ textDecoration: "none" }}
+          >
+            <div
+              className="rounded-full flex-shrink-0"
+              style={{ width: 56, height: 56, background: "var(--gray-100)", backgroundImage: avatarById.get(d.profile_id) ? `url(${avatarById.get(d.profile_id)})` : undefined, backgroundSize: "cover", backgroundPosition: "center" }}
+            />
+            <div className="flex-1">
+              <div style={{ fontSize: 15.5, fontWeight: 600, color: "var(--gray-900)" }}>
+                {nameById.get(d.profile_id)}{d.credentials ? `, ${d.credentials}` : ""}
+              </div>
+              <div style={{ fontSize: 13, color: "var(--gray-600)" }}>{d.specialty}</div>
+              <div style={{ fontSize: 12.5, color: "var(--gray-400)" }}>
+                {[d.city, d.state].filter(Boolean).join(", ")}
+                {d.insurance_accepted.length > 0 && ` · Accepts ${d.insurance_accepted.slice(0, 2).join(", ")}${d.insurance_accepted.length > 2 ? "..." : ""}`}
+              </div>
+            </div>
+            <div style={{ textAlign: "right", fontSize: 12.5, flexShrink: 0 }}>
+              {nextSlots[i] ? (
+                <span style={{ color: "var(--success-green)" }}>
+                  Next: {new Date(nextSlots[i]!.start).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" })}
+                </span>
+              ) : (
+                <span style={{ color: "var(--gray-400)" }}>No slots open</span>
+              )}
+            </div>
+          </Link>
+        ))}
+      </div>
+    </div>
+  );
+
+  if (!showChrome) return content;
+
   return (
     <div className="landing-root">
       <SiteNav />
-
-      <div className="wrap" style={{ padding: "48px 40px 80px" }}>
-        <div className="flex items-center justify-between mb-8 flex-wrap gap-3">
-          <h1 style={{ fontSize: 32, fontWeight: 700 }}>Doctors</h1>
-          <DoctorSearchButton
-            insuranceOptions={INSURANCE_OPTIONS}
-            languageOptions={LANGUAGE_OPTIONS}
-            defaults={{ q, city, insurance, language, new_patients, telehealth }}
-          />
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          {doctors.length === 0 && (
-            <p style={{ color: "var(--gray-400)", fontSize: 14 }}>No doctors match those filters yet.</p>
-          )}
-          {doctors.map((d, i) => (
-            <Link
-              key={d.id}
-              href={`/doctors/${d.slug}`}
-              className="card p-5 flex items-center gap-4 hover:shadow-sm"
-              style={{ textDecoration: "none" }}
-            >
-              <div
-                className="rounded-full flex-shrink-0"
-                style={{ width: 56, height: 56, background: "var(--gray-100)", backgroundImage: avatarById.get(d.profile_id) ? `url(${avatarById.get(d.profile_id)})` : undefined, backgroundSize: "cover", backgroundPosition: "center" }}
-              />
-              <div className="flex-1">
-                <div style={{ fontSize: 15.5, fontWeight: 600, color: "var(--gray-900)" }}>
-                  {nameById.get(d.profile_id)}{d.credentials ? `, ${d.credentials}` : ""}
-                </div>
-                <div style={{ fontSize: 13, color: "var(--gray-600)" }}>{d.specialty}</div>
-                <div style={{ fontSize: 12.5, color: "var(--gray-400)" }}>
-                  {[d.city, d.state].filter(Boolean).join(", ")}
-                  {d.insurance_accepted.length > 0 && ` · Accepts ${d.insurance_accepted.slice(0, 2).join(", ")}${d.insurance_accepted.length > 2 ? "..." : ""}`}
-                </div>
-              </div>
-              <div style={{ textAlign: "right", fontSize: 12.5, flexShrink: 0 }}>
-                {nextSlots[i] ? (
-                  <span style={{ color: "var(--success-green)" }}>
-                    Next: {new Date(nextSlots[i]!.start).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" })}
-                  </span>
-                ) : (
-                  <span style={{ color: "var(--gray-400)" }}>No slots open</span>
-                )}
-              </div>
-            </Link>
-          ))}
-        </div>
-      </div>
-
+      {content}
       <SiteFooter />
       <LandingScripts />
     </div>
   );
+}
+
+export default async function DoctorsDirectoryPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ q?: string; specialty?: string; insurance?: string; language?: string; city?: string; new_patients?: string; telehealth?: string }>;
+}) {
+  return <DoctorsDirectoryContent searchParams={searchParams} />;
 }
