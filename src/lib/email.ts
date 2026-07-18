@@ -8,7 +8,17 @@ function getClient(): Resend | null {
   return client;
 }
 
-export async function sendEmail({ to, subject, html }: { to: string; subject: string; html: string }) {
+export async function sendEmail({
+  to,
+  subject,
+  html,
+  attachments,
+}: {
+  to: string;
+  subject: string;
+  html: string;
+  attachments?: { filename: string; content: Buffer }[];
+}) {
   const resend = getClient();
   if (!resend) {
     console.log(`[email skipped — RESEND_API_KEY not set] to=${to} subject="${subject}"`);
@@ -16,5 +26,5 @@ export async function sendEmail({ to, subject, html }: { to: string; subject: st
   }
 
   const from = process.env.RESEND_FROM_EMAIL || "asaanbil.com <notifications@asaanbil.com>";
-  await resend.emails.send({ from, to, subject, html });
+  await resend.emails.send({ from, to, subject, html, attachments });
 }

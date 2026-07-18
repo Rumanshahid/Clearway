@@ -16,11 +16,18 @@ export async function resolvePostLoginPath(userId: string): Promise<string> {
   const admin = await createAdminClient();
 
   const { data: profile } = await admin.from("profiles").select("practice_id, role").eq("id", userId).maybeSingle();
-  if (!profile?.practice_id) return "/onboarding";
+  if (profile?.practice_id) {
+    // clinic_admin ("Doctor / Admin") and super_admin land on the actual
+    // dashboard overview, not the PA-requests list that sits at the bare
+    // /dashboard route -- only plain staff (clinic_user) go there.
+    const isAdmin = profile.role === "clinic_admin" || profile.role === "super_admin";
+    return isAdmin ? "/dashboard/overview" : "/dashboard";
+  }
 
-  // clinic_admin ("Doctor / Admin") and super_admin land on the actual
-  // dashboard overview, not the PA-requests list that sits at the bare
-  // /dashboard route -- only plain staff (clinic_user) go there.
-  const isAdmin = profile.role === "clinic_admin" || profile.role === "super_admin";
-  return isAdmin ? "/dashboard/overview" : "/dashboard";
+  const { data: patientAccount } = await admin.from("patient_accounts").select("id").eq("id", userId).maybeSingle();
+  if (patientAccount) return "/patient/profile";
+
+  // Neither a staff profile nor a patient account exists yet for this
+  // user -- first time signing in, needs to pick which one they are.
+  return "/auth/choose-role";
 }
