@@ -76,103 +76,109 @@ export default async function PatientProfilePage({
   const fullName = `${account.first_name} ${account.last_name}`;
   const insurancePills = [profile?.insurance_company, profile?.plan_type].filter(Boolean) as string[];
 
+  const sectionLabel: React.CSSProperties = { fontSize: 10.5, fontWeight: 700, color: "var(--gray-400)", textTransform: "uppercase", letterSpacing: 0.3, marginBottom: 4 };
+  const rowText: React.CSSProperties = { fontSize: 12.5, color: "var(--gray-600)", lineHeight: 1.6 };
+  const section: React.CSSProperties = { marginBottom: 14 };
+
   return (
-    <div className="wrap" style={{ padding: "48px 40px 80px", maxWidth: 900, margin: "0 auto" }}>
+    <div className="wrap" style={{ padding: "24px 32px", maxWidth: 1200, margin: "0 auto" }}>
       {saved && (
-        <div className="mb-4 text-[13px] rounded-lg px-3 py-2" style={{ background: "var(--success-bg)", color: "var(--success-green)" }}>
+        <div className="mb-3 text-[12.5px] rounded-lg px-3 py-1.5" style={{ background: "var(--success-bg)", color: "var(--success-green)" }}>
           Profile saved.
         </div>
       )}
 
-      <div style={{ display: "flex", gap: 24, marginBottom: 32, flexWrap: "wrap" }}>
-        <div
-          className="rounded-full flex-shrink-0"
-          style={{ width: 96, height: 96, background: "var(--gray-100)", backgroundImage: account.avatar_url ? `url(${account.avatar_url})` : undefined, backgroundSize: "cover", backgroundPosition: "center" }}
-        />
-        <div style={{ flex: 1, minWidth: 240 }}>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
-            <h1 style={{ fontSize: 26, fontWeight: 700 }}>{fullName}</h1>
-            <Link href="/patient/profile?edit=1" className="btn btn-primary btn-sm">Edit Profile</Link>
+      <div style={{ display: "flex", gap: 28, alignItems: "flex-start" }}>
+        {/* Compact profile summary -- everything fits without scrolling, so
+            the rest of the page stays free for future widgets. */}
+        <div style={{ width: 280, flexShrink: 0 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 4 }}>
+            <div
+              className="rounded-full flex-shrink-0"
+              style={{ width: 52, height: 52, background: "var(--gray-100)", backgroundImage: account.avatar_url ? `url(${account.avatar_url})` : undefined, backgroundSize: "cover", backgroundPosition: "center" }}
+            />
+            <div style={{ minWidth: 0 }}>
+              <h1 style={{ fontSize: 16, fontWeight: 700, lineHeight: 1.2 }}>{fullName}</h1>
+              <p style={{ fontSize: 12, color: "var(--gray-400)" }}>{account.patient_ref_id}</p>
+            </div>
           </div>
-          <p style={{ fontSize: 15, color: "var(--gray-600)", marginTop: 4 }}>{account.patient_ref_id}</p>
-          <p style={{ fontSize: 13, color: "var(--gray-400)", marginTop: 2 }}>
-            {account.dob} · {account.mobile_phone}
-          </p>
-          <div style={{ display: "flex", gap: 8, marginTop: 12, flexWrap: "wrap" }}>
+          <Link href="/patient/profile?edit=1" className="btn btn-primary btn-sm w-full justify-center" style={{ marginBottom: 12 }}>
+            Edit Profile
+          </Link>
+
+          <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 14 }}>
             <span
               className="status-pill"
-              style={percent >= 100 ? { background: "var(--success-bg)", color: "var(--success-green)" } : { background: "#EEF0FF", color: "var(--indigo-600)" }}
+              style={{ fontSize: 11, ...(percent >= 100 ? { background: "var(--success-bg)", color: "var(--success-green)" } : { background: "#EEF0FF", color: "var(--indigo-600)" }) }}
             >
-              Profile {percent}% complete
+              {percent}% complete
             </span>
             {profile?.has_secondary_insurance && (
-              <span className="status-pill" style={{ background: "var(--gray-100)", color: "var(--gray-600)" }}>Secondary insurance on file</span>
+              <span className="status-pill" style={{ fontSize: 11, background: "var(--gray-100)", color: "var(--gray-600)" }}>2nd insurance</span>
             )}
           </div>
+
+          <div style={section}>
+            <div style={sectionLabel}>Contact</div>
+            <p style={rowText}>{account.dob} · {account.mobile_phone}</p>
+            <p style={rowText}>
+              {account.email}
+              {profile?.preferred_contact_method && ` · ${profile.preferred_contact_method}`}
+            </p>
+          </div>
+
+          {insurancePills.length > 0 && (
+            <div style={section}>
+              <div style={sectionLabel}>Insurance</div>
+              <p style={rowText}>{insurancePills.join(" · ")}</p>
+              {(profile?.member_id || profile?.group_number) && (
+                <p style={rowText}>
+                  {profile?.member_id && `ID ${profile.member_id}`}
+                  {profile?.member_id && profile?.group_number && " · "}
+                  {profile?.group_number && `Grp ${profile.group_number}`}
+                </p>
+              )}
+            </div>
+          )}
+
+          {(profile?.emergency_contact_name || profile?.emergency_contact_phone) && (
+            <div style={section}>
+              <div style={sectionLabel}>Emergency contact</div>
+              <p style={rowText}>
+                {profile?.emergency_contact_name}
+                {profile?.emergency_contact_relationship && ` (${profile.emergency_contact_relationship})`}
+              </p>
+              {profile?.emergency_contact_phone && <p style={rowText}>{profile.emergency_contact_phone}</p>}
+            </div>
+          )}
+
+          {(profile?.address || profile?.city) && (
+            <div style={section}>
+              <div style={sectionLabel}>Address</div>
+              <p style={rowText}>
+                {profile?.address}
+                {profile?.address && ", "}
+                {[profile?.city, profile?.state, profile?.zip].filter(Boolean).join(", ")}
+              </p>
+            </div>
+          )}
+
+          {(profile?.known_drug_allergies || profile?.current_medications || profile?.medical_history) && (
+            <div style={section}>
+              <div style={sectionLabel}>Medical history</div>
+              {profile?.known_drug_allergies && <p style={rowText}>Allergies: {profile.known_drug_allergies}</p>}
+              {profile?.current_medications && <p style={rowText}>Meds: {profile.current_medications}</p>}
+              {profile?.medical_history && <p style={rowText}>{profile.medical_history}</p>}
+            </div>
+          )}
+        </div>
+
+        {/* Reserved for future widgets (upcoming appointments, recent PA/appeal
+            status, etc.) -- intentionally left empty for now. */}
+        <div style={{ flex: 1, minWidth: 0, minHeight: 400, borderRadius: 12, border: "1px dashed var(--gray-200)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <p style={{ fontSize: 13, color: "var(--gray-300)" }}>More widgets coming soon</p>
         </div>
       </div>
-
-      <section style={{ marginBottom: 32 }}>
-        <h2 style={{ fontSize: 17, fontWeight: 600, marginBottom: 10 }}>Contact</h2>
-        <p style={{ fontSize: 14.5, color: "var(--gray-600)", lineHeight: 1.7 }}>
-          {account.email}
-          {profile?.preferred_contact_method && ` · Prefers ${profile.preferred_contact_method.toLowerCase()}`}
-        </p>
-      </section>
-
-      {insurancePills.length > 0 && (
-        <section style={{ marginBottom: 32 }}>
-          <h2 style={{ fontSize: 17, fontWeight: 600, marginBottom: 10 }}>Insurance</h2>
-          <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
-            {insurancePills.map((p) => (
-              <span key={p} className="status-pill" style={{ background: "var(--gray-100)", color: "var(--gray-600)" }}>{p}</span>
-            ))}
-          </div>
-        </section>
-      )}
-
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-8" style={{ marginBottom: 32 }}>
-        <section>
-          <h2 style={{ fontSize: 17, fontWeight: 600, marginBottom: 10 }}>Insurance details</h2>
-          <ul style={{ fontSize: 14, color: "var(--gray-600)", lineHeight: 1.9 }}>
-            {profile?.member_id && <li>Member ID: {profile.member_id}</li>}
-            {profile?.group_number && <li>Group #: {profile.group_number}</li>}
-            {profile?.plan_name && <li>{profile.plan_name}</li>}
-            {!profile?.member_id && !profile?.group_number && !profile?.plan_name && <li style={{ color: "var(--gray-400)" }}>Nothing on file yet.</li>}
-          </ul>
-        </section>
-        <section>
-          <h2 style={{ fontSize: 17, fontWeight: 600, marginBottom: 10 }}>Emergency contact</h2>
-          <ul style={{ fontSize: 14, color: "var(--gray-600)", lineHeight: 1.9 }}>
-            {profile?.emergency_contact_name && <li>{profile.emergency_contact_name}{profile.emergency_contact_relationship ? ` (${profile.emergency_contact_relationship})` : ""}</li>}
-            {profile?.emergency_contact_phone && <li>{profile.emergency_contact_phone}</li>}
-            {!profile?.emergency_contact_name && !profile?.emergency_contact_phone && <li style={{ color: "var(--gray-400)" }}>Nothing on file yet.</li>}
-          </ul>
-        </section>
-      </div>
-
-      {(profile?.address || profile?.city) && (
-        <section style={{ marginBottom: 32 }}>
-          <h2 style={{ fontSize: 17, fontWeight: 600, marginBottom: 10 }}>Address</h2>
-          <p style={{ fontSize: 14.5, color: "var(--gray-600)" }}>
-            {profile?.address}{profile?.address && <br />}
-            {[profile?.city, profile?.state, profile?.zip].filter(Boolean).join(", ")}
-          </p>
-        </section>
-      )}
-
-      <section style={{ marginBottom: 32 }}>
-        <h2 style={{ fontSize: 17, fontWeight: 600, marginBottom: 10 }}>Medical history</h2>
-        {profile?.known_drug_allergies || profile?.current_medications || profile?.medical_history ? (
-          <ul style={{ fontSize: 14, color: "var(--gray-600)", lineHeight: 1.9 }}>
-            {profile?.known_drug_allergies && <li>Allergies: {profile.known_drug_allergies}</li>}
-            {profile?.current_medications && <li>Medications: {profile.current_medications}</li>}
-            {profile?.medical_history && <li>{profile.medical_history}</li>}
-          </ul>
-        ) : (
-          <p style={{ fontSize: 14.5, color: "var(--gray-400)" }}>Nothing on file yet.</p>
-        )}
-      </section>
     </div>
   );
 }
