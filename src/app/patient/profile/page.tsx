@@ -78,8 +78,7 @@ export default async function PatientProfilePage({
 
   return (
     <div className="wrap" style={{ padding: "48px 40px 80px", maxWidth: 900, margin: "0 auto" }}>
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-        <Link href="/patient" style={{ fontSize: 13, color: "var(--gray-400)" }}>← Back to Home</Link>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end" }}>
         <Link href="/patient/profile?edit=1" className="btn btn-primary btn-sm">Edit Profile</Link>
       </div>
 
