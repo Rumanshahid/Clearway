@@ -10,6 +10,7 @@ export default function PatientNavExtras({ notifications }: { notifications: Not
 
   return (
     <>
+      <Link href="/patient/profile">Profile</Link>
       <Link href="/patient/pa">PA</Link>
       <Link href="/patient/appeals">Appeals</Link>
       <NotificationBell

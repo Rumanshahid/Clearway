@@ -20,7 +20,7 @@ export default async function SiteNav() {
     data: { user },
   } = await supabase.auth.getUser();
 
-  // Patients don't have a dashboard -- their one page is their profile.
+  // Patients land on their own home page, not the staff dashboard.
   // Admin client for this identity check, same as every other
   // post-login routing decision (see lib/auth-redirect.ts).
   let dashboardHref = "/dashboard";
@@ -29,7 +29,7 @@ export default async function SiteNav() {
     const admin = await createAdminClient();
     const { data: patientAccount } = await admin.from("patient_accounts").select("id").eq("id", user.id).maybeSingle();
     if (patientAccount) {
-      dashboardHref = "/patient/profile";
+      dashboardHref = "/patient";
       const { data } = await admin
         .from("notifications")
         .select("id, type, message, link, read, created_at")
@@ -39,7 +39,7 @@ export default async function SiteNav() {
       patientNotifications = data || [];
     }
   }
-  const isPatient = dashboardHref === "/patient/profile";
+  const isPatient = dashboardHref === "/patient";
 
   return (
     <>
@@ -65,7 +65,7 @@ export default async function SiteNav() {
             <NavSearch />
             {isPatient && <PatientNavExtras notifications={patientNotifications} />}
             {user ? (
-              <Link className="btn btn-primary" href={dashboardHref} id="navCta">{dashboardHref === "/dashboard" ? "Go to Dashboard" : "Profile"}</Link>
+              <Link className="btn btn-primary" href={dashboardHref} id="navCta">{dashboardHref === "/dashboard" ? "Go to Dashboard" : "Home"}</Link>
             ) : (
               <>
                 <Link className="btn btn-text" href="/sign-in" id="navSignIn">{c("nav_signin_label")}</Link>
@@ -100,13 +100,14 @@ export default async function SiteNav() {
         <Link href="/about">{c("nav_link_about")}</Link>
         {isPatient && (
           <>
+            <Link href="/patient/profile">Profile</Link>
             <Link href="/patient/pa">PA</Link>
             <Link href="/patient/appeals">Appeals</Link>
           </>
         )}
         <div className="dd-divider"></div>
         {user ? (
-          <Link className="btn btn-primary dd-cta" href={dashboardHref} style={{ display: "block", textAlign: "center" }}>{dashboardHref === "/dashboard" ? "Go to Dashboard" : "Profile"}</Link>
+          <Link className="btn btn-primary dd-cta" href={dashboardHref} style={{ display: "block", textAlign: "center" }}>{dashboardHref === "/dashboard" ? "Go to Dashboard" : "Home"}</Link>
         ) : (
           <>
             <Link className="btn btn-outline dd-cta" href="/sign-in" style={{ display: "block", textAlign: "center", marginBottom: "8px" }}>{c("nav_signin_label")}</Link>

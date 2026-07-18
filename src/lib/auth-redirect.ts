@@ -25,7 +25,7 @@ export async function resolvePostLoginPath(userId: string): Promise<string> {
   }
 
   const { data: patientAccount } = await admin.from("patient_accounts").select("id").eq("id", userId).maybeSingle();
-  if (patientAccount) return "/patient/profile";
+  if (patientAccount) return "/patient";
 
   // Neither a staff profile nor a patient account exists yet for this
   // user -- first time signing in, needs to pick which one they are.
