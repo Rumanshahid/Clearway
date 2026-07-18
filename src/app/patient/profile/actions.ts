@@ -25,7 +25,11 @@ export async function savePatientProfileAction(formData: FormData) {
       redirect("/patient/profile?edit=1&error=Profile+picture+must+be+under+5MB.");
     }
     const ext = avatarFile.name.split(".").pop() || "jpg";
-    const path = `patients/${user.id}-${Date.now()}.${ext}`;
+    // Two folder segments (patients/<uid>/...) to match the storage RLS
+    // policy (0049), which checks foldername[1]='patients' AND
+    // foldername[2]=auth.uid() -- a single "patients/<uid>-..." segment
+    // doesn't satisfy foldername[2] at all.
+    const path = `patients/${user.id}/${Date.now()}.${ext}`;
     // Session client, not admin -- storage RLS (0049) already scopes this
     // path to the caller's own auth.uid(), same pattern staff avatar
     // uploads use for their own practice-scoped folder.
