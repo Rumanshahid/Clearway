@@ -1,9 +1,9 @@
 import { redirect } from "next/navigation";
 import { createClient, createAdminClient } from "@/lib/supabase/server";
-import PatientAppealForm from "./PatientAppealForm";
+import NewAppealRequestButton from "./NewAppealRequestButton";
 import type { DoctorOption } from "../pa/PatientPaForm";
 import LetterCard from "../LetterCard";
-import { draftPatientAppealLetterAction } from "./actions";
+import { redraftPatientAppealLetterAction, editPatientAppealLetterAction } from "./actions";
 
 export default async function PatientAppealsPage({
   searchParams,
@@ -35,7 +35,7 @@ export default async function PatientAppealsPage({
 
   const { data: requests } = await admin
     .from("patient_appeal_requests")
-    .select("id, claim_number, date_of_service, denial_reason, status, doctor_profile_id, created_at, letter_content")
+    .select("id, claim_number, date_of_service, denial_reason, status, doctor_profile_id, created_at, letter_content, risk_flags, suggestions")
     .eq("patient_account_id", user.id)
     .order("created_at", { ascending: false });
 
@@ -47,10 +47,13 @@ export default async function PatientAppealsPage({
 
   return (
     <div className="max-w-[700px] mx-auto py-8 px-5">
-      <h1 className="text-[24px] font-semibold mb-1">Appeals</h1>
+      <div className="flex items-start justify-between gap-4 mb-1">
+        <h1 className="text-[24px] font-semibold">Appeals</h1>
+        <NewAppealRequestButton doctors={doctors} />
+      </div>
       <p className="text-[13.5px] text-gray-600 mb-6">Appeal a denied claim directly with your doctor.</p>
 
-      {submitted && (
+      {submitted && !error && (
         <div className="mb-4 text-[13px] rounded-lg px-3 py-2" style={{ background: "var(--success-bg)", color: "var(--success-green)" }}>
           Appeal submitted.
         </div>
@@ -61,11 +64,6 @@ export default async function PatientAppealsPage({
         </div>
       )}
 
-      <div className="mb-6">
-        <PatientAppealForm doctors={doctors} />
-      </div>
-
-      <h2 className="text-[15px] font-semibold mb-3">Your appeals</h2>
       {requests && requests.length > 0 ? (
         <div className="flex flex-col gap-3">
           {requests.map((r) => (
@@ -77,12 +75,19 @@ export default async function PatientAppealsPage({
               <p className="text-[13px] text-gray-600">{r.denial_reason}</p>
               {r.claim_number && <p className="text-[12px] text-gray-400 mt-1">Claim #{r.claim_number}</p>}
               <p className="text-[11.5px] text-gray-400 mt-1">{new Date(r.created_at).toLocaleDateString()}</p>
-              <LetterCard requestId={r.id} letterContent={r.letter_content} draftAction={draftPatientAppealLetterAction} />
+              <LetterCard
+                requestId={r.id}
+                letterContent={r.letter_content}
+                riskFlags={r.risk_flags}
+                suggestions={r.suggestions}
+                draftAction={redraftPatientAppealLetterAction}
+                editAction={editPatientAppealLetterAction}
+              />
             </div>
           ))}
         </div>
       ) : (
-        <p className="text-gray-400 text-[13.5px]">No appeals yet.</p>
+        <p className="text-gray-400 text-[13.5px]">No appeals yet. Click &quot;+ New appeal&quot; to submit one.</p>
       )}
     </div>
   );

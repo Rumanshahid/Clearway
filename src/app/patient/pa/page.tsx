@@ -1,8 +1,9 @@
 import { redirect } from "next/navigation";
 import { createClient, createAdminClient } from "@/lib/supabase/server";
-import PatientPaForm, { type DoctorOption } from "./PatientPaForm";
+import NewPaRequestButton from "./NewPaRequestButton";
+import type { DoctorOption } from "./PatientPaForm";
 import LetterCard from "../LetterCard";
-import { draftPatientPaLetterAction } from "./actions";
+import { redraftPatientPaLetterAction, editPatientPaLetterAction } from "./actions";
 
 export default async function PatientPaPage({
   searchParams,
@@ -37,7 +38,7 @@ export default async function PatientPaPage({
 
   const { data: requests } = await admin
     .from("patient_pa_requests")
-    .select("id, procedure_description, status, doctor_profile_id, created_at, letter_content")
+    .select("id, procedure_description, status, doctor_profile_id, created_at, letter_content, risk_flags, suggestions")
     .eq("patient_account_id", user.id)
     .order("created_at", { ascending: false });
 
@@ -49,10 +50,13 @@ export default async function PatientPaPage({
 
   return (
     <div className="max-w-[700px] mx-auto py-8 px-5">
-      <h1 className="text-[24px] font-semibold mb-1">Prior Authorization</h1>
+      <div className="flex items-start justify-between gap-4 mb-1">
+        <h1 className="text-[24px] font-semibold">Prior Authorization</h1>
+        <NewPaRequestButton doctors={doctors} />
+      </div>
       <p className="text-[13.5px] text-gray-600 mb-6">Submit a prior-authorization request directly to your doctor.</p>
 
-      {submitted && (
+      {submitted && !error && (
         <div className="mb-4 text-[13px] rounded-lg px-3 py-2" style={{ background: "var(--success-bg)", color: "var(--success-green)" }}>
           Request submitted.
         </div>
@@ -63,11 +67,6 @@ export default async function PatientPaPage({
         </div>
       )}
 
-      <div className="mb-6">
-        <PatientPaForm doctors={doctors} />
-      </div>
-
-      <h2 className="text-[15px] font-semibold mb-3">Your requests</h2>
       {requests && requests.length > 0 ? (
         <div className="flex flex-col gap-3">
           {requests.map((r) => (
@@ -78,12 +77,19 @@ export default async function PatientPaPage({
               </div>
               <p className="text-[13px] text-gray-600">{r.procedure_description}</p>
               <p className="text-[11.5px] text-gray-400 mt-1">{new Date(r.created_at).toLocaleDateString()}</p>
-              <LetterCard requestId={r.id} letterContent={r.letter_content} draftAction={draftPatientPaLetterAction} />
+              <LetterCard
+                requestId={r.id}
+                letterContent={r.letter_content}
+                riskFlags={r.risk_flags}
+                suggestions={r.suggestions}
+                draftAction={redraftPatientPaLetterAction}
+                editAction={editPatientPaLetterAction}
+              />
             </div>
           ))}
         </div>
       ) : (
-        <p className="text-gray-400 text-[13.5px]">No requests yet.</p>
+        <p className="text-gray-400 text-[13.5px]">No requests yet. Click &quot;+ New request&quot; to submit one.</p>
       )}
     </div>
   );

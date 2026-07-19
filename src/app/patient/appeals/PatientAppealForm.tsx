@@ -2,22 +2,21 @@
 
 import { useFormStatus } from "react-dom";
 import DateInput from "@/components/DateInput";
-import { createPatientAppealRequestAction } from "./actions";
+import { createAndDraftPatientAppealRequestAction } from "./actions";
 import type { DoctorOption } from "../pa/PatientPaForm";
 
 function SubmitButton() {
   const { pending } = useFormStatus();
   return (
     <button className="btn btn-primary" type="submit" disabled={pending}>
-      {pending ? "Submitting…" : "Submit appeal"}
+      {pending ? "Drafting letter…" : "Draft letter"}
     </button>
   );
 }
 
 export default function PatientAppealForm({ doctors }: { doctors: DoctorOption[] }) {
   return (
-    <form action={createPatientAppealRequestAction} className="card p-6 flex flex-col gap-4">
-      <h2 className="text-[15px] font-semibold">New appeal</h2>
+    <form action={createAndDraftPatientAppealRequestAction} className="flex flex-col gap-4">
       <div>
         <label className="label" htmlFor="doctor_profile_id">Doctor</label>
         <select className="input" id="doctor_profile_id" name="doctor_profile_id" required defaultValue="">

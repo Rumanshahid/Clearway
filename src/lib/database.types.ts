@@ -33,6 +33,12 @@ export interface ClaimLetterMeta {
   overturnReason: string;
 }
 
+export type PatientLetterRiskSeverity = "high" | "medium" | "low";
+export interface PatientLetterRiskFlag {
+  severity: PatientLetterRiskSeverity;
+  message: string;
+}
+
 export interface Database {
   public: {
     Tables: {
@@ -1114,6 +1120,8 @@ export interface Database {
           procedure_description: string;
           notes: string | null;
           letter_content: string | null;
+          risk_flags: PatientLetterRiskFlag[];
+          suggestions: string[];
           status: "submitted" | "in_review" | "resolved";
           created_at: string;
           updated_at: string;
@@ -1136,6 +1144,8 @@ export interface Database {
           denial_reason: string;
           notes: string | null;
           letter_content: string | null;
+          risk_flags: PatientLetterRiskFlag[];
+          suggestions: string[];
           status: "submitted" | "in_review" | "resolved";
           created_at: string;
           updated_at: string;

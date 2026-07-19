@@ -1,7 +1,7 @@
 "use client";
 
 import { useFormStatus } from "react-dom";
-import { createPatientPaRequestAction } from "./actions";
+import { createAndDraftPatientPaRequestAction } from "./actions";
 
 export interface DoctorOption {
   profileId: string;
@@ -13,15 +13,14 @@ function SubmitButton() {
   const { pending } = useFormStatus();
   return (
     <button className="btn btn-primary" type="submit" disabled={pending}>
-      {pending ? "Submitting…" : "Submit request"}
+      {pending ? "Drafting letter…" : "Draft letter"}
     </button>
   );
 }
 
 export default function PatientPaForm({ doctors }: { doctors: DoctorOption[] }) {
   return (
-    <form action={createPatientPaRequestAction} className="card p-6 flex flex-col gap-4">
-      <h2 className="text-[15px] font-semibold">New prior-authorization request</h2>
+    <form action={createAndDraftPatientPaRequestAction} className="flex flex-col gap-4">
       <div>
         <label className="label" htmlFor="doctor_profile_id">Doctor</label>
         <select className="input" id="doctor_profile_id" name="doctor_profile_id" required defaultValue="">
