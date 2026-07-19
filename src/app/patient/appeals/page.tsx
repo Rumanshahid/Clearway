@@ -6,9 +6,8 @@ import RequestFiltersDropdown from "../RequestFiltersDropdown";
 import type { DoctorOption } from "../pa/PatientPaForm";
 
 const STATUS_OPTIONS: [string, string][] = [
+  ["draft", "Draft"],
   ["submitted", "Submitted"],
-  ["in_review", "In review"],
-  ["resolved", "Resolved"],
 ];
 
 export default async function PatientAppealsPage({
@@ -41,11 +40,11 @@ export default async function PatientAppealsPage({
 
   let query = admin
     .from("patient_appeal_requests")
-    .select("id, claim_number, denial_reason, status, doctor_profile_id, created_at")
+    .select("id, claim_number, denial_reason, status, doctor_profile_id, created_at, letter_content")
     .eq("patient_account_id", user.id)
     .order("created_at", { ascending: false });
 
-  if (status) query = query.eq("status", status as "submitted" | "in_review" | "resolved");
+  if (status) query = query.eq("status", status as "draft" | "submitted" | "in_review" | "resolved");
   if (doctor) query = query.eq("doctor_profile_id", doctor);
   if (from) query = query.gte("created_at", from);
   if (to) query = query.lte("created_at", `${to}T23:59:59`);
@@ -106,6 +105,7 @@ export default async function PatientAppealsPage({
                       claimNumber={r.claim_number}
                       status={r.status}
                       createdAt={r.created_at}
+                      hasLetter={!!r.letter_content}
                     />
                   ))
                 ) : (

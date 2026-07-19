@@ -1122,7 +1122,7 @@ export interface Database {
           letter_content: string | null;
           risk_flags: PatientLetterRiskFlag[];
           suggestions: string[];
-          status: "submitted" | "in_review" | "resolved";
+          status: "draft" | "submitted" | "in_review" | "resolved";
           created_at: string;
           updated_at: string;
         };
@@ -1146,7 +1146,7 @@ export interface Database {
           letter_content: string | null;
           risk_flags: PatientLetterRiskFlag[];
           suggestions: string[];
-          status: "submitted" | "in_review" | "resolved";
+          status: "draft" | "submitted" | "in_review" | "resolved";
           created_at: string;
           updated_at: string;
         };

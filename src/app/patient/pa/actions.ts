@@ -123,3 +123,44 @@ export async function editPatientPaLetterAction(formData: FormData) {
   revalidatePath("/patient/pa");
   revalidatePath(`/patient/pa/${requestId}`);
 }
+
+export async function updatePatientPaStatusAction(formData: FormData) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) redirect("/sign-in");
+
+  const requestId = String(formData.get("request_id") || "");
+  const status = String(formData.get("status") || "");
+  if (status !== "draft" && status !== "submitted") return;
+
+  const admin = await createAdminClient();
+  const { data: request } = await admin
+    .from("patient_pa_requests")
+    .select("id")
+    .eq("id", requestId)
+    .eq("patient_account_id", user.id)
+    .maybeSingle();
+  if (!request) redirect("/patient/pa?error=Request+not+found.");
+
+  await admin.from("patient_pa_requests").update({ status }).eq("id", requestId);
+
+  revalidatePath("/patient/pa");
+  revalidatePath(`/patient/pa/${requestId}`);
+}
+
+export async function deletePatientPaRequestAction(formData: FormData) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) redirect("/sign-in");
+
+  const requestId = String(formData.get("request_id") || "");
+  const admin = await createAdminClient();
+
+  await admin.from("patient_pa_requests").delete().eq("id", requestId).eq("patient_account_id", user.id);
+
+  revalidatePath("/patient/pa");
+}

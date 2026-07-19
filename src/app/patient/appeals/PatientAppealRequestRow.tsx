@@ -1,12 +1,8 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-
-const STATUS_LABEL: Record<string, string> = {
-  submitted: "Submitted",
-  in_review: "In review",
-  resolved: "Resolved",
-};
+import PatientAppealStatusSelect from "./PatientAppealStatusSelect";
+import PatientAppealRowActions from "./PatientAppealRowActions";
 
 export default function PatientAppealRequestRow({
   requestId,
@@ -15,6 +11,7 @@ export default function PatientAppealRequestRow({
   claimNumber,
   status,
   createdAt,
+  hasLetter,
 }: {
   requestId: string;
   doctorName: string;
@@ -22,6 +19,7 @@ export default function PatientAppealRequestRow({
   claimNumber: string | null;
   status: string;
   createdAt: string;
+  hasLetter: boolean;
 }) {
   const router = useRouter();
 
@@ -34,13 +32,13 @@ export default function PatientAppealRequestRow({
       <td className="px-5 py-3">{doctorName}</td>
       <td className="px-5 py-3 max-w-[240px] truncate">{denialReason}</td>
       <td className="px-5 py-3 text-gray-600">{claimNumber || "—"}</td>
-      <td className="px-5 py-3">
-        <span className="status-pill" style={{ background: "var(--gray-100)", color: "var(--gray-600)" }}>
-          {STATUS_LABEL[status] || status}
-        </span>
+      <td className="px-5 py-3" onClick={(e) => e.stopPropagation()}>
+        <PatientAppealStatusSelect requestId={requestId} status={status} />
       </td>
       <td className="px-5 py-3 text-gray-400">{new Date(createdAt).toLocaleDateString()}</td>
-      <td className="px-5 py-3 text-gray-400">→</td>
+      <td className="px-5 py-3" onClick={(e) => e.stopPropagation()}>
+        <PatientAppealRowActions requestId={requestId} hasLetter={hasLetter} />
+      </td>
     </tr>
   );
 }

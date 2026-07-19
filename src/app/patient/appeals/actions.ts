@@ -124,3 +124,44 @@ export async function editPatientAppealLetterAction(formData: FormData) {
   revalidatePath("/patient/appeals");
   revalidatePath(`/patient/appeals/${requestId}`);
 }
+
+export async function updatePatientAppealStatusAction(formData: FormData) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) redirect("/sign-in");
+
+  const requestId = String(formData.get("request_id") || "");
+  const status = String(formData.get("status") || "");
+  if (status !== "draft" && status !== "submitted") return;
+
+  const admin = await createAdminClient();
+  const { data: request } = await admin
+    .from("patient_appeal_requests")
+    .select("id")
+    .eq("id", requestId)
+    .eq("patient_account_id", user.id)
+    .maybeSingle();
+  if (!request) redirect("/patient/appeals?error=Request+not+found.");
+
+  await admin.from("patient_appeal_requests").update({ status }).eq("id", requestId);
+
+  revalidatePath("/patient/appeals");
+  revalidatePath(`/patient/appeals/${requestId}`);
+}
+
+export async function deletePatientAppealRequestAction(formData: FormData) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) redirect("/sign-in");
+
+  const requestId = String(formData.get("request_id") || "");
+  const admin = await createAdminClient();
+
+  await admin.from("patient_appeal_requests").delete().eq("id", requestId).eq("patient_account_id", user.id);
+
+  revalidatePath("/patient/appeals");
+}

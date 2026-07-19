@@ -2,13 +2,8 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { createClient, createAdminClient } from "@/lib/supabase/server";
 import LetterCard from "../../LetterCard";
+import PatientAppealStatusSelect from "../PatientAppealStatusSelect";
 import { redraftPatientAppealLetterAction, editPatientAppealLetterAction } from "../actions";
-
-const STATUS_LABEL: Record<string, string> = {
-  submitted: "Submitted",
-  in_review: "In review",
-  resolved: "Resolved",
-};
 
 // redraft calls Claude, which can run close to the platform's 10s default
 // serverless timeout.
@@ -45,9 +40,9 @@ export default async function PatientAppealRequestDetailPage({ params }: { param
             {request.claim_number ? ` · Claim #${request.claim_number}` : ""} · {new Date(request.created_at).toLocaleDateString()}
           </p>
         </div>
-        <span className="status-pill flex-shrink-0" style={{ background: "var(--gray-100)", color: "var(--gray-600)" }}>
-          {STATUS_LABEL[request.status] || request.status}
-        </span>
+        <div className="flex-shrink-0">
+          <PatientAppealStatusSelect requestId={request.id} status={request.status} />
+        </div>
       </div>
 
       {request.notes && (

@@ -1,12 +1,8 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-
-const STATUS_LABEL: Record<string, string> = {
-  submitted: "Submitted",
-  in_review: "In review",
-  resolved: "Resolved",
-};
+import PatientPaStatusSelect from "./PatientPaStatusSelect";
+import PatientPaRowActions from "./PatientPaRowActions";
 
 export default function PatientPaRequestRow({
   requestId,
@@ -14,12 +10,14 @@ export default function PatientPaRequestRow({
   procedureDescription,
   status,
   createdAt,
+  hasLetter,
 }: {
   requestId: string;
   doctorName: string;
   procedureDescription: string;
   status: string;
   createdAt: string;
+  hasLetter: boolean;
 }) {
   const router = useRouter();
 
@@ -31,13 +29,13 @@ export default function PatientPaRequestRow({
     >
       <td className="px-5 py-3">{doctorName}</td>
       <td className="px-5 py-3 max-w-[280px] truncate">{procedureDescription}</td>
-      <td className="px-5 py-3">
-        <span className="status-pill" style={{ background: "var(--gray-100)", color: "var(--gray-600)" }}>
-          {STATUS_LABEL[status] || status}
-        </span>
+      <td className="px-5 py-3" onClick={(e) => e.stopPropagation()}>
+        <PatientPaStatusSelect requestId={requestId} status={status} />
       </td>
       <td className="px-5 py-3 text-gray-400">{new Date(createdAt).toLocaleDateString()}</td>
-      <td className="px-5 py-3 text-gray-400">→</td>
+      <td className="px-5 py-3" onClick={(e) => e.stopPropagation()}>
+        <PatientPaRowActions requestId={requestId} hasLetter={hasLetter} />
+      </td>
     </tr>
   );
 }

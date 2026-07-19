@@ -1,0 +1,50 @@
+"use client";
+
+import { deletePatientAppealRequestAction } from "./actions";
+
+export default function PatientAppealRowActions({ requestId, hasLetter }: { requestId: string; hasLetter: boolean }) {
+  return (
+    <div className="flex items-center gap-3">
+      {hasLetter ? (
+        <a
+          href={`/api/patient/appeals/${requestId}/pdf`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-btn text-gray-400 hover:text-indigo-600"
+          aria-label="Download letter"
+          title="Download letter"
+        >
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+            <path d="M8 2v8m0 0l-3-3m3 3l3-3M3 12v1.5A1.5 1.5 0 004.5 15h7a1.5 1.5 0 001.5-1.5V12" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        </a>
+      ) : (
+        <span className="text-gray-200" aria-hidden="true">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+            <path d="M8 2v8m0 0l-3-3m3 3l3-3M3 12v1.5A1.5 1.5 0 004.5 15h7a1.5 1.5 0 001.5-1.5V12" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        </span>
+      )}
+      <form
+        action={deletePatientAppealRequestAction}
+        onSubmit={(e) => {
+          if (!confirm("Delete this appeal and its letter? This can't be undone.")) {
+            e.preventDefault();
+          }
+        }}
+      >
+        <input type="hidden" name="request_id" value={requestId} />
+        <button
+          type="submit"
+          className="text-btn text-gray-400 hover:text-[var(--danger-red)]"
+          aria-label="Delete appeal"
+          title="Delete appeal"
+        >
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+            <path d="M3 4.5h10M6.5 4.5V3a1 1 0 011-1h1a1 1 0 011 1v1.5M4.5 4.5V13a1 1 0 001 1h5a1 1 0 001-1V4.5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        </button>
+      </form>
+    </div>
+  );
+}
