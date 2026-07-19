@@ -32,11 +32,6 @@ export default function PatientAppealStatusSelect({ requestId, status }: { reque
 
   return (
     <div className="flex items-center gap-2">
-      <span
-        aria-hidden="true"
-        className="rounded-full flex-shrink-0"
-        style={{ width: 7, height: 7, background: value === "submitted" ? "var(--success-green)" : "var(--gray-400)" }}
-      />
       <select
         className="input"
         value={value}
@@ -48,6 +43,11 @@ export default function PatientAppealStatusSelect({ requestId, status }: { reque
           <option key={o.value} value={o.value}>{o.label}</option>
         ))}
       </select>
+      <span
+        aria-hidden="true"
+        className="rounded-full flex-shrink-0"
+        style={{ width: 7, height: 7, background: value === "submitted" ? "#22c55e" : "var(--gray-400)" }}
+      />
     </div>
   );
 }
