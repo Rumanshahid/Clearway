@@ -70,7 +70,7 @@ export async function updateProfileAction(formData: FormData) {
   if (isDoctor) {
     const { data: doctorProfile } = await supabase.from("doctor_profiles").select("id, slug").eq("profile_id", session.userId).single();
     if (doctorProfile) {
-      redirectTarget = `/doctors/${doctorProfile.slug}?saved=1`;
+      redirectTarget = `/doctor/${doctorProfile.slug}?saved=1`;
       const blocks: HourBlock[] = JSON.parse(String(formData.get("blocks") || "[]"));
       const appointmentTypeId = String(formData.get("appointment_type_id") || "");
       const conditionsTreated = String(formData.get("conditions_treated") || "")
@@ -137,7 +137,7 @@ export async function updateProfileAction(formData: FormData) {
 
   revalidatePath("/dashboard/profiles");
   revalidatePath("/dashboard/chat");
-  if (isDoctor) revalidatePath("/doctors/[slug]", "page");
+  if (isDoctor) revalidatePath("/doctor/[slug]", "page");
   // A real redirect (not just revalidatePath) is what actually closes edit
   // mode back to the summary view -- ProfileCard's local `editing` state
   // survives a revalidate-only re-render since the component isn't

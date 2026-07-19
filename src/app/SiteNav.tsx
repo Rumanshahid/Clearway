@@ -12,7 +12,7 @@ export default async function SiteNav() {
   const c = makeFieldGetter(NAV_PAGE, content);
 
   // This nav renders on every public/marketing page, including ones a
-  // signed-in doctor now visits regularly (their own /doctors/[slug]
+  // signed-in doctor now visits regularly (their own /doctor/[slug]
   // page) -- without this check it always showed Sign In/Sign Up even to
   // someone already logged in.
   const supabase = await createClient();
@@ -57,7 +57,7 @@ export default async function SiteNav() {
           <div className="nav-links" id="navLinks">
             <Link href={homeHref}>Home</Link>
             <Link href="/#pricing">{c("nav_link_pricing")}</Link>
-            <Link href="/doctors">Find a Doctor</Link>
+            <Link href="/doctor">Find a Doctor</Link>
             <Link href="/blog">{c("nav_link_blog")}</Link>
             <Link href="/questions">Q&amp;A</Link>
             <Link href="/about">{c("nav_link_about")}</Link>
@@ -95,7 +95,7 @@ export default async function SiteNav() {
         </form>
         <Link href="/">Home</Link>
         <Link href="/#pricing">{c("nav_link_pricing")}</Link>
-        <Link href="/doctors">Find a Doctor</Link>
+        <Link href="/doctor">Find a Doctor</Link>
         <Link href="/blog">{c("nav_link_blog")}</Link>
         <Link href="/questions">Q&amp;A</Link>
         <Link href="/about">{c("nav_link_about")}</Link>

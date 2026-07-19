@@ -1,4 +1,4 @@
-import { BookAppointmentContent } from "@/app/doctors/[slug]/book/page";
+import { BookAppointmentContent } from "@/app/doctor/[slug]/book/page";
 
 export const metadata = {
   title: "Book an Appointment — asaanbil.com",
@@ -6,5 +6,5 @@ export const metadata = {
 
 export default async function PatientBookAppointmentPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  return <BookAppointmentContent slug={slug} basePath="/patient/doctors" showChrome={false} />;
+  return <BookAppointmentContent slug={slug} basePath="/patient/doctor" showChrome={false} />;
 }

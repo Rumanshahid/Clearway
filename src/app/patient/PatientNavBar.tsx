@@ -29,7 +29,7 @@ export default function PatientNavBar({
             <NavLink href="/patient/profile">Profile</NavLink>
             <NavLink href="/patient/pa">PA</NavLink>
             <NavLink href="/patient/appeals">Appeals</NavLink>
-            <NavLink href="/patient/doctors">Find a Doctor</NavLink>
+            <NavLink href="/patient/doctor">Find a Doctor</NavLink>
             <NavLink href="/patient/blog">Blog</NavLink>
             <NavLink href="/patient/questions">Q&amp;A</NavLink>
           </div>

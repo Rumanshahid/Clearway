@@ -9,7 +9,7 @@ const QUICK_LINKS = [
   { href: "/patient/profile", label: "Profile", description: "Your details, insurance, and contact info." },
   { href: "/patient/pa", label: "Prior Authorization", description: "Submit a request directly to your doctor." },
   { href: "/patient/appeals", label: "Appeals", description: "Appeal a denied claim." },
-  { href: "/doctors", label: "Find a Doctor", description: "Search doctors and book an appointment." },
+  { href: "/doctor", label: "Find a Doctor", description: "Search doctors and book an appointment." },
   { href: "/blog", label: "Blog", description: "Read, like, and comment on posts." },
   { href: "/questions", label: "Q&A", description: "Ask a question or help other patients." },
 ];

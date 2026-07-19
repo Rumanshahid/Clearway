@@ -100,7 +100,7 @@ export default async function SearchPage({
             <h2 className="text-[13px] font-semibold uppercase tracking-wide text-gray-400 mb-4">Doctors</h2>
             <div className="flex flex-col gap-4">
               {(doctorRows || []).map((d) => (
-                <Link key={d.id} href={`/doctors/${d.slug}`} className="card p-4 hover:bg-gray-50 transition-colors">
+                <Link key={d.id} href={`/doctor/${d.slug}`} className="card p-4 hover:bg-gray-50 transition-colors">
                   <div className="text-[15px] font-semibold mb-1">{nameById.get(d.profile_id)}</div>
                   <p className="text-[13px] text-gray-600">{d.specialty}{d.city ? ` · ${d.city}, ${d.state}` : ""}</p>
                 </Link>

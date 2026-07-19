@@ -41,7 +41,7 @@ export async function getDashboardNavData(userId: string): Promise<DashboardNavD
   let profileHref = "/dashboard/profiles";
   if (isAdmin) {
     const { data: doctorProfile } = await supabase.from("doctor_profiles").select("slug").eq("profile_id", userId).maybeSingle();
-    if (doctorProfile) profileHref = `/doctors/${doctorProfile.slug}`;
+    if (doctorProfile) profileHref = `/doctor/${doctorProfile.slug}`;
   }
 
   const { data: practice } = await supabase.from("practices").select("plan, billing_status").eq("id", profile.practice_id).single();

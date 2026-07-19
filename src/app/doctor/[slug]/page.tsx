@@ -20,13 +20,13 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   };
 }
 
-// Extracted so /patient/doctors/[slug] can render the same profile under
+// Extracted so /patient/doctor/[slug] can render the same profile under
 // its own URL prefix, without the marketing chrome -- PatientLayout
 // already supplies its own nav there.
 export async function DoctorProfileContent({
   slug,
   saved,
-  basePath = "/doctors",
+  basePath = "/doctor",
   showChrome = true,
 }: {
   slug: string;

@@ -15,12 +15,12 @@ export const metadata = {
 const INSURANCE_OPTIONS = ["Aetna", "Cigna / eviCore", "UnitedHealthcare", "Humana", "BCBS / Anthem", "Medicare", "Medicaid"];
 const LANGUAGE_OPTIONS = ["English", "Spanish", "Mandarin", "Vietnamese", "Arabic", "Tagalog", "French", "Urdu/Hindi"];
 
-// Extracted so /patient/doctors can render the same directory (same data,
+// Extracted so /patient/doctor can render the same directory (same data,
 // same filters) under its own URL prefix and without the marketing chrome
 // -- PatientLayout already supplies its own nav there.
 export async function DoctorsDirectoryContent({
   searchParams,
-  basePath = "/doctors",
+  basePath = "/doctor",
   showChrome = true,
 }: {
   searchParams: Promise<{ q?: string; specialty?: string; insurance?: string; language?: string; city?: string; new_patients?: string; telehealth?: string }>;

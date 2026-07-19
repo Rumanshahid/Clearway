@@ -10,6 +10,19 @@ const nextConfig: NextConfig = {
       bodySizeLimit: "6mb",
     },
   },
+  // /doctors -> /doctor rename: permanent redirects so Google's existing
+  // index and any external backlinks to the old plural URLs still resolve
+  // instead of 404ing.
+  async redirects() {
+    return [
+      { source: "/doctors", destination: "/doctor", permanent: true },
+      { source: "/doctors/:slug", destination: "/doctor/:slug", permanent: true },
+      { source: "/doctors/:slug/book", destination: "/doctor/:slug/book", permanent: true },
+      { source: "/patient/doctors", destination: "/patient/doctor", permanent: true },
+      { source: "/patient/doctors/:slug", destination: "/patient/doctor/:slug", permanent: true },
+      { source: "/patient/doctors/:slug/book", destination: "/patient/doctor/:slug/book", permanent: true },
+    ];
+  },
 };
 
 export default nextConfig;

@@ -9,12 +9,12 @@ export const metadata = {
   title: "Book an Appointment — asaanbil.com",
 };
 
-// Extracted so /patient/doctors/[slug]/book can render the same booking
+// Extracted so /patient/doctor/[slug]/book can render the same booking
 // flow under its own URL prefix, without the marketing chrome --
 // PatientLayout already supplies its own nav there.
 export async function BookAppointmentContent({
   slug,
-  basePath = "/doctors",
+  basePath = "/doctor",
   showChrome = true,
 }: {
   slug: string;

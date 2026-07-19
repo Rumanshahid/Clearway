@@ -266,7 +266,7 @@ export default function ProfileCard({
                 this internal page instead of "back where they clicked
                 Edit Profile from". Staff have no public page to return to. */}
             {isDoctor && doctorData ? (
-              <Link href={`/doctors/${doctorData.profile.slug}`} className="btn btn-outline btn-sm">Cancel</Link>
+              <Link href={`/doctor/${doctorData.profile.slug}`} className="btn btn-outline btn-sm">Cancel</Link>
             ) : (
               <button type="button" className="btn btn-outline btn-sm" onClick={() => setEditing(false)}>Cancel</button>
             )}

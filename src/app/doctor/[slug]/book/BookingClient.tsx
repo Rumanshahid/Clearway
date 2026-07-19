@@ -32,7 +32,7 @@ export default function BookingClient({
   doctorSlug,
   doctorName,
   telehealthAvailable,
-  backHref = "/doctors",
+  backHref = "/doctor",
 }: {
   doctorSlug: string;
   doctorName: string;

@@ -1,6 +1,6 @@
-import { DoctorProfileContent } from "@/app/doctors/[slug]/page";
+import { DoctorProfileContent } from "@/app/doctor/[slug]/page";
 
-export { generateMetadata } from "@/app/doctors/[slug]/page";
+export { generateMetadata } from "@/app/doctor/[slug]/page";
 
 export default async function PatientDoctorProfilePage({
   params,
@@ -11,5 +11,5 @@ export default async function PatientDoctorProfilePage({
 }) {
   const { slug } = await params;
   const { saved } = await searchParams;
-  return <DoctorProfileContent slug={slug} saved={saved} basePath="/patient/doctors" showChrome={false} />;
+  return <DoctorProfileContent slug={slug} saved={saved} basePath="/patient/doctor" showChrome={false} />;
 }

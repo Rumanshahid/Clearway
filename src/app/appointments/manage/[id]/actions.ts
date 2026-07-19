@@ -62,7 +62,7 @@ export async function patientCancelAction(formData: FormData): Promise<{ ok: boo
     doctorName: ctx.doctorName,
     appointmentTypeName: ctx.typeName,
     start: ctx.appointment.start_at,
-    rebookUrl: `${process.env.NEXT_PUBLIC_SITE_URL || ""}/doctors/${ctx.doctorSlug}`,
+    rebookUrl: `${process.env.NEXT_PUBLIC_SITE_URL || ""}/doctor/${ctx.doctorSlug}`,
   });
   try {
     await sendEmail({ to: ctx.appointment.patient_email, subject: email.subject, html: email.html });

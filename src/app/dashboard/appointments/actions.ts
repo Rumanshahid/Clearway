@@ -124,7 +124,7 @@ export async function markNoShowAction(formData: FormData) {
     const email = noShowReengagementEmail({
       doctorName,
       appointmentTypeName: type?.name || "your appointment",
-      rebookUrl: `${process.env.NEXT_PUBLIC_SITE_URL || ""}/doctors/${doctorProfile?.slug || ""}`,
+      rebookUrl: `${process.env.NEXT_PUBLIC_SITE_URL || ""}/doctor/${doctorProfile?.slug || ""}`,
     });
     await sendEmail({ to: appointment.patient_email, subject: email.subject, html: email.html });
   } catch (err) {
@@ -160,7 +160,7 @@ export async function cancelAppointmentAction(formData: FormData) {
       doctorName,
       appointmentTypeName: type?.name || "your appointment",
       start: appointment.start_at,
-      rebookUrl: `${process.env.NEXT_PUBLIC_SITE_URL || ""}/doctors/${doctorProfile?.slug || ""}`,
+      rebookUrl: `${process.env.NEXT_PUBLIC_SITE_URL || ""}/doctor/${doctorProfile?.slug || ""}`,
     });
     await sendEmail({ to: appointment.patient_email, subject: email.subject, html: email.html });
 

@@ -26,7 +26,7 @@ export default async function PatientPaPage({
   const { data: account } = await admin.from("patient_accounts").select("id").eq("id", user.id).maybeSingle();
   if (!account) redirect("/auth/choose-role");
 
-  // Anonymous-safe admin client, same pattern as /doctors: doctor_profiles
+  // Anonymous-safe admin client, same pattern as /doctor: doctor_profiles
   // has no public-select RLS policy, and profiles.full_name isn't
   // patient-readable via RLS either.
   const { data: doctorRows } = await admin.from("doctor_profiles").select("profile_id, specialty").eq("public_enabled", true);
