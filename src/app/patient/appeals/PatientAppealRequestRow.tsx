@@ -46,15 +46,13 @@ export default function PatientAppealRequestRow({
       style={{ borderBottom: "1px solid var(--gray-200)" }}
       onClick={() => router.push(`/patient/appeals/${requestId}`)}
     >
-      <td className="px-5 py-3">
-        <div className="flex items-center gap-2">
-          <span
-            aria-hidden="true"
-            className="rounded-full flex-shrink-0"
-            style={{ width: 7, height: 7, background: value === "submitted" ? "#22c55e" : "var(--gray-400)" }}
-          />
-          {doctorName}
-        </div>
+      <td className="px-5 py-3 relative">
+        <span
+          aria-hidden="true"
+          className="rounded-full absolute"
+          style={{ width: 7, height: 7, left: 6, top: "50%", transform: "translateY(-50%)", background: value === "submitted" ? "#22c55e" : "var(--gray-400)" }}
+        />
+        {doctorName}
       </td>
       <td className="px-5 py-3 max-w-[240px] truncate">{denialReason}</td>
       <td className="px-5 py-3 text-gray-600">{claimNumber || "—"}</td>
