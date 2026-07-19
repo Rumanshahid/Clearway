@@ -72,5 +72,5 @@ export async function completeOnboardingAction(formData: FormData) {
     redirect(`/onboarding?error=${encodeURIComponent(profileError.message)}`);
   }
 
-  redirect("/dashboard");
+  redirect("/doctor/dashboard");
 }

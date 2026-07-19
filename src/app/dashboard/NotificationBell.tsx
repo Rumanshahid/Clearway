@@ -103,7 +103,7 @@ export default function NotificationBell({
             return (
               <Link
                 key={n.id}
-                href={n.link || "/dashboard"}
+                href={n.link || "/doctor/dashboard"}
                 // Only set an inline background for the unread case — an
                 // inline "transparent" for read notifications would
                 // permanently win over a hover:bg-gray-50 class (inline

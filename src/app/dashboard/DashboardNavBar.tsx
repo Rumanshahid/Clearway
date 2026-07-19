@@ -18,7 +18,7 @@ export default function DashboardNavBar({ data }: { data: DashboardNavData }) {
     <nav className="bg-white border-b" style={{ borderColor: "var(--gray-200)" }}>
       <div className="max-w-[1300px] mx-auto px-5 h-14 flex items-center justify-between">
         <div className="flex items-center gap-8">
-          <Link href="/dashboard" className="flex items-center gap-2 text-[17px] font-semibold text-gray-900">
+          <Link href="/doctor/dashboard" className="flex items-center gap-2 text-[17px] font-semibold text-gray-900">
             <span className="w-[24px] h-[24px] rounded-[6px] bg-navy-900 flex items-center justify-center">
               <svg width="12" height="12" viewBox="0 0 14 14" fill="none">
                 <path d="M2 7h10M7 2l5 5-5 5" stroke="#fff" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
@@ -28,12 +28,12 @@ export default function DashboardNavBar({ data }: { data: DashboardNavData }) {
           </Link>
           <div className="flex items-center gap-1">
             {isAdmin && <NavLink href="/dashboard/overview">Dashboard</NavLink>}
-            {showSection("requests") && <NavLink href="/dashboard" extraPrefixes={["/dashboard/requests"]}>PA</NavLink>}
+            {showSection("requests") && <NavLink href="/doctor/dashboard" extraPrefixes={["/dashboard/requests"]}>PA</NavLink>}
             {showSection("patients") && <NavLink href="/dashboard/patients">Patients</NavLink>}
             {showSection("appeals") && <NavLink href="/dashboard/appeals">Appeals</NavLink>}
             <NavLink href="/dashboard/appointments">Appointments</NavLink>
-            <NavLink href="/blog">Blog</NavLink>
-            <NavLink href="/questions">Q&amp;A</NavLink>
+            <NavLink href="/doctor/blog">Blog</NavLink>
+            <NavLink href="/doctor/questions">Q&amp;A</NavLink>
           </div>
         </div>
         <div className="flex items-center gap-1">

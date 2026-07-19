@@ -47,7 +47,7 @@ async function requireCallerIsPracticeAdmin() {
     .single();
 
   if (!profile?.practice_id || (profile.role !== "clinic_admin" && profile.role !== "super_admin")) {
-    redirect("/dashboard");
+    redirect("/doctor/dashboard");
   }
 
   return { callerId: user.id, practiceId: profile.practice_id };

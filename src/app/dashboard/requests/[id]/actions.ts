@@ -73,7 +73,7 @@ export async function updateStatusAction(formData: FormData) {
   }
 
   revalidatePath(`/dashboard/requests/${requestId}`);
-  revalidatePath("/dashboard");
+  revalidatePath("/doctor/dashboard");
 }
 
 export async function deleteRequestAction(formData: FormData) {
@@ -90,7 +90,7 @@ export async function deleteRequestAction(formData: FormData) {
   // Letters cascade-delete via the pa_request_id foreign key.
   await supabase.from("pa_requests").delete().eq("id", requestId);
 
-  revalidatePath("/dashboard");
+  revalidatePath("/doctor/dashboard");
 }
 
 export async function redraftAction(formData: FormData) {

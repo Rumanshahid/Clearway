@@ -129,7 +129,7 @@ export async function resetPasswordAction(formData: FormData) {
     redirect(`/reset-password?error=${encodeURIComponent(error.message)}`);
   }
 
-  redirect("/dashboard");
+  redirect("/doctor/dashboard");
 }
 
 export async function signOutAction() {

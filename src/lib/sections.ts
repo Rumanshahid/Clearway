@@ -3,7 +3,7 @@
 // be pulled into "use client" components.
 
 export const DASHBOARD_SECTIONS = [
-  { key: "requests", label: "PA Requests", href: "/dashboard" },
+  { key: "requests", label: "PA Requests", href: "/doctor/dashboard" },
   { key: "patients", label: "Patients", href: "/dashboard/patients" },
   { key: "appeals", label: "Appeals", href: "/dashboard/appeals" },
 ] as const;

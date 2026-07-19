@@ -8,7 +8,7 @@ import { slugify } from "@/lib/blog";
 import type { BlogPostStatus } from "@/lib/database.types";
 
 function requireSuperAdmin(role: string) {
-  if (role !== "super_admin") redirect("/dashboard");
+  if (role !== "super_admin") redirect("/doctor/dashboard");
 }
 
 async function uploadCoverImage(supabase: Awaited<ReturnType<typeof createClient>>, slug: string, file: File): Promise<string> {

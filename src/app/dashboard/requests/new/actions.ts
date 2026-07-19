@@ -245,7 +245,7 @@ export async function createRequestAction(formData: FormData) {
     );
   }
 
-  redirect(`/dashboard?drafted=${encodeURIComponent(patientReference)}`);
+  redirect(`/doctor/dashboard?drafted=${encodeURIComponent(patientReference)}`);
 }
 
 export async function draftLetterForRequest(requestId: string) {

@@ -37,7 +37,7 @@ export default function FiltersDropdown({
     Object.entries(next).forEach(([k, v]) => {
       if (v) params.set(k, v);
     });
-    router.push(`/dashboard${params.toString() ? `?${params.toString()}` : ""}`);
+    router.push(`/doctor/dashboard${params.toString() ? `?${params.toString()}` : ""}`);
   }
 
   const labelFor = (options: [string, string][], value?: string) => options.find(([v]) => v === value)?.[1];
@@ -115,7 +115,7 @@ export default function FiltersDropdown({
                 {chip.label}
               </span>
             ))}
-            <button type="button" className="text-btn text-[12.5px] text-gray-400" onClick={() => router.push("/dashboard")}>
+            <button type="button" className="text-btn text-[12.5px] text-gray-400" onClick={() => router.push("/doctor/dashboard")}>
               Clear filters
             </button>
           </div>

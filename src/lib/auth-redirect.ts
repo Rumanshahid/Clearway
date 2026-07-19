@@ -21,7 +21,7 @@ export async function resolvePostLoginPath(userId: string): Promise<string> {
     // dashboard overview, not the PA-requests list that sits at the bare
     // /dashboard route -- only plain staff (clinic_user) go there.
     const isAdmin = profile.role === "clinic_admin" || profile.role === "super_admin";
-    return isAdmin ? "/dashboard/overview" : "/dashboard";
+    return isAdmin ? "/dashboard/overview" : "/doctor/dashboard";
   }
 
   const { data: patientAccount } = await admin.from("patient_accounts").select("id").eq("id", userId).maybeSingle();

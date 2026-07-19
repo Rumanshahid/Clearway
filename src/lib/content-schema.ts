@@ -302,7 +302,7 @@ export const CONTENT_PAGES: ContentPageDef[] = [
   {
     slug: "pa",
     label: "PA",
-    revalidatePaths: ["/dashboard"],
+    revalidatePaths: ["/doctor/dashboard"],
     sections: [
       {
         title: "Heading",

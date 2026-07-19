@@ -23,7 +23,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   if (!user) redirect("/sign-in");
 
   const { data: profile } = await supabase.from("profiles").select("role").eq("id", user.id).single();
-  if (profile?.role !== "super_admin") redirect("/dashboard");
+  if (profile?.role !== "super_admin") redirect("/doctor/dashboard");
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -42,7 +42,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
             </div>
           </div>
           <div className="flex items-center gap-4">
-            <Link href="/dashboard" className="text-[12.5px]" style={{ color: "#A0A8C0" }}>Back to app</Link>
+            <Link href="/doctor/dashboard" className="text-[12.5px]" style={{ color: "#A0A8C0" }}>Back to app</Link>
             <form action={signOutAction}>
               <button className="btn btn-outline btn-sm" type="submit">Sign out</button>
             </form>

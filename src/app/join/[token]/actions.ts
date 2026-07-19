@@ -53,5 +53,5 @@ export async function acceptInviteAction(formData: FormData) {
     .update({ accepted_at: new Date().toISOString(), accepted_by: user.id })
     .eq("id", invite.id);
 
-  redirect("/dashboard");
+  redirect("/doctor/dashboard");
 }

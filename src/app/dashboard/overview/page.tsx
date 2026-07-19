@@ -202,7 +202,7 @@ export default async function OverviewPage({
     switch (key) {
       case "pa_requests":
         return (
-          <SectionCard title="PA Requests" href="/dashboard">
+          <SectionCard title="PA Requests" href="/doctor/dashboard">
             <StatRow label="This month" value={paStats.total} />
             <StatRow label="Approved" value={paStats.approved} accent="var(--success-green)" />
             <StatRow label="Pending" value={paStats.pending} accent="var(--indigo-600)" />

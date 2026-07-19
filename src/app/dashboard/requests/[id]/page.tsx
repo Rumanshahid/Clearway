@@ -49,7 +49,7 @@ export default async function RequestDetailPage({
 
   return (
     <div className="max-w-[900px] mx-auto py-8 px-5">
-      <Link href="/dashboard" className="text-[13px] text-gray-400 mb-3 inline-block">← Back to requests</Link>
+      <Link href="/doctor/dashboard" className="text-[13px] text-gray-400 mb-3 inline-block">← Back to requests</Link>
 
       {error && (
         <div className="mb-5 text-[13px] rounded-lg px-3 py-2" style={{ background: "var(--danger-bg)", color: "var(--danger-red)" }}>

@@ -66,7 +66,7 @@ export default async function JoinPage({
         ) : alreadyThisPractice ? (
           <p className="text-[14px] text-gray-600 mt-3">
             You&apos;re already a member of <strong>{practice?.name}</strong>.{" "}
-            <Link href="/dashboard" className="text-indigo-600 font-medium">Go to your dashboard →</Link>
+            <Link href="/doctor/dashboard" className="text-indigo-600 font-medium">Go to your dashboard →</Link>
           </p>
         ) : inOtherPractice ? (
           <p className="text-[14px] text-gray-600 mt-3">

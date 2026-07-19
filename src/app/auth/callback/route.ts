@@ -22,7 +22,7 @@ export async function GET(request: Request) {
     const {
       data: { user },
     } = await supabase.auth.getUser();
-    return user ? resolvePostLoginPath(user.id) : "/dashboard";
+    return user ? resolvePostLoginPath(user.id) : "/doctor/dashboard";
   }
 
   // Preferred path: token_hash + type (from a custom email template link).
@@ -69,5 +69,5 @@ export async function GET(request: Request) {
   // the browser. Hand off to a client page that can read location.hash.
   // No fragment is set on this redirect, so browsers carry over whatever
   // fragment the original URL had.
-  return NextResponse.redirect(`${origin}/auth/hash-callback?next=${encodeURIComponent(explicitNext || "/dashboard")}`);
+  return NextResponse.redirect(`${origin}/auth/hash-callback?next=${encodeURIComponent(explicitNext || "/doctor/dashboard")}`);
 }

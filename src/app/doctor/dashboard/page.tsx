@@ -5,8 +5,8 @@ import { PAYERS } from "@/lib/criteria";
 import { getProcedureLabelMap, getSiteContent } from "@/lib/criteria-repo";
 import { getPageBySlug, makeFieldGetter } from "@/lib/content-schema";
 import type { RequestStatus } from "@/lib/database.types";
-import RequestRow from "./RequestRow";
-import FiltersDropdown from "./FiltersDropdown";
+import RequestRow from "@/app/dashboard/RequestRow";
+import FiltersDropdown from "@/app/dashboard/FiltersDropdown";
 
 const PA_PAGE = getPageBySlug("pa")!;
 

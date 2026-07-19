@@ -7,7 +7,7 @@ import type { EmailOtpType } from "@supabase/supabase-js";
 export async function confirmInviteLinkAction(formData: FormData) {
   const tokenHash = String(formData.get("token_hash") || "");
   const type = String(formData.get("type") || "") as EmailOtpType;
-  const next = String(formData.get("next") || "/dashboard");
+  const next = String(formData.get("next") || "/doctor/dashboard");
 
   if (!tokenHash || !type) {
     redirect(`/sign-in?error=${encodeURIComponent("That link is missing required information. Ask for a new one.")}`);

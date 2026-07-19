@@ -35,7 +35,7 @@ export default async function ConfirmPage({
         <form action={confirmInviteLinkAction}>
           <input type="hidden" name="token_hash" value={token_hash} />
           <input type="hidden" name="type" value={type} />
-          <input type="hidden" name="next" value={next || "/dashboard"} />
+          <input type="hidden" name="next" value={next || "/doctor/dashboard"} />
           <button type="submit" className="btn btn-primary w-full justify-center">Continue →</button>
         </form>
       </div>

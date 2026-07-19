@@ -4,12 +4,10 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 function isActive(pathname: string, href: string, extraPrefixes?: string[]): boolean {
-  // "/dashboard" itself is the PA requests root — every other dashboard
-  // route also starts with "/dashboard/", so it can't use prefix matching
-  // or it would light up for every page. Everything else is specific
-  // enough (e.g. "/dashboard/patients") that prefix matching is correct,
-  // so a detail page like "/dashboard/patients/123" still highlights it.
-  const matchesOwn = href === "/dashboard" ? pathname === href : pathname === href || pathname.startsWith(`${href}/`);
+  // "/doctor/dashboard" itself is the PA requests root — matched via its
+  // own extraPrefixes ("/dashboard/requests") rather than prefix-matching
+  // its own href, since nothing else starts with "/doctor/dashboard/".
+  const matchesOwn = href === "/doctor/dashboard" ? pathname === href : pathname === href || pathname.startsWith(`${href}/`);
   if (matchesOwn) return true;
   return !!extraPrefixes?.some((p) => pathname === p || pathname.startsWith(`${p}/`));
 }

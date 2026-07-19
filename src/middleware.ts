@@ -2,7 +2,7 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { resolvePostLoginPath } from "@/lib/auth-redirect";
 
-const PROTECTED_PREFIXES = ["/dashboard", "/onboarding", "/admin", "/patient"];
+const PROTECTED_PREFIXES = ["/dashboard", "/doctor/dashboard", "/onboarding", "/admin", "/patient"];
 const AUTH_PAGES = ["/sign-in", "/sign-up", "/forgot-password"];
 
 /**

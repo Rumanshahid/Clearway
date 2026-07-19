@@ -13,6 +13,11 @@ const nextConfig: NextConfig = {
   // /doctors -> /doctor rename: permanent redirects so Google's existing
   // index and any external backlinks to the old plural URLs still resolve
   // instead of 404ing.
+  //
+  // /dashboard -> /doctor/dashboard: only the exact root PA-requests page
+  // moved (source has no wildcard) -- every other /dashboard/* sub-page
+  // (overview, patients, appeals, appointments, etc.) intentionally stays
+  // where it is, so this redirect must not match those.
   async redirects() {
     return [
       { source: "/doctors", destination: "/doctor", permanent: true },
@@ -21,6 +26,7 @@ const nextConfig: NextConfig = {
       { source: "/patient/doctors", destination: "/patient/doctor", permanent: true },
       { source: "/patient/doctors/:slug", destination: "/patient/doctor/:slug", permanent: true },
       { source: "/patient/doctors/:slug/book", destination: "/patient/doctor/:slug/book", permanent: true },
+      { source: "/dashboard", destination: "/doctor/dashboard", permanent: true },
     ];
   },
 };

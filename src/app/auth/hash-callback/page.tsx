@@ -10,7 +10,7 @@ function HashCallbackInner() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const next = searchParams.get("next") || "/dashboard";
+    const next = searchParams.get("next") || "/doctor/dashboard";
     const hash = window.location.hash.startsWith("#") ? window.location.hash.slice(1) : window.location.hash;
     const hashParams = new URLSearchParams(hash);
 

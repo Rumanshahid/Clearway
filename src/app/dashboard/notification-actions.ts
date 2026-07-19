@@ -8,6 +8,7 @@ export async function markNotificationReadAction(formData: FormData) {
   const supabase = await createClient();
   await supabase.from("notifications").update({ read: true }).eq("id", id);
   revalidatePath("/dashboard", "layout");
+  revalidatePath("/doctor/dashboard", "layout");
 }
 
 export async function markAllNotificationsReadAction() {
@@ -19,4 +20,5 @@ export async function markAllNotificationsReadAction() {
 
   await supabase.from("notifications").update({ read: true }).eq("user_id", user.id).eq("read", false);
   revalidatePath("/dashboard", "layout");
+  revalidatePath("/doctor/dashboard", "layout");
 }
