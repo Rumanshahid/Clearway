@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { createClient, createAdminClient } from "@/lib/supabase/server";
 import LetterCard from "../../LetterCard";
-import PatientAppealStatusSelect from "../PatientAppealStatusSelect";
+import PatientAppealStatusControl from "../PatientAppealStatusControl";
 import { redraftPatientAppealLetterAction, editPatientAppealLetterAction } from "../actions";
 
 // redraft calls Claude, which can run close to the platform's 10s default
@@ -41,7 +41,7 @@ export default async function PatientAppealRequestDetailPage({ params }: { param
           </p>
         </div>
         <div className="flex-shrink-0">
-          <PatientAppealStatusSelect requestId={request.id} status={request.status} />
+          <PatientAppealStatusControl requestId={request.id} status={request.status} />
         </div>
       </div>
 

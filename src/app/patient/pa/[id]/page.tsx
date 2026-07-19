@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { createClient, createAdminClient } from "@/lib/supabase/server";
 import LetterCard from "../../LetterCard";
-import PatientPaStatusSelect from "../PatientPaStatusSelect";
+import PatientPaStatusControl from "../PatientPaStatusControl";
 import { redraftPatientPaLetterAction, editPatientPaLetterAction } from "../actions";
 
 // draftPatientPaLetterAction/redraft calls Claude, which can run close to
@@ -40,7 +40,7 @@ export default async function PatientPaRequestDetailPage({ params }: { params: P
           </p>
         </div>
         <div className="flex-shrink-0">
-          <PatientPaStatusSelect requestId={request.id} status={request.status} />
+          <PatientPaStatusControl requestId={request.id} status={request.status} />
         </div>
       </div>
 
