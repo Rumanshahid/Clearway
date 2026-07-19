@@ -1,6 +1,8 @@
 import { redirect } from "next/navigation";
 import { createClient, createAdminClient } from "@/lib/supabase/server";
 import PatientPaForm, { type DoctorOption } from "./PatientPaForm";
+import LetterCard from "../LetterCard";
+import { draftPatientPaLetterAction } from "./actions";
 
 export default async function PatientPaPage({
   searchParams,
@@ -35,7 +37,7 @@ export default async function PatientPaPage({
 
   const { data: requests } = await admin
     .from("patient_pa_requests")
-    .select("id, procedure_description, status, doctor_profile_id, created_at")
+    .select("id, procedure_description, status, doctor_profile_id, created_at, letter_content")
     .eq("patient_account_id", user.id)
     .order("created_at", { ascending: false });
 
@@ -76,6 +78,7 @@ export default async function PatientPaPage({
               </div>
               <p className="text-[13px] text-gray-600">{r.procedure_description}</p>
               <p className="text-[11.5px] text-gray-400 mt-1">{new Date(r.created_at).toLocaleDateString()}</p>
+              <LetterCard requestId={r.id} letterContent={r.letter_content} draftAction={draftPatientPaLetterAction} />
             </div>
           ))}
         </div>
