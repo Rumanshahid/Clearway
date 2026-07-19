@@ -1,16 +1,22 @@
 import { redirect } from "next/navigation";
 import { createClient, createAdminClient } from "@/lib/supabase/server";
 import NewPaRequestButton from "./NewPaRequestButton";
+import PatientPaRequestRow from "./PatientPaRequestRow";
+import RequestFiltersDropdown from "../RequestFiltersDropdown";
 import type { DoctorOption } from "./PatientPaForm";
-import LetterCard from "../LetterCard";
-import { redraftPatientPaLetterAction, editPatientPaLetterAction } from "./actions";
+
+const STATUS_OPTIONS: [string, string][] = [
+  ["submitted", "Submitted"],
+  ["in_review", "In review"],
+  ["resolved", "Resolved"],
+];
 
 export default async function PatientPaPage({
   searchParams,
 }: {
-  searchParams: Promise<{ error?: string; submitted?: string }>;
+  searchParams: Promise<{ error?: string; submitted?: string; status?: string; doctor?: string; from?: string; to?: string }>;
 }) {
-  const { error, submitted } = await searchParams;
+  const { error, submitted, status, doctor, from, to } = await searchParams;
   const supabase = await createClient();
   const {
     data: { user },
@@ -36,20 +42,21 @@ export default async function PatientPaPage({
     specialty: d.specialty,
   }));
 
-  const { data: requests } = await admin
+  let query = admin
     .from("patient_pa_requests")
-    .select("id, procedure_description, status, doctor_profile_id, created_at, letter_content, risk_flags, suggestions")
+    .select("id, procedure_description, status, doctor_profile_id, created_at")
     .eq("patient_account_id", user.id)
     .order("created_at", { ascending: false });
 
-  const requestDoctorIds = [...new Set((requests || []).map((r) => r.doctor_profile_id))];
-  const { data: requestDoctorProfiles } = requestDoctorIds.length
-    ? await admin.from("profiles").select("id, full_name").in("id", requestDoctorIds)
-    : { data: [] as { id: string; full_name: string | null }[] };
-  const requestDoctorNameById = new Map((requestDoctorProfiles || []).map((p) => [p.id, p.full_name || "Doctor"]));
+  if (status) query = query.eq("status", status as "submitted" | "in_review" | "resolved");
+  if (doctor) query = query.eq("doctor_profile_id", doctor);
+  if (from) query = query.gte("created_at", from);
+  if (to) query = query.lte("created_at", `${to}T23:59:59`);
+
+  const { data: requests } = await query;
 
   return (
-    <div className="max-w-[700px] mx-auto py-8 px-5">
+    <div className="max-w-[1300px] mx-auto py-8 px-5">
       <div className="flex items-start justify-between gap-4 mb-1">
         <h1 className="text-[24px] font-semibold">Prior Authorization</h1>
         <NewPaRequestButton doctors={doctors} />
@@ -57,40 +64,63 @@ export default async function PatientPaPage({
       <p className="text-[13.5px] text-gray-600 mb-6">Submit a prior-authorization request directly to your doctor.</p>
 
       {submitted && !error && (
-        <div className="mb-4 text-[13px] rounded-lg px-3 py-2" style={{ background: "var(--success-bg)", color: "var(--success-green)" }}>
-          Request submitted.
+        <div className="mb-6 text-[13px] rounded-lg px-3 py-2" style={{ background: "var(--success-bg)", color: "var(--success-green)" }}>
+          Request submitted — see it in the table below.
         </div>
       )}
       {error && (
-        <div className="mb-4 text-[13px] rounded-lg px-3 py-2" style={{ background: "var(--danger-bg)", color: "var(--danger-red)" }}>
+        <div className="mb-6 text-[13px] rounded-lg px-3 py-2" style={{ background: "var(--danger-bg)", color: "var(--danger-red)" }}>
           {error}
         </div>
       )}
 
-      {requests && requests.length > 0 ? (
-        <div className="flex flex-col gap-3">
-          {requests.map((r) => (
-            <div key={r.id} className="card p-4">
-              <div className="flex items-center justify-between mb-1">
-                <span className="text-[13.5px] font-medium">{requestDoctorNameById.get(r.doctor_profile_id) || "Doctor"}</span>
-                <span className="text-[12px] text-gray-400 capitalize">{r.status.replace("_", " ")}</span>
-              </div>
-              <p className="text-[13px] text-gray-600">{r.procedure_description}</p>
-              <p className="text-[11.5px] text-gray-400 mt-1">{new Date(r.created_at).toLocaleDateString()}</p>
-              <LetterCard
-                requestId={r.id}
-                letterContent={r.letter_content}
-                riskFlags={r.risk_flags}
-                suggestions={r.suggestions}
-                draftAction={redraftPatientPaLetterAction}
-                editAction={editPatientPaLetterAction}
-              />
-            </div>
-          ))}
+      <div className="flex flex-col lg:flex-row gap-6 items-start">
+        <RequestFiltersDropdown
+          basePath="/patient/pa"
+          status={status}
+          doctor={doctor}
+          from={from}
+          to={to}
+          statusOptions={STATUS_OPTIONS}
+          doctorOptions={doctors.map((d) => [d.profileId, d.name])}
+        />
+
+        <div className="flex-1 min-w-0 w-full">
+          <div className="card overflow-hidden overflow-x-auto">
+            <table className="w-full text-[13.5px]">
+              <thead>
+                <tr className="text-left text-gray-400 text-[11px] uppercase tracking-wide" style={{ borderBottom: "1px solid var(--gray-200)" }}>
+                  <th className="px-5 py-3 font-semibold">Doctor</th>
+                  <th className="px-5 py-3 font-semibold">Procedure</th>
+                  <th className="px-5 py-3 font-semibold">Status</th>
+                  <th className="px-5 py-3 font-semibold">Created</th>
+                  <th className="px-5 py-3 font-semibold"></th>
+                </tr>
+              </thead>
+              <tbody>
+                {requests && requests.length > 0 ? (
+                  requests.map((r) => (
+                    <PatientPaRequestRow
+                      key={r.id}
+                      requestId={r.id}
+                      doctorName={nameById.get(r.doctor_profile_id) || "Doctor"}
+                      procedureDescription={r.procedure_description}
+                      status={r.status}
+                      createdAt={r.created_at}
+                    />
+                  ))
+                ) : (
+                  <tr>
+                    <td className="px-5 py-10 text-center text-gray-400" colSpan={5}>
+                      No requests yet. Click &quot;+ New request&quot; to submit one.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
-      ) : (
-        <p className="text-gray-400 text-[13.5px]">No requests yet. Click &quot;+ New request&quot; to submit one.</p>
-      )}
+      </div>
     </div>
   );
 }

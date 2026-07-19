@@ -97,6 +97,7 @@ export async function redraftPatientAppealLetterAction(formData: FormData) {
   await admin.from("patient_appeal_requests").update({ letter_content: letter, risk_flags: riskFlags, suggestions }).eq("id", requestId);
 
   revalidatePath("/patient/appeals");
+  revalidatePath(`/patient/appeals/${requestId}`);
 }
 
 export async function editPatientAppealLetterAction(formData: FormData) {
@@ -121,4 +122,5 @@ export async function editPatientAppealLetterAction(formData: FormData) {
   await admin.from("patient_appeal_requests").update({ letter_content: letterContent }).eq("id", requestId);
 
   revalidatePath("/patient/appeals");
+  revalidatePath(`/patient/appeals/${requestId}`);
 }
