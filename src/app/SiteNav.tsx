@@ -29,7 +29,7 @@ export default async function SiteNav() {
     const admin = await createAdminClient();
     const { data: patientAccount } = await admin.from("patient_accounts").select("id").eq("id", user.id).maybeSingle();
     if (patientAccount) {
-      dashboardHref = "/patient";
+      dashboardHref = "/patient/profile";
       const { data } = await admin
         .from("notifications")
         .select("id, type, message, link, read, created_at")
@@ -39,7 +39,8 @@ export default async function SiteNav() {
       patientNotifications = data || [];
     }
   }
-  const isPatient = dashboardHref === "/patient";
+  const isPatient = dashboardHref === "/patient/profile";
+  const homeHref = isPatient ? "/patient/profile" : "/";
 
   return (
     <>
@@ -54,7 +55,7 @@ export default async function SiteNav() {
             {c("nav_logo_text")}
           </Link>
           <div className="nav-links" id="navLinks">
-            <Link href="/">Home</Link>
+            <Link href={homeHref}>Home</Link>
             <Link href="/#pricing">{c("nav_link_pricing")}</Link>
             <Link href="/doctors">Find a Doctor</Link>
             <Link href="/blog">{c("nav_link_blog")}</Link>

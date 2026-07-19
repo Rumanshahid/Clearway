@@ -1,16 +1,31 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import "./landing.css";
 import LandingScripts from "./LandingScripts";
 import SiteNav from "./SiteNav";
 import SiteFooter from "./SiteFooter";
 import { getSiteContent } from "@/lib/criteria-repo";
 import { getPageBySlug, makeFieldGetter, sectionVisible } from "@/lib/content-schema";
+import { createClient, createAdminClient } from "@/lib/supabase/server";
 import SiteSearchBar from "./SiteSearchBar";
 
 const HOME_PAGE = getPageBySlug("home")!;
 const sectionByTitle = (title: string) => HOME_PAGE.sections.find((s) => s.title === title)!;
 
 export default async function LandingPage() {
+  // A signed-in patient's "main page" is their profile, not the marketing
+  // homepage -- same admin-client identity check every other post-login
+  // routing decision uses (see lib/auth-redirect.ts).
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (user) {
+    const admin = await createAdminClient();
+    const { data: patientAccount } = await admin.from("patient_accounts").select("id").eq("id", user.id).maybeSingle();
+    if (patientAccount) redirect("/patient/profile");
+  }
+
   const content = await getSiteContent();
   const c = makeFieldGetter(HOME_PAGE, content);
   const visible = (title: string) => sectionVisible(content, sectionByTitle(title));
