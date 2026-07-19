@@ -85,7 +85,7 @@ export async function BlogListContent({
             <Link key={post.id} href={`${basePath}/${post.slug}`} className="flex flex-col sm:flex-row gap-5 group">
               {post.cover_image_url && (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img src={post.cover_image_url} alt="" className="w-full sm:w-[220px] h-[140px] object-cover rounded-lg flex-shrink-0" />
+                <img src={post.cover_image_url} alt="" className="w-full sm:w-[220px] h-auto rounded-lg flex-shrink-0" />
               )}
               <div className="min-w-0">
                 <div className="flex items-center gap-2 text-[12px] text-gray-400 mb-1">

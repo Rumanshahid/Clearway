@@ -159,7 +159,7 @@ export async function BlogPostContent({
 
         {post.cover_image_url && (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={post.cover_image_url} alt="" className="w-full max-h-[420px] object-cover rounded-xl mb-8" />
+          <img src={post.cover_image_url} alt="" className="w-full h-auto rounded-xl mb-8" />
         )}
 
         <div className="blog-preview" dangerouslySetInnerHTML={{ __html: renderMarkdown(post.content) }} />
@@ -265,7 +265,7 @@ export async function BlogPostContent({
             <Link key={s.id} href={`${basePath}/${s.slug}`} className="card p-4 flex flex-col gap-2 hover:bg-gray-50 transition-colors">
               {s.cover_image_url && (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img src={s.cover_image_url} alt="" className="w-full h-[110px] object-cover rounded-lg" />
+                <img src={s.cover_image_url} alt="" className="w-full h-auto rounded-lg" />
               )}
               <div className="text-[12px] text-gray-400">
                 {s.published_at && new Date(s.published_at).toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" })}

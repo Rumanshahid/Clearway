@@ -103,7 +103,7 @@ export default function BlogPostForm({
             <label className="label" htmlFor="cover_image">Cover image</label>
             {(coverPreview || post.cover_image_url) && (
               // eslint-disable-next-line @next/next/no-img-element
-              <img src={coverPreview || post.cover_image_url!} alt="" className="w-full max-h-[220px] object-cover rounded-lg mb-2" />
+              <img src={coverPreview || post.cover_image_url!} alt="" className="w-full h-auto rounded-lg mb-2" />
             )}
             <input
               className="input"
