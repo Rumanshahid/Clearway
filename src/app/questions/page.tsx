@@ -59,20 +59,23 @@ export async function QuestionsListContent({
         <SiteSearchBar placeholder="Search questions…" />
       </div>
 
-      <div className={`flex items-start gap-4 mb-2 flex-wrap ${showHeading ? "justify-between" : "justify-end"}`}>
-        {showHeading && (
+      {showHeading && (
+        <div className="flex items-start justify-between gap-4 mb-2 flex-wrap">
           <div>
             <h1 className="text-[32px] font-semibold mb-2">Questions &amp; Answers</h1>
             <p className="text-[15px] text-gray-600">Ask a question — doctors, staff, and other patients can answer.</p>
           </div>
-        )}
-        {user && <Link href={`${basePath}/new`} className="btn btn-primary flex-shrink-0">Ask a question →</Link>}
-      </div>
+          {user && <Link href={`${basePath}/new`} className="btn btn-primary flex-shrink-0">Ask a question →</Link>}
+        </div>
+      )}
 
-      <div className="flex gap-6 items-start mt-8">
+      <div className={`flex gap-6 items-start ${showHeading ? "mt-8" : ""}`}>
         <FiltersSidebar tag={tag} authorType={authorType} sort={sort} tagOptions={allTags} basePath={basePath} />
 
         <div className="flex-1 min-w-0 flex flex-col gap-6">
+          {!showHeading && user && (
+            <Link href={`${basePath}/new`} className="btn btn-primary flex-shrink-0 self-end">Ask a question →</Link>
+          )}
           {(questions || []).map((q) => (
             <Link key={q.id} href={`${basePath}/${q.id}`} className="card p-5 flex flex-col gap-2 hover:bg-gray-50 transition-colors">
               <div className="flex items-center gap-2 text-[12px] text-gray-400">

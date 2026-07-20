@@ -69,22 +69,25 @@ export async function BlogListContent({
         <SiteSearchBar placeholder="Search blog posts…" />
       </div>
 
-      <div className={`flex items-start gap-4 mb-2 flex-wrap ${showHeading ? "justify-between" : "justify-end"}`}>
-        {showHeading && (
+      {showHeading && (
+        <div className="flex items-start justify-between gap-4 mb-2 flex-wrap">
           <div>
             <h1 className="text-[32px] font-semibold mb-2">Blog</h1>
             <p className="text-[15px] text-gray-600">Notes on prior authorization, claims, and running a specialty practice — from our team, physicians, and patients.</p>
           </div>
-        )}
-        {canWrite && (
-          <Link href={`${basePath}/new`} className="btn btn-primary flex-shrink-0">Write a post →</Link>
-        )}
-      </div>
+          {canWrite && (
+            <Link href={`${basePath}/new`} className="btn btn-primary flex-shrink-0">Write a post →</Link>
+          )}
+        </div>
+      )}
 
-      <div className="flex gap-6 items-start mt-8">
+      <div className={`flex gap-6 items-start ${showHeading ? "mt-8" : ""}`}>
         <FiltersSidebar tag={tag} authorType={authorType} sort={sort} tagOptions={allTags} basePath={basePath} />
 
         <div className="flex-1 min-w-0 flex flex-col gap-8">
+          {!showHeading && canWrite && (
+            <Link href={`${basePath}/new`} className="btn btn-primary flex-shrink-0 self-end">Write a post →</Link>
+          )}
           {(posts || []).map((post) => (
             <Link key={post.id} href={`${basePath}/${post.slug}`} className="flex flex-col sm:flex-row gap-5 group">
               {post.cover_image_url && (
