@@ -54,7 +54,7 @@ export async function QuestionsListContent({
   }, {});
 
   const content = (
-    <div className="wrap" style={{ width: "100%", paddingTop: 56, paddingBottom: 56 }}>
+    <div className="wrap" style={{ width: "100%", paddingTop: 24, paddingBottom: 56 }}>
       <div className="mb-8">
         <SiteSearchBar placeholder="Search questions…" />
       </div>
