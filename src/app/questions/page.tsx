@@ -73,9 +73,6 @@ export async function QuestionsListContent({
         <FiltersSidebar tag={tag} authorType={authorType} sort={sort} tagOptions={allTags} basePath={basePath} />
 
         <div className="flex-1 min-w-0 flex flex-col gap-6">
-          {!showHeading && user && (
-            <Link href={`${basePath}/new`} className="btn btn-primary flex-shrink-0 self-end">Ask a question →</Link>
-          )}
           {(questions || []).map((q) => (
             <Link key={q.id} href={`${basePath}/${q.id}`} className="card p-5 flex flex-col gap-2 hover:bg-gray-50 transition-colors">
               <div className="flex items-center gap-2 text-[12px] text-gray-400">
@@ -105,7 +102,14 @@ export async function QuestionsListContent({
           )}
         </div>
 
-        <RecentQuestionsSidebar questions={recent || []} basePath={basePath} />
+        {showHeading ? (
+          <RecentQuestionsSidebar questions={recent || []} basePath={basePath} />
+        ) : (
+          <div className="flex flex-col gap-4 items-end">
+            {user && <Link href={`${basePath}/new`} className="btn btn-primary flex-shrink-0">Ask a question →</Link>}
+            <RecentQuestionsSidebar questions={recent || []} basePath={basePath} />
+          </div>
+        )}
       </div>
     </div>
   );

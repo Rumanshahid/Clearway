@@ -85,9 +85,6 @@ export async function BlogListContent({
         <FiltersSidebar tag={tag} authorType={authorType} sort={sort} tagOptions={allTags} basePath={basePath} />
 
         <div className="flex-1 min-w-0 flex flex-col gap-8">
-          {!showHeading && canWrite && (
-            <Link href={`${basePath}/new`} className="btn btn-primary flex-shrink-0 self-end">Write a post →</Link>
-          )}
           {(posts || []).map((post) => (
             <Link key={post.id} href={`${basePath}/${post.slug}`} className="flex flex-col sm:flex-row gap-5 group">
               {post.cover_image_url && (
@@ -121,7 +118,16 @@ export async function BlogListContent({
           )}
         </div>
 
-        <SuggestionsSidebar posts={suggested || []} basePath={basePath} />
+        {showHeading ? (
+          <SuggestionsSidebar posts={suggested || []} basePath={basePath} />
+        ) : (
+          <div className="flex flex-col gap-4 items-end">
+            {canWrite && (
+              <Link href={`${basePath}/new`} className="btn btn-primary flex-shrink-0">Write a post →</Link>
+            )}
+            <SuggestionsSidebar posts={suggested || []} basePath={basePath} />
+          </div>
+        )}
       </div>
     </div>
   );
