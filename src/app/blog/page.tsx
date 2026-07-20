@@ -21,10 +21,12 @@ export async function BlogListContent({
   searchParams,
   basePath = "/blog",
   showChrome = true,
+  showHeading = true,
 }: {
   searchParams: Promise<{ tag?: string; author_type?: string; sort?: string }>;
   basePath?: string;
   showChrome?: boolean;
+  showHeading?: boolean;
 }) {
   const { tag, author_type: authorType, sort } = await searchParams;
   const supabase = await createClient();
@@ -67,11 +69,13 @@ export async function BlogListContent({
         <SiteSearchBar placeholder="Search blog posts…" />
       </div>
 
-      <div className="flex items-start justify-between gap-4 mb-2 flex-wrap">
-        <div>
-          <h1 className="text-[32px] font-semibold mb-2">Blog</h1>
-          <p className="text-[15px] text-gray-600">Notes on prior authorization, claims, and running a specialty practice — from our team, physicians, and patients.</p>
-        </div>
+      <div className={`flex items-start gap-4 mb-2 flex-wrap ${showHeading ? "justify-between" : "justify-end"}`}>
+        {showHeading && (
+          <div>
+            <h1 className="text-[32px] font-semibold mb-2">Blog</h1>
+            <p className="text-[15px] text-gray-600">Notes on prior authorization, claims, and running a specialty practice — from our team, physicians, and patients.</p>
+          </div>
+        )}
         {canWrite && (
           <Link href={`${basePath}/new`} className="btn btn-primary flex-shrink-0">Write a post →</Link>
         )}

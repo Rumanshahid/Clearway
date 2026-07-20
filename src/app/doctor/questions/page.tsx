@@ -16,5 +16,5 @@ export default async function DoctorQuestionsListPage({
 }: {
   searchParams: Promise<{ tag?: string; author_type?: string; sort?: string }>;
 }) {
-  return <QuestionsListContent searchParams={searchParams} showChrome={false} />;
+  return <QuestionsListContent searchParams={searchParams} showChrome={false} showHeading={false} />;
 }

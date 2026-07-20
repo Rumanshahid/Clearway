@@ -18,5 +18,5 @@ export default async function DoctorBlogListPage({
 }: {
   searchParams: Promise<{ tag?: string; author_type?: string; sort?: string }>;
 }) {
-  return <BlogListContent searchParams={searchParams} showChrome={false} />;
+  return <BlogListContent searchParams={searchParams} showChrome={false} showHeading={false} />;
 }

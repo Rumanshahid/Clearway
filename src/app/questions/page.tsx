@@ -21,10 +21,12 @@ export async function QuestionsListContent({
   searchParams,
   basePath = "/questions",
   showChrome = true,
+  showHeading = true,
 }: {
   searchParams: Promise<{ tag?: string; author_type?: string; sort?: string }>;
   basePath?: string;
   showChrome?: boolean;
+  showHeading?: boolean;
 }) {
   const { tag, author_type: authorType, sort } = await searchParams;
   const supabase = await createClient();
@@ -57,11 +59,13 @@ export async function QuestionsListContent({
         <SiteSearchBar placeholder="Search questions…" />
       </div>
 
-      <div className="flex items-start justify-between gap-4 mb-2 flex-wrap">
-        <div>
-          <h1 className="text-[32px] font-semibold mb-2">Questions &amp; Answers</h1>
-          <p className="text-[15px] text-gray-600">Ask a question — doctors, staff, and other patients can answer.</p>
-        </div>
+      <div className={`flex items-start gap-4 mb-2 flex-wrap ${showHeading ? "justify-between" : "justify-end"}`}>
+        {showHeading && (
+          <div>
+            <h1 className="text-[32px] font-semibold mb-2">Questions &amp; Answers</h1>
+            <p className="text-[15px] text-gray-600">Ask a question — doctors, staff, and other patients can answer.</p>
+          </div>
+        )}
         {user && <Link href={`${basePath}/new`} className="btn btn-primary flex-shrink-0">Ask a question →</Link>}
       </div>
 
