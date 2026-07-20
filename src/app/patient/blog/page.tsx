@@ -10,5 +10,5 @@ export default async function PatientBlogListPage({
 }: {
   searchParams: Promise<{ tag?: string; author_type?: string; sort?: string }>;
 }) {
-  return <BlogListContent searchParams={searchParams} basePath="/patient/blog" showChrome={false} />;
+  return <BlogListContent searchParams={searchParams} basePath="/patient/blog" showChrome={false} showHeading={false} />;
 }
