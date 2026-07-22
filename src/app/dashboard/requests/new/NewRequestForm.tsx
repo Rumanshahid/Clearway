@@ -1,11 +1,12 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { useFormStatus } from "react-dom";
 import type { FieldDef, PayerKey, ProcedureCriteria } from "@/lib/criteria";
+import type { CodeSuggestionResult } from "@/lib/code-suggestions";
 import type { AuthoringMode } from "@/lib/database.types";
 import { isEligibilityStale } from "@/lib/eligibility";
-import { createRequestAction } from "./actions";
+import { createRequestAction, suggestCodesAction } from "./actions";
 import DateInput from "@/components/DateInput";
 
 function SubmitButton() {
@@ -176,8 +177,43 @@ export default function NewRequestForm({
       ? payerKeyOverride
       : availablePayers[0]?.key || "aetna";
 
+  // AI code suggestions -- reads the whole form via formRef so it can see
+  // the procedure-specific fields even though this button sits in the Case
+  // section. Reviewable suggestions only, never auto-applied: clicking one
+  // adds it to the ICD-10/CPT inputs, staff still confirm before drafting.
+  const formRef = useRef<HTMLFormElement>(null);
+  const icd10InputRef = useRef<HTMLInputElement>(null);
+  const cptInputRef = useRef<HTMLInputElement>(null);
+  const [codeSuggestions, setCodeSuggestions] = useState<CodeSuggestionResult | null>(null);
+  const [suggestingCodes, setSuggestingCodes] = useState(false);
+  const [suggestCodesError, setSuggestCodesError] = useState<string | null>(null);
+
+  async function handleSuggestCodes() {
+    if (!formRef.current) return;
+    setSuggestingCodes(true);
+    setSuggestCodesError(null);
+    const result = await suggestCodesAction(new FormData(formRef.current));
+    setSuggestingCodes(false);
+    if ("error" in result) {
+      setSuggestCodesError(result.error);
+      return;
+    }
+    setCodeSuggestions(result);
+  }
+
+  function addIcd10Code(code: string) {
+    if (!icd10InputRef.current) return;
+    const existing = icd10InputRef.current.value.split(",").map((c) => c.trim()).filter(Boolean);
+    if (!existing.includes(code)) existing.push(code);
+    icd10InputRef.current.value = existing.join(", ");
+  }
+
+  function setCptCodeValue(code: string) {
+    if (cptInputRef.current) cptInputRef.current.value = code;
+  }
+
   return (
-    <form action={createRequestAction} className="flex flex-col gap-4">
+    <form ref={formRef} action={createRequestAction} className="flex flex-col gap-4">
       <section className="card p-5">
         <h2 className="text-[15px] font-semibold mb-3">Case</h2>
 
@@ -295,7 +331,7 @@ export default function NewRequestForm({
           </div>
           <div>
             <label className="label" htmlFor="icd10_codes">ICD-10 diagnosis code(s)</label>
-            <input className="input" id="icd10_codes" name="icd10_codes" placeholder="M54.5, M51.16" required />
+            <input ref={icd10InputRef} className="input" id="icd10_codes" name="icd10_codes" placeholder="M54.5, M51.16" required />
           </div>
           {patientSelection === "new" ? (
             <>
@@ -330,7 +366,56 @@ export default function NewRequestForm({
           )}
           <div>
             <label className="label" htmlFor="cpt_code">CPT/HCPCS code</label>
-            <input className="input" id="cpt_code" name="cpt_code" placeholder="e.g. 72148" />
+            <input ref={cptInputRef} className="input" id="cpt_code" name="cpt_code" placeholder="e.g. 72148" />
+          </div>
+
+          <div className="col-span-3">
+            <button
+              type="button"
+              className="text-[12.5px] font-medium"
+              style={{ color: "var(--indigo-600)" }}
+              onClick={handleSuggestCodes}
+              disabled={suggestingCodes}
+            >
+              {suggestingCodes ? "Suggesting codes…" : "✨ Suggest ICD-10/CPT codes from what's entered so far"}
+            </button>
+
+            {suggestCodesError && (
+              <p className="text-[12px] mt-1.5" style={{ color: "var(--danger-red)" }}>{suggestCodesError}</p>
+            )}
+
+            {codeSuggestions && (codeSuggestions.icd10.length > 0 || codeSuggestions.cpt.length > 0) && (
+              <div className="rounded-lg px-3 py-2.5 mt-2" style={{ background: "var(--gray-50)", border: "1px solid var(--gray-200)" }}>
+                <div className="flex flex-wrap gap-1.5 mb-1.5">
+                  {codeSuggestions.icd10.map((s) => (
+                    <button
+                      key={s.code}
+                      type="button"
+                      onClick={() => addIcd10Code(s.code)}
+                      className="text-[12px] rounded-full px-2.5 py-1"
+                      style={{ background: "var(--gray-100)", color: "var(--gray-900)" }}
+                    >
+                      + {s.code} — {s.label}
+                    </button>
+                  ))}
+                  {codeSuggestions.cpt.map((s) => (
+                    <button
+                      key={s.code}
+                      type="button"
+                      onClick={() => setCptCodeValue(s.code)}
+                      className="text-[12px] rounded-full px-2.5 py-1"
+                      style={{ background: "var(--gray-100)", color: "var(--gray-900)" }}
+                    >
+                      CPT {s.code} — {s.label}
+                    </button>
+                  ))}
+                </div>
+                <p className="text-[11px] text-gray-400">{codeSuggestions.caveat}</p>
+              </div>
+            )}
+            {codeSuggestions && codeSuggestions.icd10.length === 0 && codeSuggestions.cpt.length === 0 && (
+              <p className="text-[12px] text-gray-400 mt-1.5">Not enough case detail yet to suggest codes responsibly — fill in more fields below and try again.</p>
+            )}
           </div>
         </div>
       </section>

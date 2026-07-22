@@ -8,7 +8,31 @@ import type { AuthoringMode } from "@/lib/database.types";
 import { getActivePromptTemplate, getProcedureByKey } from "@/lib/criteria-repo";
 import { logAccess } from "@/lib/access-log";
 import { requireSectionAccess } from "@/lib/permissions";
+import { suggestCodes, type CodeSuggestionResult } from "@/lib/code-suggestions";
 import { notifyLetterReady, notifyUsageThreshold } from "./notify";
+
+// Called directly from the client (not a <form action>) so it can return
+// suggestions to fill in rather than redirect -- doesn't touch the
+// practice's letter quota, this is a side lookup, not a draft.
+export async function suggestCodesAction(formData: FormData): Promise<CodeSuggestionResult | { error: string }> {
+  await requireSectionAccess("requests");
+
+  const procedureType = String(formData.get("procedure_type") || "");
+  const procedure = await getProcedureByKey(procedureType);
+  if (!procedure) return { error: "Select a procedure type first." };
+
+  const caseFields: Record<string, string> = {};
+  for (const field of procedure.requiredFields) {
+    caseFields[field.key] = String(formData.get(field.key) || "").trim();
+  }
+  const intendedUse = String(formData.get("intended_use") || "").trim();
+
+  try {
+    return await suggestCodes({ procedureLabel: procedure.label, caseFields, intendedUse: intendedUse || undefined });
+  } catch (err) {
+    return { error: err instanceof Error ? err.message : "Could not generate suggestions." };
+  }
+}
 
 // Best-effort split for the quick "save this patient" shortcut in the New
 // Request form, which only collects one combined name field — a real
