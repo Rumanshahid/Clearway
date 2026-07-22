@@ -4,19 +4,20 @@ import SiteNav from "../SiteNav";
 import SiteFooter from "../SiteFooter";
 import LandingScripts from "../LandingScripts";
 import { createClient } from "@/lib/supabase/server";
-import { excerptFrom } from "@/lib/blog";
+import { getPublicIdentities } from "@/lib/blog-identity";
 import FiltersSidebar from "./FiltersSidebar";
 import SuggestionsSidebar from "./SuggestionsSidebar";
 import SiteSearchBar from "../SiteSearchBar";
+import PostCard from "./PostCard";
 
 export const metadata = {
   title: "Blog — asaanbil.com",
   description: "Notes on prior authorization, claims, and running a specialty practice — from our team, physicians, and patients.",
 };
 
-// Extracted so /patient/blog can render the same list under its own URL
-// prefix, without the marketing chrome -- PatientLayout already supplies
-// its own nav there.
+// Extracted so /patient/blog and /doctor/blog can render the same feed
+// under their own URL prefix, without the marketing chrome -- their
+// layouts already supply their own nav.
 export async function BlogListContent({
   searchParams,
   basePath = "/blog",
@@ -38,14 +39,19 @@ export async function BlogListContent({
   // Patients can read/like/upvote/comment but not author posts -- only
   // staff (and the super_admin/company voice) write blog content.
   let canWrite = false;
+  let isSuperAdmin = false;
   if (user) {
-    const { data: patientAccount } = await supabase.from("patient_accounts").select("id").eq("id", user.id).maybeSingle();
+    const [{ data: patientAccount }, { data: profile }] = await Promise.all([
+      supabase.from("patient_accounts").select("id").eq("id", user.id).maybeSingle(),
+      supabase.from("profiles").select("role").eq("id", user.id).maybeSingle(),
+    ]);
     canWrite = !patientAccount;
+    isSuperAdmin = profile?.role === "super_admin";
   }
 
   let query = supabase
     .from("blog_posts")
-    .select("id, title, slug, excerpt, content, cover_image_url, tags, author_type, upvote_count, published_at")
+    .select("id, title, slug, excerpt, content, cover_image_url, tags, author_type, author_id, patient_author_id, upvote_count, published_at")
     .eq("status", "published");
   if (tag) query = query.contains("tags", [tag]);
   if (authorType === "staff" || authorType === "patient") query = query.eq("author_type", authorType);
@@ -62,6 +68,32 @@ export async function BlogListContent({
     .eq("status", "published")
     .order("published_at", { ascending: false })
     .limit(5);
+
+  // Batch-fetch likes/comments/identities/follow-status for every post on
+  // this page in a handful of queries, rather than one round trip per card.
+  const postIds = (posts || []).map((p) => p.id);
+  const [{ data: allLikes }, { data: allComments }] = await Promise.all([
+    postIds.length ? supabase.from("blog_likes").select("post_id, user_id").in("post_id", postIds) : Promise.resolve({ data: [] }),
+    postIds.length
+      ? supabase.from("blog_comments").select("id, post_id, user_id, content, created_at").in("post_id", postIds).order("created_at", { ascending: true })
+      : Promise.resolve({ data: [] }),
+  ]);
+
+  const likesByPost = new Map<string, { user_id: string }[]>();
+  for (const like of allLikes || []) likesByPost.set(like.post_id, [...(likesByPost.get(like.post_id) || []), like]);
+
+  const commentsByPost = new Map<string, NonNullable<typeof allComments>>();
+  for (const comment of allComments || []) commentsByPost.set(comment.post_id, [...(commentsByPost.get(comment.post_id) || []), comment]);
+
+  const authorIds = (posts || []).map((p) => p.author_id || p.patient_author_id).filter((id): id is string => !!id);
+  const commenterIds = (allComments || []).map((c) => c.user_id);
+  const identities = await getPublicIdentities([...authorIds, ...commenterIds]);
+
+  let followingSet = new Set<string>();
+  if (user && authorIds.length) {
+    const { data: followRows } = await supabase.from("user_follows").select("followed_id").eq("follower_id", user.id).in("followed_id", authorIds);
+    followingSet = new Set((followRows || []).map((r) => r.followed_id));
+  }
 
   const content = (
     <div className="wrap" style={{ width: "100%", paddingTop: 24, paddingBottom: 56 }}>
@@ -84,33 +116,28 @@ export async function BlogListContent({
       <div className={`flex gap-6 items-start ${showHeading ? "mt-8" : ""}`}>
         <FiltersSidebar tag={tag} authorType={authorType} sort={sort} tagOptions={allTags} basePath={basePath} />
 
-        <div className="flex-1 min-w-0 flex flex-col gap-8">
-          {(posts || []).map((post) => (
-            <Link key={post.id} href={`${basePath}/${post.slug}`} className="flex flex-col sm:flex-row gap-5 group">
-              {post.cover_image_url && (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={post.cover_image_url} alt="" className="w-full sm:w-[220px] h-auto rounded-lg flex-shrink-0" />
-              )}
-              <div className="min-w-0">
-                <div className="flex items-center gap-2 text-[12px] text-gray-400 mb-1">
-                  {post.published_at && <span>{new Date(post.published_at).toLocaleDateString(undefined, { year: "numeric", month: "long", day: "numeric" })}</span>}
-                  <span>·</span>
-                  <span>{post.author_type === "patient" ? "Patient" : "Doctor/Staff"}</span>
-                  <span>·</span>
-                  <span>▲ {post.upvote_count}</span>
-                </div>
-                <h2 className="text-[19px] font-semibold mb-1.5 group-hover:text-indigo-600 transition-colors">{post.title}</h2>
-                <p className="text-[14px] text-gray-600 leading-relaxed">{post.excerpt || excerptFrom(post.content)}</p>
-                {post.tags.length > 0 && (
-                  <div className="flex flex-wrap gap-1.5 mt-2">
-                    {post.tags.map((t) => (
-                      <span key={t} className="text-[11.5px] text-gray-400">#{t}</span>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </Link>
-          ))}
+        <div className="flex-1 min-w-0 flex flex-col gap-5">
+          {(posts || []).map((post) => {
+            const authorUserId = post.author_id || post.patient_author_id;
+            const postLikes = likesByPost.get(post.id) || [];
+            const postComments = commentsByPost.get(post.id) || [];
+            return (
+              <PostCard
+                key={post.id}
+                post={post}
+                basePath={basePath}
+                currentUserId={user?.id || null}
+                isSuperAdmin={isSuperAdmin}
+                authorIdentity={authorUserId ? identities[authorUserId] : undefined}
+                authorUserId={authorUserId}
+                isFollowingAuthor={!!authorUserId && followingSet.has(authorUserId)}
+                likeCount={postLikes.length}
+                isLiked={!!user && postLikes.some((l) => l.user_id === user.id)}
+                comments={postComments}
+                commenterIdentities={identities}
+              />
+            );
+          })}
           {(!posts || posts.length === 0) && (
             <p className="text-gray-400 text-center py-16">
               {tag ? `No posts tagged "${tag}" yet.` : "No posts yet — check back soon."}

@@ -8,6 +8,16 @@ import { checkAlarmingContent, notifySuperAdminsOfFlag } from "@/lib/blog-modera
 import { notifyFollowersOfNewContent } from "@/lib/follows";
 import { slugify } from "@/lib/blog";
 
+// Like/comment actions are now triggerable from the feed itself (any of
+// three basePaths), not just the detail page -- revalidate all of them
+// rather than threading basePath through every card's forms.
+function revalidateBlogSurfaces(slug: string) {
+  for (const base of ["/blog", "/patient/blog", "/doctor/blog"]) {
+    revalidatePath(base);
+    revalidatePath(`${base}/${slug}`);
+  }
+}
+
 function readPostFields(formData: FormData) {
   const title = String(formData.get("title") || "").trim();
   const tags = String(formData.get("tags") || "")
@@ -126,6 +136,8 @@ export async function deleteOwnBlogPostAction(formData: FormData) {
   await supabase.from("blog_posts").delete().eq("id", postId);
 
   revalidatePath("/blog");
+  revalidatePath("/patient/blog");
+  revalidatePath("/doctor/blog");
   redirect("/blog");
 }
 
@@ -148,7 +160,7 @@ export async function toggleLikeAction(formData: FormData) {
     await supabase.from("blog_likes").insert({ post_id: postId, user_id: identity.userId });
   }
 
-  revalidatePath(`/blog/${slug}`);
+  revalidateBlogSurfaces(slug);
 }
 
 export async function toggleUpvoteAction(formData: FormData) {
@@ -170,8 +182,7 @@ export async function toggleUpvoteAction(formData: FormData) {
     await supabase.from("blog_upvotes").insert({ post_id: postId, user_id: identity.userId });
   }
 
-  revalidatePath(`/blog/${slug}`);
-  revalidatePath("/blog");
+  revalidateBlogSurfaces(slug);
 }
 
 export async function addCommentAction(formData: FormData) {
@@ -200,7 +211,7 @@ export async function addCommentAction(formData: FormData) {
     });
   }
 
-  revalidatePath(`/blog/${slug}`);
+  revalidateBlogSurfaces(slug);
 }
 
 export async function editCommentAction(formData: FormData) {
@@ -219,7 +230,7 @@ export async function editCommentAction(formData: FormData) {
     .update({ content, updated_at: new Date().toISOString() })
     .eq("id", commentId);
 
-  revalidatePath(`/blog/${slug}`);
+  revalidateBlogSurfaces(slug);
 }
 
 export async function deleteCommentAction(formData: FormData) {
@@ -232,5 +243,5 @@ export async function deleteCommentAction(formData: FormData) {
   // author OR a super_admin -- no extra check needed here.
   await supabase.from("blog_comments").delete().eq("id", commentId);
 
-  revalidatePath(`/blog/${slug}`);
+  revalidateBlogSurfaces(slug);
 }
