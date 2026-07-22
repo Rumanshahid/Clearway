@@ -99,6 +99,7 @@ export default function PostCard({
             <Link href={`${postUrl}/edit`} className="text-[12.5px] text-indigo-600 font-medium">Edit</Link>
             <form action={deleteOwnBlogPostAction}>
               <input type="hidden" name="post_id" value={post.id} />
+              <input type="hidden" name="base_path" value={basePath} />
               <button type="submit" className="text-btn text-[12.5px]" style={{ color: "var(--danger-red)" }}>Delete</button>
             </form>
           </div>

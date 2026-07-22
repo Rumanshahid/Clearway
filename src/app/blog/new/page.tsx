@@ -9,22 +9,27 @@ import { createBlogPostAction } from "../actions";
 
 export const metadata = { title: "Write a post — asaanbil.com Blog" };
 
-export default async function NewBlogPostPage({
-  searchParams,
+// Extracted so /patient/blog/new (unreachable today -- patients can't
+// write posts) and /doctor/blog/new can render the same composer under
+// their own URL prefix. createBlogPostAction reads the base_path hidden
+// field to redirect back to whichever prefix this was reached from.
+export async function NewBlogPostContent({
+  error,
+  basePath = "/blog",
+  showChrome = true,
 }: {
-  searchParams: Promise<{ error?: string }>;
+  error?: string;
+  basePath?: string;
+  showChrome?: boolean;
 }) {
-  const identity = await requireBlogIdentity("/blog/new");
-  // Patients can read/like/upvote/comment but not author posts.
-  if (identity.authorType === "patient") redirect("/blog");
-  const { error } = await searchParams;
+  const identity = await requireBlogIdentity(`${basePath}/new`);
+  // Patients can read/like/comment but not author posts.
+  if (identity.authorType === "patient") redirect(basePath);
 
-  return (
-    <div className="landing-root">
-      <SiteNav />
-      <div className="wrap" style={{ width: "100%", paddingTop: 56, paddingBottom: 56 }}>
+  const content = (
+    <div className="wrap" style={{ width: "100%", paddingTop: 56, paddingBottom: 56 }}>
       <div className="max-w-[720px] mx-auto">
-        <Link href="/blog" className="text-[13px] text-indigo-600 font-medium">← Back to Blog</Link>
+        <Link href={basePath} className="text-[13px] text-indigo-600 font-medium">← Back to Blog</Link>
         <h1 className="text-[26px] font-semibold mt-4 mb-1">Write a post</h1>
         <p className="text-[14px] text-gray-600 mb-8">Your post publishes immediately and appears in the blog list right away.</p>
 
@@ -35,6 +40,7 @@ export default async function NewBlogPostPage({
         )}
 
         <form action={createBlogPostAction} className="flex flex-col gap-4">
+          <input type="hidden" name="base_path" value={basePath} />
           <div>
             <label className="label" htmlFor="title">Title</label>
             <input className="input" id="title" name="title" required />
@@ -50,9 +56,26 @@ export default async function NewBlogPostPage({
           <button type="submit" className="btn btn-primary w-full justify-center mt-2">Publish →</button>
         </form>
       </div>
-      </div>
+    </div>
+  );
+
+  if (!showChrome) return content;
+
+  return (
+    <div className="landing-root">
+      <SiteNav />
+      {content}
       <SiteFooter />
       <LandingScripts />
     </div>
   );
+}
+
+export default async function NewBlogPostPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ error?: string }>;
+}) {
+  const { error } = await searchParams;
+  return <NewBlogPostContent error={error} />;
 }

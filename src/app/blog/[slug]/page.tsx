@@ -150,6 +150,7 @@ export async function BlogPostContent({
               <Link href={`${basePath}/${post.slug}/edit`} className="text-indigo-600 font-medium">Edit</Link>
               <form action={deleteOwnBlogPostAction}>
                 <input type="hidden" name="post_id" value={post.id} />
+                <input type="hidden" name="base_path" value={basePath} />
                 <button type="submit" className="text-btn text-[13px]" style={{ color: "var(--danger-red)" }}>Delete</button>
               </form>
             </div>

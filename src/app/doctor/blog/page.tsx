@@ -8,15 +8,14 @@ export const metadata = {
 // Renders the same list as /blog but inside the staff dashboard chrome
 // (DashboardNavBar via layout.tsx here) instead of the marketing SiteNav --
 // a signed-in doctor clicking "Blog" from their own dashboard should stay
-// inside the dashboard shell. Deliberately NOT passing a custom basePath --
-// individual post, write, and edit links inside BlogListContent still
-// resolve to their existing working /blog/... routes rather than requiring
-// a full parallel mirror of the authoring/editing flow under
-// /doctor/blog/....
+// inside the dashboard shell. basePath="/doctor/blog" so post, write, and
+// edit links stay under the dashboard prefix too -- see
+// doctor/blog/[slug]/page.tsx, doctor/blog/[slug]/edit/page.tsx, and
+// doctor/blog/new/page.tsx, which mirror the corresponding /blog/... routes.
 export default async function DoctorBlogListPage({
   searchParams,
 }: {
   searchParams: Promise<{ tag?: string; author_type?: string }>;
 }) {
-  return <BlogListContent searchParams={searchParams} showChrome={false} showHeading={false} />;
+  return <BlogListContent searchParams={searchParams} basePath="/doctor/blog" showChrome={false} showHeading={false} />;
 }

@@ -34,17 +34,18 @@ function readPostFields(formData: FormData) {
 // Public composer for staff and patient authors -- unlike the admin panel
 // (super_admin only, supports drafts/SEO/cover images), this is the
 // simple "write a post" flow reachable from /blog itself: publish
-// immediately, then redirect back to /blog (the list page the "create a
-// blog" link was clicked from), per the product spec.
+// immediately, then redirect back to whichever basePath the composer was
+// reached from (its base_path hidden field), per the product spec.
 export async function createBlogPostAction(formData: FormData) {
-  const identity = await requireBlogIdentity("/blog/new");
-  // Patients can read/like/upvote/comment but not author posts -- enforced
-  // here too (not just hiding the button/page) since this is a directly
+  const basePath = String(formData.get("base_path") || "/blog");
+  const identity = await requireBlogIdentity(`${basePath}/new`);
+  // Patients can read/like/comment but not author posts -- enforced here
+  // too (not just hiding the button/page) since this is a directly
   // postable Server Action.
-  if (identity.authorType === "patient") redirect("/blog");
+  if (identity.authorType === "patient") redirect(basePath);
   const fields = readPostFields(formData);
   if (!fields.title || !fields.content.trim()) {
-    redirect(`/blog/new?error=${encodeURIComponent("Title and content are required.")}`);
+    redirect(`${basePath}/new?error=${encodeURIComponent("Title and content are required.")}`);
   }
 
   const supabase = await createClient();
@@ -71,7 +72,7 @@ export async function createBlogPostAction(formData: FormData) {
     .single();
 
   if (error || !post) {
-    redirect(`/blog/new?error=${encodeURIComponent(error?.message || "Could not publish your post.")}`);
+    redirect(`${basePath}/new?error=${encodeURIComponent(error?.message || "Could not publish your post.")}`);
   }
 
   if (flagged) {
@@ -84,16 +85,19 @@ export async function createBlogPostAction(formData: FormData) {
   await notifyFollowersOfNewContent(identity.userId, `${identity.displayName} published a new blog post: "${fields.title}"`, `/blog/${post.slug}`);
 
   revalidatePath("/blog");
-  redirect("/blog");
+  revalidatePath("/patient/blog");
+  revalidatePath("/doctor/blog");
+  redirect(basePath);
 }
 
 export async function updateOwnBlogPostAction(formData: FormData) {
-  const identity = await requireBlogIdentity("/blog");
+  const basePath = String(formData.get("base_path") || "/blog");
+  const identity = await requireBlogIdentity(basePath);
   const postId = String(formData.get("post_id") || "");
   const slug = String(formData.get("slug") || "");
   const fields = readPostFields(formData);
   if (!fields.title || !fields.content.trim()) {
-    redirect(`/blog/${slug}/edit?error=${encodeURIComponent("Title and content are required.")}`);
+    redirect(`${basePath}/${slug}/edit?error=${encodeURIComponent("Title and content are required.")}`);
   }
 
   const supabase = await createClient();
@@ -114,7 +118,7 @@ export async function updateOwnBlogPostAction(formData: FormData) {
     .eq("id", postId);
 
   if (error) {
-    redirect(`/blog/${slug}/edit?error=${encodeURIComponent(error.message)}`);
+    redirect(`${basePath}/${slug}/edit?error=${encodeURIComponent(error.message)}`);
   }
 
   if (flagged) {
@@ -124,13 +128,13 @@ export async function updateOwnBlogPostAction(formData: FormData) {
     });
   }
 
-  revalidatePath("/blog");
-  revalidatePath(`/blog/${slug}`);
-  redirect("/blog");
+  revalidateBlogSurfaces(slug);
+  redirect(basePath);
 }
 
 export async function deleteOwnBlogPostAction(formData: FormData) {
-  await requireBlogIdentity("/blog");
+  const basePath = String(formData.get("base_path") || "/blog");
+  await requireBlogIdentity(basePath);
   const postId = String(formData.get("post_id") || "");
   const supabase = await createClient();
   await supabase.from("blog_posts").delete().eq("id", postId);
@@ -138,7 +142,7 @@ export async function deleteOwnBlogPostAction(formData: FormData) {
   revalidatePath("/blog");
   revalidatePath("/patient/blog");
   revalidatePath("/doctor/blog");
-  redirect("/blog");
+  redirect(basePath);
 }
 
 export async function toggleLikeAction(formData: FormData) {
