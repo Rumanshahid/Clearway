@@ -6,16 +6,15 @@ import { useState } from "react";
 interface FiltersSidebarProps {
   tag?: string;
   authorType?: string;
-  sort?: string;
   tagOptions: string[];
   basePath?: string;
 }
 
-export default function FiltersSidebar({ tag, authorType, sort, tagOptions, basePath = "/blog" }: FiltersSidebarProps) {
+export default function FiltersSidebar({ tag, authorType, tagOptions, basePath = "/blog" }: FiltersSidebarProps) {
   const router = useRouter();
   const [open, setOpen] = useState(true);
 
-  const current = { tag, author_type: authorType, sort };
+  const current = { tag, author_type: authorType };
   const activeCount = Object.values(current).filter(Boolean).length;
 
   function applyFilter(key: keyof typeof current, value: string) {
@@ -30,7 +29,6 @@ export default function FiltersSidebar({ tag, authorType, sort, tagOptions, base
   const chips: { key: keyof typeof current; label: string }[] = [];
   if (tag) chips.push({ key: "tag", label: `Tag: ${tag}` });
   if (authorType) chips.push({ key: "author_type", label: `Author: ${authorType === "patient" ? "Patients" : "Doctors & Staff"}` });
-  if (sort) chips.push({ key: "sort", label: `Sort: ${sort === "top" ? "Top voted" : "Newest"}` });
 
   return (
     <aside className="w-[230px] flex-shrink-0">
@@ -52,13 +50,6 @@ export default function FiltersSidebar({ tag, authorType, sort, tagOptions, base
         <div className={`collapse-panel${open ? " open" : ""}`}>
           <div>
             <div className="flex flex-col gap-4 pt-4">
-              <div>
-                <label className="label" htmlFor="filter-sort">Sort by</label>
-                <select className="input" id="filter-sort" value={sort || ""} onChange={(e) => applyFilter("sort", e.target.value)}>
-                  <option value="">Newest</option>
-                  <option value="top">Top voted</option>
-                </select>
-              </div>
               <div>
                 <label className="label" htmlFor="filter-author-type">Written by</label>
                 <select className="input" id="filter-author-type" value={authorType || ""} onChange={(e) => applyFilter("author_type", e.target.value)}>

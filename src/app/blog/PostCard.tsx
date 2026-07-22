@@ -2,7 +2,7 @@ import Link from "next/link";
 import { excerptFrom } from "@/lib/blog";
 import type { PublicIdentity } from "@/lib/blog-identity";
 import { toggleFollowAction } from "../social-actions";
-import { toggleLikeAction, toggleUpvoteAction, addCommentAction, editCommentAction, deleteCommentAction, deleteOwnBlogPostAction } from "./actions";
+import { toggleLikeAction, addCommentAction, editCommentAction, deleteCommentAction, deleteOwnBlogPostAction } from "./actions";
 import ShareButton from "./ShareButton";
 import CollapsibleComments from "./CollapsibleComments";
 
@@ -25,7 +25,6 @@ interface Post {
   author_type: "staff" | "patient";
   author_id: string | null;
   patient_author_id: string | null;
-  upvote_count: number;
   published_at: string | null;
 }
 
@@ -136,12 +135,6 @@ export default function PostCard({
         </form>
 
         <ShareButton path={postUrl} />
-
-        <form action={toggleUpvoteAction}>
-          <input type="hidden" name="post_id" value={post.id} />
-          <input type="hidden" name="slug" value={post.slug} />
-          <button type="submit" className={actionBtn}>▲ {post.upvote_count}</button>
-        </form>
 
         <CollapsibleComments label={`Comment${comments.length > 0 ? ` (${comments.length})` : ""}`}>
           {currentUserId ? (

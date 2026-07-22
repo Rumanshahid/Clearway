@@ -8,7 +8,7 @@ export const metadata = {
 export default async function PatientBlogListPage({
   searchParams,
 }: {
-  searchParams: Promise<{ tag?: string; author_type?: string; sort?: string }>;
+  searchParams: Promise<{ tag?: string; author_type?: string }>;
 }) {
   return <BlogListContent searchParams={searchParams} basePath="/patient/blog" showChrome={false} showHeading={false} />;
 }

@@ -163,28 +163,6 @@ export async function toggleLikeAction(formData: FormData) {
   revalidateBlogSurfaces(slug);
 }
 
-export async function toggleUpvoteAction(formData: FormData) {
-  const postId = String(formData.get("post_id") || "");
-  const slug = String(formData.get("slug") || "");
-  const identity = await requireBlogIdentity(`/blog/${slug}`);
-
-  const supabase = await createClient();
-  const { data: existing } = await supabase
-    .from("blog_upvotes")
-    .select("post_id")
-    .eq("post_id", postId)
-    .eq("user_id", identity.userId)
-    .maybeSingle();
-
-  if (existing) {
-    await supabase.from("blog_upvotes").delete().eq("post_id", postId).eq("user_id", identity.userId);
-  } else {
-    await supabase.from("blog_upvotes").insert({ post_id: postId, user_id: identity.userId });
-  }
-
-  revalidateBlogSurfaces(slug);
-}
-
 export async function addCommentAction(formData: FormData) {
   const postId = String(formData.get("post_id") || "");
   const slug = String(formData.get("slug") || "");

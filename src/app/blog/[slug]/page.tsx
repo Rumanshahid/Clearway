@@ -11,7 +11,6 @@ import { getPublicIdentities } from "@/lib/blog-identity";
 import { toggleFollowAction } from "../../social-actions";
 import {
   toggleLikeAction,
-  toggleUpvoteAction,
   deleteOwnBlogPostAction,
   addCommentAction,
   editCommentAction,
@@ -175,11 +174,6 @@ export async function BlogPostContent({
             >
               {isLiked ? "♥ Liked" : "♡ Like"} ({(likes || []).length})
             </button>
-          </form>
-          <form action={toggleUpvoteAction}>
-            <input type="hidden" name="post_id" value={post.id} />
-            <input type="hidden" name="slug" value={post.slug} />
-            <button type="submit" className="btn">▲ Upvote ({post.upvote_count})</button>
           </form>
         </div>
 

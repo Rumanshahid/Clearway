@@ -24,20 +24,20 @@ export async function BlogListContent({
   showChrome = true,
   showHeading = true,
 }: {
-  searchParams: Promise<{ tag?: string; author_type?: string; sort?: string }>;
+  searchParams: Promise<{ tag?: string; author_type?: string }>;
   basePath?: string;
   showChrome?: boolean;
   showHeading?: boolean;
 }) {
-  const { tag, author_type: authorType, sort } = await searchParams;
+  const { tag, author_type: authorType } = await searchParams;
   const supabase = await createClient();
 
   const {
     data: { user },
   } = await supabase.auth.getUser();
 
-  // Patients can read/like/upvote/comment but not author posts -- only
-  // staff (and the super_admin/company voice) write blog content.
+  // Patients can read/like/comment but not author posts -- only staff (and
+  // the super_admin/company voice) write blog content.
   let canWrite = false;
   let isSuperAdmin = false;
   if (user) {
@@ -51,11 +51,11 @@ export async function BlogListContent({
 
   let query = supabase
     .from("blog_posts")
-    .select("id, title, slug, excerpt, content, cover_image_url, tags, author_type, author_id, patient_author_id, upvote_count, published_at")
-    .eq("status", "published");
+    .select("id, title, slug, excerpt, content, cover_image_url, tags, author_type, author_id, patient_author_id, published_at")
+    .eq("status", "published")
+    .order("published_at", { ascending: false });
   if (tag) query = query.contains("tags", [tag]);
   if (authorType === "staff" || authorType === "patient") query = query.eq("author_type", authorType);
-  query = sort === "top" ? query.order("upvote_count", { ascending: false }) : query.order("published_at", { ascending: false });
 
   const { data: posts } = await query;
 
@@ -114,7 +114,7 @@ export async function BlogListContent({
       )}
 
       <div className={`flex gap-6 items-start ${showHeading ? "mt-8" : ""}`}>
-        <FiltersSidebar tag={tag} authorType={authorType} sort={sort} tagOptions={allTags} basePath={basePath} />
+        <FiltersSidebar tag={tag} authorType={authorType} tagOptions={allTags} basePath={basePath} />
 
         <div className="flex-1 min-w-0 flex flex-col gap-5">
           {(posts || []).map((post) => {
@@ -174,7 +174,7 @@ export async function BlogListContent({
 export default async function BlogListPage({
   searchParams,
 }: {
-  searchParams: Promise<{ tag?: string; author_type?: string; sort?: string }>;
+  searchParams: Promise<{ tag?: string; author_type?: string }>;
 }) {
   return <BlogListContent searchParams={searchParams} />;
 }
