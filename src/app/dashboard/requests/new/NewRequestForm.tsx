@@ -177,11 +177,11 @@ export default function NewRequestForm({
       : availablePayers[0]?.key || "aetna";
 
   return (
-    <form action={createRequestAction} className="flex flex-col gap-6">
-      <section className="card p-6">
-        <h2 className="text-[15px] font-semibold mb-4">Case</h2>
+    <form action={createRequestAction} className="flex flex-col gap-4">
+      <section className="card p-5">
+        <h2 className="text-[15px] font-semibold mb-3">Case</h2>
 
-        <div className="mb-5">
+        <div className="mb-4">
           <label className="label mb-2">Written for</label>
           <div className="inline-flex rounded-[10px] border overflow-hidden" style={{ borderColor: "var(--gray-200)" }}>
             <button
@@ -217,7 +217,7 @@ export default function NewRequestForm({
           </p>
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-3 gap-3">
           {patientSelection === "new" ? (
             <>
               <div>
@@ -231,7 +231,7 @@ export default function NewRequestForm({
                   value={patientFields.patientReference}
                   onChange={(e) => setPatientFields((prev) => ({ ...prev, patientReference: e.target.value }))}
                 />
-                <p className="text-[12px] text-gray-400 mt-1">Used in your dashboard and notifications — never sent to the payer.</p>
+                <p className="text-[11px] text-gray-400 mt-1">Never sent to the payer.</p>
               </div>
               <div>
                 <label className="label" htmlFor="plan_type">Plan type</label>
@@ -335,15 +335,14 @@ export default function NewRequestForm({
         </div>
       </section>
 
-      <section className="card p-6">
+      <section className="card p-5">
         <h2 className="text-[15px] font-semibold mb-1">Patient</h2>
-        <p className="text-[12.5px] text-gray-400 mb-4">
-          Full legal name and date of birth are required — a payer can&apos;t process a request without them. This
-          information is only used inside the letter itself; the internal reference above stays de-identified everywhere else in the app.
-        </p>
+        {patientSelection === "new" && (
+          <p className="text-[12px] text-gray-400 mb-3">Full legal name and date of birth are required — a payer can&apos;t process a request without them.</p>
+        )}
 
         {savedPatients.length > 0 && (
-          <div className="mb-4">
+          <div className="mb-3">
             <label className="label" htmlFor="patient_selection">Patient</label>
             <select
               className="input"
@@ -363,7 +362,7 @@ export default function NewRequestForm({
 
         {selectedPatient && (
           <p
-            className="text-[12.5px] rounded-lg px-3 py-2 mb-4"
+            className="text-[12.5px] rounded-lg px-3 py-2 mb-3"
             style={
               eligibilityIsStale
                 ? { background: "var(--amber-bg)", color: "var(--amber)" }
@@ -382,8 +381,8 @@ export default function NewRequestForm({
 
         {patientSelection === "new" ? (
           <>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
+            <div className="grid grid-cols-3 gap-3">
+              <div className="col-span-2">
                 <label className="label" htmlFor="patient_full_name">Full legal name <span style={{ color: "var(--danger-red)" }}>*</span></label>
                 <input
                   className="input"
@@ -438,7 +437,7 @@ export default function NewRequestForm({
                 />
               </div>
             </div>
-            <label className="flex items-center gap-2 text-[13px] text-gray-600 mt-4">
+            <label className="flex items-center gap-2 text-[12.5px] text-gray-600 mt-3">
               <input type="checkbox" name="save_patient" defaultChecked className="w-4 h-4" />
               Save this patient for next time
             </label>
@@ -459,51 +458,46 @@ export default function NewRequestForm({
         )}
       </section>
 
-      <section className="card p-6">
+      <section className="card p-5">
         <h2 className="text-[15px] font-semibold mb-1">{procedure.label} — required details</h2>
-        <p className="text-[12.5px] text-gray-400 mb-4">
-          Fields marked * are required before drafting can start.
-        </p>
-        <div className="flex flex-col gap-4">
+        <p className="text-[11px] text-gray-400 mb-3">Fields marked * are required before drafting can start.</p>
+        <div className="grid grid-cols-2 gap-3">
           {procedure.requiredFields.map((field) => (
             <DynamicField key={field.key} field={field} />
           ))}
         </div>
+
+        {procedure.redFlags.length > 0 && (
+          <div className="mt-4 pt-4" style={{ borderTop: "1px solid var(--gray-200)" }}>
+            <h3 className="text-[13px] font-semibold text-gray-900 mb-2">Red flags present?</h3>
+            <div className="grid grid-cols-2 gap-x-4 gap-y-1.5">
+              {procedure.redFlags.map((flag) => (
+                <label key={flag} className="flex items-start gap-2 text-[13px] text-gray-900">
+                  <input type="checkbox" name="red_flags" value={flag} className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                  {flag}
+                </label>
+              ))}
+            </div>
+          </div>
+        )}
       </section>
 
-      {procedure.redFlags.length > 0 && (
-        <section className="card p-6">
-          <h2 className="text-[15px] font-semibold mb-1">Red flags present?</h2>
-          <p className="text-[12.5px] text-gray-400 mb-4">
-            Any of these bypass the standard conservative-care requirement — the letter will lead with them.
-          </p>
-          <div className="flex flex-col gap-2">
-            {procedure.redFlags.map((flag) => (
-              <label key={flag} className="flex items-start gap-2 text-[13.5px] text-gray-900">
-                <input type="checkbox" name="red_flags" value={flag} className="w-4 h-4 mt-0.5" />
-                {flag}
-              </label>
-            ))}
-          </div>
-        </section>
-      )}
-
-      <section className="card p-6">
-        <h2 className="text-[15px] font-semibold mb-4">Intent &amp; ordering physician</h2>
-        <div className="grid grid-cols-2 gap-4">
+      <section className="card p-5">
+        <h2 className="text-[15px] font-semibold mb-3">Intent &amp; ordering physician</h2>
+        <div className="grid grid-cols-3 gap-3">
           {/* Some procedures (e.g. Lumbar Spine MRI) already collect "intended
               use" as one of their own required fields above — skip the
               duplicate here, since a second field with the same name would
               silently overwrite the first in the submitted form data. */}
           {!procedure.requiredFields.some((f) => f.key === "intended_use") && (
-            <div className="col-span-2">
+            <div className="col-span-3">
               <label className="label" htmlFor="intended_use">Intended use of imaging result</label>
               <input className="input" id="intended_use" name="intended_use" placeholder="e.g. surgical planning" />
             </div>
           )}
 
           {savedPhysicians.length > 0 && (
-            <div className="col-span-2">
+            <div className="col-span-3">
               <label className="label" htmlFor="physician_selection">Ordering physician</label>
               <select
                 className="input"
@@ -524,7 +518,7 @@ export default function NewRequestForm({
           {showPhysicianFields ? (
             <>
               {physicianSelectionIncomplete && (
-                <p className="col-span-2 text-[12.5px] rounded-lg px-3 py-2 -mt-1" style={{ background: "var(--amber-bg)", color: "var(--amber)" }}>
+                <p className="col-span-3 text-[12.5px] rounded-lg px-3 py-2 -mt-1" style={{ background: "var(--amber-bg)", color: "var(--amber)" }}>
                   This doctor&apos;s profile is missing an NPI or direct phone — fill them in below to continue, or save them once on their own Profile page.
                 </p>
               )}
@@ -597,13 +591,13 @@ export default function NewRequestForm({
                   onChange={(e) => setPhysicianFields((prev) => ({ ...prev, fax: e.target.value }))}
                 />
               </div>
-              <label className="col-span-2 flex items-center gap-2 text-[13px] text-gray-600">
+              <label className="col-span-3 flex items-center gap-2 text-[12.5px] text-gray-600">
                 <input type="checkbox" name="save_physician" defaultChecked className="w-4 h-4" />
                 Save this physician for next time
               </label>
             </>
           ) : (
-            <div className="col-span-2 rounded-lg px-3 py-2.5 text-[13px] text-gray-600" style={{ background: "var(--gray-50)", border: "1px solid var(--gray-200)" }}>
+            <div className="col-span-3 rounded-lg px-3 py-2.5 text-[13px] text-gray-600" style={{ background: "var(--gray-50)", border: "1px solid var(--gray-200)" }}>
               <span className="font-medium text-gray-900">{physicianFields.name}</span>
               {physicianFields.credentials && <>, {physicianFields.credentials}</>}
               {physicianFields.specialty && <> · {physicianFields.specialty}</>}
@@ -627,13 +621,13 @@ export default function NewRequestForm({
 
 function DynamicField({ field }: { field: FieldDef }) {
   return (
-    <div>
+    <div className={field.type === "textarea" ? "col-span-2" : undefined}>
       <label className="label" htmlFor={field.key}>
         {field.label}
         {field.required && <span style={{ color: "var(--danger-red)" }}> *</span>}
       </label>
       {field.type === "textarea" ? (
-        <textarea className="input" id={field.key} name={field.key} rows={3} required={field.required} />
+        <textarea className="input" id={field.key} name={field.key} rows={2} required={field.required} />
       ) : field.type === "select" ? (
         <select className="input" id={field.key} name={field.key} required={field.required} defaultValue="">
           <option value="" disabled>Select…</option>
@@ -646,7 +640,7 @@ function DynamicField({ field }: { field: FieldDef }) {
       ) : (
         <input className="input" id={field.key} name={field.key} type="text" required={field.required} />
       )}
-      {field.helpText && <p className="text-[12px] text-gray-400 mt-1">{field.helpText}</p>}
+      {field.helpText && <p className="text-[11px] text-gray-400 mt-1">{field.helpText}</p>}
     </div>
   );
 }

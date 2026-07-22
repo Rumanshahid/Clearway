@@ -121,19 +121,19 @@ export default async function NewRequestPage({
   }));
 
   return (
-    <div className="max-w-[760px] mx-auto py-8 px-5">
-      <h1 className="text-[24px] font-semibold mb-1">New prior authorization request</h1>
-      <p className="text-[14px] text-gray-600 mb-6">
+    <div className="max-w-[760px] mx-auto py-6 px-5">
+      <h1 className="text-[22px] font-semibold mb-1">New prior authorization request</h1>
+      <p className="text-[13px] text-gray-600 mb-4">
         Under three minutes to fill in. Your letter is drafted automatically from what you enter here.
       </p>
 
       {error && (
-        <div className="mb-5 text-[13px] rounded-lg px-3 py-2" style={{ background: "var(--danger-bg)", color: "var(--danger-red)" }}>
+        <div className="mb-4 text-[13px] rounded-lg px-3 py-2" style={{ background: "var(--danger-bg)", color: "var(--danger-red)" }}>
           {error}
         </div>
       )}
 
-      <TipsRotator className="mb-6" />
+      <TipsRotator className="mb-4" />
 
       {procedures.length === 0 ? (
         <div className="card p-6 text-center text-gray-400">
