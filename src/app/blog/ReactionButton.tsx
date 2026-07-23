@@ -23,6 +23,26 @@ export default function ReactionButton({
   const [open, setOpen] = useState(false);
   const [pending, setPending] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+  const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // The popup sits above the button with a small gap (mb-1.5, outside the
+  // container's normal-flow hit area since it's absolutely positioned) --
+  // closing on mouseLeave immediately meant the popup vanished mid-transit
+  // as the cursor crossed that gap. A short delay, cancelled by re-entering
+  // either element, gives the cursor time to actually arrive.
+  function scheduleClose() {
+    closeTimer.current = setTimeout(() => setOpen(false), 350);
+  }
+  function cancelClose() {
+    if (closeTimer.current) {
+      clearTimeout(closeTimer.current);
+      closeTimer.current = null;
+    }
+  }
+
+  useEffect(() => {
+    return () => cancelClose();
+  }, []);
 
   useEffect(() => {
     if (!open) return;
@@ -39,6 +59,7 @@ export default function ReactionButton({
   const topTypes = REACTION_TYPES.filter((t) => reactionCounts[t] > 0).sort((a, b) => reactionCounts[b] - reactionCounts[a]);
 
   async function react(type: ReactionType) {
+    cancelClose();
     setOpen(false);
     setPending(true);
     const formData = new FormData();
@@ -52,7 +73,15 @@ export default function ReactionButton({
   const current = myReaction ? REACTION_META[myReaction] : null;
 
   return (
-    <div ref={containerRef} className="relative inline-flex items-center" onMouseEnter={() => setOpen(true)} onMouseLeave={() => setOpen(false)}>
+    <div
+      ref={containerRef}
+      className="relative inline-flex items-center"
+      onMouseEnter={() => {
+        cancelClose();
+        setOpen(true);
+      }}
+      onMouseLeave={scheduleClose}
+    >
       <button
         type="button"
         disabled={pending}
