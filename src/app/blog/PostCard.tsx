@@ -2,9 +2,10 @@ import Link from "next/link";
 import { excerptFrom } from "@/lib/blog";
 import type { PublicIdentity } from "@/lib/blog-identity";
 import { toggleFollowAction } from "../social-actions";
-import { toggleLikeAction, addCommentAction, editCommentAction, deleteCommentAction, deleteOwnBlogPostAction } from "./actions";
+import { toggleLikeAction, addCommentAction, editCommentAction, deleteCommentAction } from "./actions";
 import ShareButton from "./ShareButton";
 import CollapsibleComments from "./CollapsibleComments";
+import PostMenu from "./PostMenu";
 
 interface Comment {
   id: string;
@@ -94,16 +95,7 @@ export default function PostCard({
             {post.published_at && new Date(post.published_at).toLocaleDateString(undefined, { year: "numeric", month: "long", day: "numeric" })}
           </div>
         </div>
-        {(isOwner || isSuperAdmin) && (
-          <div className="flex items-center gap-3 flex-shrink-0">
-            <Link href={`${postUrl}/edit`} className="text-[12.5px] text-indigo-600 font-medium">Edit</Link>
-            <form action={deleteOwnBlogPostAction}>
-              <input type="hidden" name="post_id" value={post.id} />
-              <input type="hidden" name="base_path" value={basePath} />
-              <button type="submit" className="text-btn text-[12.5px]" style={{ color: "var(--danger-red)" }}>Delete</button>
-            </form>
-          </div>
-        )}
+        {(isOwner || isSuperAdmin) && <PostMenu postId={post.id} postUrl={postUrl} basePath={basePath} />}
       </div>
 
       <Link href={postUrl}>

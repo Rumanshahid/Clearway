@@ -11,11 +11,11 @@ import { getPublicIdentities } from "@/lib/blog-identity";
 import { toggleFollowAction } from "../../social-actions";
 import {
   toggleLikeAction,
-  deleteOwnBlogPostAction,
   addCommentAction,
   editCommentAction,
   deleteCommentAction,
 } from "../actions";
+import PostMenu from "../PostMenu";
 
 async function getPost(slug: string) {
   const supabase = await createClient();
@@ -146,13 +146,8 @@ export async function BlogPostContent({
             </div>
           )}
           {(isOwner || isSuperAdmin) && (
-            <div className="flex items-center gap-3 ml-auto">
-              <Link href={`${basePath}/${post.slug}/edit`} className="text-indigo-600 font-medium">Edit</Link>
-              <form action={deleteOwnBlogPostAction}>
-                <input type="hidden" name="post_id" value={post.id} />
-                <input type="hidden" name="base_path" value={basePath} />
-                <button type="submit" className="text-btn text-[13px]" style={{ color: "var(--danger-red)" }}>Delete</button>
-              </form>
+            <div className="ml-auto">
+              <PostMenu postId={post.id} postUrl={`${basePath}/${post.slug}`} basePath={basePath} />
             </div>
           )}
         </div>
