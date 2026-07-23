@@ -53,11 +53,11 @@ export default async function PatientAppealsPage({
 
   return (
     <div className="max-w-[1300px] mx-auto py-8 px-5">
-      <div className="flex items-start justify-between gap-4 mb-1">
-        <h1 className="text-[24px] font-semibold">Appeals</h1>
+      <h1 className="text-[24px] font-semibold mb-1">Appeals</h1>
+      <p className="text-[13.5px] text-gray-600 mb-3">Appeal a denied claim directly with your doctor.</p>
+      <div className="flex justify-end mb-3">
         <NewAppealRequestButton doctors={doctors} />
       </div>
-      <p className="text-[13.5px] text-gray-600 mb-6">Appeal a denied claim directly with your doctor.</p>
 
       {submitted && !error && (
         <div className="mb-6 text-[13px] rounded-lg px-3 py-2" style={{ background: "var(--success-bg)", color: "var(--success-green)" }}>

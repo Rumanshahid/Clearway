@@ -8,11 +8,13 @@ export default function SidebarLink({
   label,
   icon,
   extraPrefixes,
+  expanded = false,
 }: {
   href: string;
   label: string;
   icon: React.ReactNode;
   extraPrefixes?: string[];
+  expanded?: boolean;
 }) {
   const pathname = usePathname();
   const active =
@@ -26,10 +28,13 @@ export default function SidebarLink({
       title={label}
       aria-label={label}
       aria-current={active ? "page" : undefined}
-      className="w-11 h-11 rounded-xl flex items-center justify-center transition-transform transition-colors flex-shrink-0 hover:scale-125 active:scale-95"
-      style={active ? { background: "var(--navy-900)", color: "#fff" } : { color: "var(--gray-600)" }}
+      className={`rounded-xl flex items-center transition-colors flex-shrink-0 ${
+        expanded ? "w-full h-11 justify-start gap-3 px-3" : "w-11 h-11 justify-center"
+      }`}
+      style={active ? { background: "rgba(10, 20, 85, 0.08)", color: "var(--navy-900)" } : { color: "var(--gray-600)" }}
     >
-      {icon}
+      <span className="flex-shrink-0">{icon}</span>
+      {expanded && <span className="text-[13.5px] font-medium truncate">{label}</span>}
     </Link>
   );
 }

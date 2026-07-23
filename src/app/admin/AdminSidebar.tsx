@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { signOutAction } from "@/app/(auth)/actions";
@@ -30,17 +31,41 @@ const NAV = [
 ];
 
 // Keeps the admin section's distinct dark-navy identity, just as a left
-// rail instead of a top bar.
+// rail instead of a top bar. Expandable via the toggle between the logo
+// and the first nav icon.
 export default function AdminSidebar() {
   const pathname = usePathname();
+  const [expanded, setExpanded] = useState(false);
 
   return (
-    <aside className="w-[68px] flex-shrink-0 flex flex-col items-center py-4 gap-1 sticky top-0 h-screen overflow-y-auto" style={{ background: "var(--navy-900)" }}>
-      <Link href="/admin/practices" className="w-9 h-9 rounded-[8px] flex items-center justify-center flex-shrink-0 mb-4" style={{ background: "rgba(255,255,255,.14)" }}>
-        <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+    <aside
+      className={`relative flex-shrink-0 flex flex-col items-center py-4 gap-1 sticky top-0 h-screen overflow-y-auto transition-[width] duration-200 ${
+        expanded ? "w-[200px] items-stretch px-3" : "w-[68px]"
+      }`}
+      style={{ background: "var(--navy-900)" }}
+    >
+      <Link
+        href="/admin/practices"
+        className={`rounded-[8px] flex items-center flex-shrink-0 mb-4 ${expanded ? "w-full h-9 px-2.5 gap-2 justify-start" : "w-9 h-9 justify-center self-center"}`}
+        style={{ background: "rgba(255,255,255,.14)" }}
+      >
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" className="flex-shrink-0">
           <path d="M2 7h10M7 2l5 5-5 5" stroke="#fff" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
+        {expanded && <span className="text-white text-[13px] font-semibold truncate">asaanbil Admin</span>}
       </Link>
+
+      <button
+        type="button"
+        onClick={() => setExpanded((v) => !v)}
+        aria-label={expanded ? "Collapse sidebar" : "Expand sidebar"}
+        className="absolute top-[52px] w-6 h-6 rounded-full flex items-center justify-center transition-transform hover:scale-110"
+        style={{ right: -12, background: "var(--navy-900)", border: "1px solid rgba(255,255,255,.2)", color: "#A0A8C0" }}
+      >
+        <svg width="11" height="11" viewBox="0 0 12 12" fill="none" style={{ transform: expanded ? "rotate(180deg)" : undefined }}>
+          <path d="M4.5 2.5L8 6l-3.5 3.5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      </button>
 
       {NAV.map((item) => {
         const active = pathname === item.href || pathname.startsWith(`${item.href}/`);
@@ -51,10 +76,11 @@ export default function AdminSidebar() {
             title={item.label}
             aria-label={item.label}
             aria-current={active ? "page" : undefined}
-            className="w-11 h-11 rounded-xl flex items-center justify-center transition-transform transition-colors flex-shrink-0 hover:scale-125 active:scale-95"
-            style={active ? { background: "rgba(255,255,255,.16)", color: "#fff" } : { color: "#A0A8C0" }}
+            className={`rounded-xl flex items-center transition-colors flex-shrink-0 ${expanded ? "w-full h-11 justify-start gap-3 px-3" : "w-11 h-11 justify-center"}`}
+            style={active ? { background: "rgba(255,255,255,.1)", color: "#fff" } : { color: "#A0A8C0" }}
           >
-            {item.icon}
+            <span className="flex-shrink-0">{item.icon}</span>
+            {expanded && <span className="text-[13.5px] font-medium truncate">{item.label}</span>}
           </Link>
         );
       })}
@@ -65,20 +91,22 @@ export default function AdminSidebar() {
         href="/doctor/dashboard"
         title="Back to app"
         aria-label="Back to app"
-        className="w-11 h-11 rounded-xl flex items-center justify-center transition-transform hover:scale-125 active:scale-95"
+        className={`rounded-xl flex items-center transition-colors flex-shrink-0 ${expanded ? "w-full h-11 justify-start gap-3 px-3" : "w-11 h-11 justify-center"}`}
         style={{ color: "#A0A8C0" }}
       >
-        <ArrowLeftIcon />
+        <span className="flex-shrink-0"><ArrowLeftIcon /></span>
+        {expanded && <span className="text-[13.5px] font-medium truncate">Back to app</span>}
       </Link>
-      <form action={signOutAction}>
+      <form action={signOutAction} className={expanded ? "w-full" : undefined}>
         <button
           type="submit"
           title="Sign out"
           aria-label="Sign out"
-          className="w-11 h-11 rounded-xl flex items-center justify-center transition-transform hover:scale-125 active:scale-95"
+          className={`rounded-xl flex items-center transition-colors flex-shrink-0 ${expanded ? "w-full h-11 justify-start gap-3 px-3" : "w-11 h-11 justify-center"}`}
           style={{ color: "#A0A8C0" }}
         >
-          <LogOutIcon />
+          <span className="flex-shrink-0"><LogOutIcon /></span>
+          {expanded && <span className="text-[13.5px] font-medium truncate">Sign out</span>}
         </button>
       </form>
     </aside>

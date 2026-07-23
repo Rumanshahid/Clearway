@@ -34,14 +34,14 @@ export default function TasksBell({ tasks }: { tasks: TaskPreviewItem[] }) {
     <div ref={containerRef} className="relative">
       <button
         type="button"
-        className="relative w-10 h-10 rounded-full bg-white flex items-center justify-center flex-shrink-0 transition-transform hover:scale-125 active:scale-95"
-        style={{ border: "1px solid var(--gray-200)", boxShadow: "0 1px 2px rgba(16,24,40,0.04)", ...(open ? { background: "var(--gray-100)" } : {}) }}
+        className="relative w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 transition-colors"
+        style={{ color: "var(--gray-600)", ...(open ? { background: "rgba(79, 70, 229, 0.1)", color: "var(--indigo-600)" } : {}) }}
         onClick={() => setOpen((v) => !v)}
         aria-label="Tasks"
       >
         <svg width="17" height="17" viewBox="0 0 16 16" fill="none">
-          <path d="M3 4.5h9M3 8h9M3 11.5h6" stroke="var(--gray-900)" strokeWidth="1.4" strokeLinecap="round" />
-          <path d="M2 4.5h.01M2 8h.01M2 11.5h.01" stroke="var(--gray-900)" strokeWidth="1.7" strokeLinecap="round" />
+          <path d="M3 4.5h9M3 8h9M3 11.5h6" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+          <path d="M2 4.5h.01M2 8h.01M2 11.5h.01" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
         </svg>
         {tasks.length > 0 && (
           <span
