@@ -5,6 +5,7 @@ import SiteFooter from "../SiteFooter";
 import LandingScripts from "../LandingScripts";
 import { createClient } from "@/lib/supabase/server";
 import { getPublicIdentities } from "@/lib/blog-identity";
+import { emptyReactionCounts, isReactionType } from "@/lib/blog-reactions";
 import FiltersSidebar from "./FiltersSidebar";
 import SuggestionsSidebar from "./SuggestionsSidebar";
 import SiteSearchBar from "../SiteSearchBar";
@@ -73,13 +74,13 @@ export async function BlogListContent({
   // this page in a handful of queries, rather than one round trip per card.
   const postIds = (posts || []).map((p) => p.id);
   const [{ data: allLikes }, { data: allComments }] = await Promise.all([
-    postIds.length ? supabase.from("blog_likes").select("post_id, user_id").in("post_id", postIds) : Promise.resolve({ data: [] }),
+    postIds.length ? supabase.from("blog_likes").select("post_id, user_id, reaction_type").in("post_id", postIds) : Promise.resolve({ data: [] }),
     postIds.length
       ? supabase.from("blog_comments").select("id, post_id, user_id, content, created_at").in("post_id", postIds).order("created_at", { ascending: true })
       : Promise.resolve({ data: [] }),
   ]);
 
-  const likesByPost = new Map<string, { user_id: string }[]>();
+  const likesByPost = new Map<string, { user_id: string; reaction_type: string }[]>();
   for (const like of allLikes || []) likesByPost.set(like.post_id, [...(likesByPost.get(like.post_id) || []), like]);
 
   const commentsByPost = new Map<string, NonNullable<typeof allComments>>();
@@ -121,6 +122,12 @@ export async function BlogListContent({
             const authorUserId = post.author_id || post.patient_author_id;
             const postLikes = likesByPost.get(post.id) || [];
             const postComments = commentsByPost.get(post.id) || [];
+            const reactionCounts = emptyReactionCounts();
+            for (const like of postLikes) {
+              if (isReactionType(like.reaction_type)) reactionCounts[like.reaction_type]++;
+            }
+            const myLike = user ? postLikes.find((l) => l.user_id === user.id) : undefined;
+            const myReaction = myLike && isReactionType(myLike.reaction_type) ? myLike.reaction_type : null;
             return (
               <PostCard
                 key={post.id}
@@ -131,8 +138,8 @@ export async function BlogListContent({
                 authorIdentity={authorUserId ? identities[authorUserId] : undefined}
                 authorUserId={authorUserId}
                 isFollowingAuthor={!!authorUserId && followingSet.has(authorUserId)}
-                likeCount={postLikes.length}
-                isLiked={!!user && postLikes.some((l) => l.user_id === user.id)}
+                reactionCounts={reactionCounts}
+                myReaction={myReaction}
                 comments={postComments}
                 commenterIdentities={identities}
               />

@@ -1,11 +1,13 @@
 import Link from "next/link";
 import { excerptFrom } from "@/lib/blog";
 import type { PublicIdentity } from "@/lib/blog-identity";
+import type { ReactionType } from "@/lib/blog-reactions";
 import { toggleFollowAction } from "../social-actions";
-import { toggleLikeAction, addCommentAction, editCommentAction, deleteCommentAction } from "./actions";
+import { addCommentAction, editCommentAction, deleteCommentAction } from "./actions";
 import ShareButton from "./ShareButton";
 import CollapsibleComments from "./CollapsibleComments";
 import PostMenu from "./PostMenu";
+import ReactionButton from "./ReactionButton";
 
 interface Comment {
   id: string;
@@ -42,8 +44,6 @@ function Avatar({ identity }: { identity?: PublicIdentity }) {
   );
 }
 
-const actionBtn = "flex items-center gap-1.5 text-[13px] font-medium text-gray-500 hover:text-gray-900 transition-colors";
-
 export default function PostCard({
   post,
   basePath,
@@ -52,8 +52,8 @@ export default function PostCard({
   authorIdentity,
   authorUserId,
   isFollowingAuthor,
-  likeCount,
-  isLiked,
+  reactionCounts,
+  myReaction,
   comments,
   commenterIdentities,
 }: {
@@ -64,8 +64,8 @@ export default function PostCard({
   authorIdentity?: PublicIdentity;
   authorUserId: string | null;
   isFollowingAuthor: boolean;
-  likeCount: number;
-  isLiked: boolean;
+  reactionCounts: Record<ReactionType, number>;
+  myReaction: ReactionType | null;
   comments: Comment[];
   commenterIdentities: Record<string, PublicIdentity>;
 }) {
@@ -119,13 +119,7 @@ export default function PostCard({
       )}
 
       <div className="flex flex-wrap items-center gap-5 pt-3" style={{ borderTop: "1px solid var(--gray-200)" }}>
-        <form action={toggleLikeAction}>
-          <input type="hidden" name="post_id" value={post.id} />
-          <input type="hidden" name="slug" value={post.slug} />
-          <button type="submit" className={actionBtn} style={isLiked ? { color: "var(--indigo-600)" } : undefined}>
-            {isLiked ? "♥" : "♡"} Like{likeCount > 0 ? ` (${likeCount})` : ""}
-          </button>
-        </form>
+        <ReactionButton postId={post.id} slug={post.slug} reactionCounts={reactionCounts} myReaction={myReaction} />
 
         <ShareButton path={postUrl} />
 

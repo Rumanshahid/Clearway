@@ -7,6 +7,7 @@ import { requireBlogIdentity } from "@/lib/blog-identity";
 import { checkAlarmingContent, notifySuperAdminsOfFlag } from "@/lib/blog-moderation";
 import { notifyFollowersOfNewContent } from "@/lib/follows";
 import { slugify } from "@/lib/blog";
+import { isReactionType } from "@/lib/blog-reactions";
 
 // Like/comment actions are now triggerable from the feed itself (any of
 // three basePaths), not just the detail page -- revalidate all of them
@@ -148,20 +149,26 @@ export async function deleteOwnBlogPostAction(formData: FormData) {
 export async function toggleLikeAction(formData: FormData) {
   const postId = String(formData.get("post_id") || "");
   const slug = String(formData.get("slug") || "");
+  const reactionTypeRaw = String(formData.get("reaction_type") || "like");
+  const reactionType = isReactionType(reactionTypeRaw) ? reactionTypeRaw : "like";
   const identity = await requireBlogIdentity(`/blog/${slug}`);
 
   const supabase = await createClient();
   const { data: existing } = await supabase
     .from("blog_likes")
-    .select("post_id")
+    .select("reaction_type")
     .eq("post_id", postId)
     .eq("user_id", identity.userId)
     .maybeSingle();
 
-  if (existing) {
+  if (existing?.reaction_type === reactionType) {
+    // Clicking the same reaction again removes it.
     await supabase.from("blog_likes").delete().eq("post_id", postId).eq("user_id", identity.userId);
+  } else if (existing) {
+    // Switching from one reaction to another -- one per user per post.
+    await supabase.from("blog_likes").update({ reaction_type: reactionType }).eq("post_id", postId).eq("user_id", identity.userId);
   } else {
-    await supabase.from("blog_likes").insert({ post_id: postId, user_id: identity.userId });
+    await supabase.from("blog_likes").insert({ post_id: postId, user_id: identity.userId, reaction_type: reactionType });
   }
 
   revalidateBlogSurfaces(slug);

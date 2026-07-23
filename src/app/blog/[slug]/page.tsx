@@ -10,12 +10,13 @@ import { renderMarkdown, excerptFrom } from "@/lib/blog";
 import { getPublicIdentities } from "@/lib/blog-identity";
 import { toggleFollowAction } from "../../social-actions";
 import {
-  toggleLikeAction,
   addCommentAction,
   editCommentAction,
   deleteCommentAction,
 } from "../actions";
 import PostMenu from "../PostMenu";
+import ReactionButton from "../ReactionButton";
+import { emptyReactionCounts, isReactionType } from "@/lib/blog-reactions";
 
 async function getPost(slug: string) {
   const supabase = await createClient();
@@ -97,14 +98,19 @@ export async function BlogPostContent({
 
   const [{ data: profile }, { data: likes }, { data: comments }, suggested] = await Promise.all([
     user ? supabase.from("profiles").select("role").eq("id", user.id).maybeSingle() : Promise.resolve({ data: null }),
-    supabase.from("blog_likes").select("user_id").eq("post_id", post.id),
+    supabase.from("blog_likes").select("user_id, reaction_type").eq("post_id", post.id),
     supabase.from("blog_comments").select("*").eq("post_id", post.id).order("created_at", { ascending: true }),
     getSuggestedPosts(post.id, post.tags),
   ]);
 
   const isSuperAdmin = profile?.role === "super_admin";
   const isOwner = (post.author_id && post.author_id === user?.id) || (post.patient_author_id && post.patient_author_id === user?.id);
-  const isLiked = !!user && (likes || []).some((l) => l.user_id === user.id);
+  const reactionCounts = emptyReactionCounts();
+  for (const like of likes || []) {
+    if (isReactionType(like.reaction_type)) reactionCounts[like.reaction_type]++;
+  }
+  const myLike = user ? (likes || []).find((l) => l.user_id === user.id) : undefined;
+  const myReaction = myLike && isReactionType(myLike.reaction_type) ? myLike.reaction_type : null;
 
   const identities = await getPublicIdentities([
     ...(post.author_id ? [post.author_id] : []),
@@ -160,17 +166,7 @@ export async function BlogPostContent({
         <div className="blog-preview" dangerouslySetInnerHTML={{ __html: renderMarkdown(post.content) }} />
 
         <div className="flex items-center gap-3 mt-10 pt-6" style={{ borderTop: "1px solid var(--gray-200)" }}>
-          <form action={toggleLikeAction}>
-            <input type="hidden" name="post_id" value={post.id} />
-            <input type="hidden" name="slug" value={post.slug} />
-            <button
-              type="submit"
-              className="btn"
-              style={isLiked ? { background: "var(--indigo-600)", color: "#fff" } : undefined}
-            >
-              {isLiked ? "♥ Liked" : "♡ Like"} ({(likes || []).length})
-            </button>
-          </form>
+          <ReactionButton postId={post.id} slug={post.slug} reactionCounts={reactionCounts} myReaction={myReaction} />
         </div>
 
         <section className="mt-10">

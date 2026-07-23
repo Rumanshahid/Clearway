@@ -917,6 +917,7 @@ export interface Database {
         Row: {
           post_id: string;
           user_id: string;
+          reaction_type: "like" | "support" | "insightful" | "love" | "laugh" | "angry" | "sad";
           created_at: string;
         };
         Insert: Partial<Database["public"]["Tables"]["blog_likes"]["Row"]> & {
