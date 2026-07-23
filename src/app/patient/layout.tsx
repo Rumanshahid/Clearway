@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { createClient, createAdminClient } from "@/lib/supabase/server";
 import PatientNavBar from "./PatientNavBar";
+import PatientSidebar from "./PatientSidebar";
 
 export default async function PatientLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient();
@@ -21,9 +22,12 @@ export default async function PatientLayout({ children }: { children: React.Reac
     .limit(30);
 
   return (
-    <div className="min-h-screen flex flex-col">
-      <PatientNavBar name={account.first_name} notifications={notifications || []} />
-      <main className="flex-1 bg-gray-50">{children}</main>
+    <div className="min-h-screen flex">
+      <PatientSidebar />
+      <div className="flex-1 min-w-0 flex flex-col">
+        <PatientNavBar name={account.first_name} notifications={notifications || []} />
+        <main className="flex-1 bg-gray-50">{children}</main>
+      </div>
     </div>
   );
 }
