@@ -11,10 +11,16 @@ export interface ConversationPreview {
 }
 
 // Self-contained (own open state + click-outside-to-close) so it can be
-// placed anywhere in the sidebar independently of the other icons --
-// dropdown opens to the right (sm:left-full) since the trigger now lives
-// in a left rail, not a top bar.
-export default function ChatBell({ conversations }: { conversations: ConversationPreview[] }) {
+// placed anywhere independently of the other icons.
+export default function ChatBell({
+  conversations,
+  align = "right",
+}: {
+  conversations: ConversationPreview[];
+  // "right": opens to the right, for a left rail. "down": opens below-left,
+  // for the top-right corner cluster (TopRightIcons.tsx).
+  align?: "right" | "down";
+}) {
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
@@ -37,18 +43,20 @@ export default function ChatBell({ conversations }: { conversations: Conversatio
     <div ref={containerRef} className="relative">
       <button
         type="button"
-        className="relative w-10 h-10 rounded-full bg-white flex items-center justify-center flex-shrink-0 transition-transform hover:scale-110 active:scale-95"
+        className="relative w-10 h-10 rounded-full bg-white flex items-center justify-center flex-shrink-0 transition-transform hover:scale-125 active:scale-95"
         style={{ border: "1px solid var(--gray-200)", boxShadow: "0 1px 2px rgba(16,24,40,0.04)", ...(open ? { background: "var(--gray-100)" } : {}) }}
         onClick={() => setOpen((v) => !v)}
         aria-label="Chat"
       >
-        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-          <path d="M2 3.5h12v7H6l-3 2.5v-2.5H2v-7z" stroke="var(--gray-600)" strokeWidth="1.3" strokeLinejoin="round" />
+        <svg width="17" height="17" viewBox="0 0 16 16" fill="none">
+          <path d="M2 3.5h12v7H6l-3 2.5v-2.5H2v-7z" stroke="var(--gray-900)" strokeWidth="1.4" strokeLinejoin="round" />
         </svg>
       </button>
 
       <div
-        className={`dropdown-panel fixed sm:absolute right-3 sm:right-auto left-3 sm:left-full top-16 sm:top-0 sm:ml-2 sm:w-[320px] card z-20 overflow-hidden${open ? " open" : ""}`}
+        className={`dropdown-panel fixed sm:absolute right-3 left-3 top-16 sm:w-[320px] card z-20 overflow-hidden ${
+          align === "right" ? "sm:right-auto sm:left-full sm:top-0 sm:ml-2" : "sm:right-0 sm:left-auto sm:top-full sm:mt-2"
+        }${open ? " open" : ""}`}
       >
         <div className="flex items-center justify-between px-4 py-3" style={{ borderBottom: "1px solid var(--gray-200)" }}>
           <span className="text-[13.5px] font-semibold">Chat</span>

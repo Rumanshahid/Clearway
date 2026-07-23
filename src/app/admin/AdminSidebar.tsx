@@ -51,7 +51,7 @@ export default function AdminSidebar() {
             title={item.label}
             aria-label={item.label}
             aria-current={active ? "page" : undefined}
-            className="w-11 h-11 rounded-xl flex items-center justify-center transition-transform transition-colors flex-shrink-0 hover:scale-110 active:scale-95"
+            className="w-11 h-11 rounded-xl flex items-center justify-center transition-transform transition-colors flex-shrink-0 hover:scale-125 active:scale-95"
             style={active ? { background: "rgba(255,255,255,.16)", color: "#fff" } : { color: "#A0A8C0" }}
           >
             {item.icon}
@@ -65,7 +65,7 @@ export default function AdminSidebar() {
         href="/doctor/dashboard"
         title="Back to app"
         aria-label="Back to app"
-        className="w-11 h-11 rounded-xl flex items-center justify-center transition-transform hover:scale-110 active:scale-95"
+        className="w-11 h-11 rounded-xl flex items-center justify-center transition-transform hover:scale-125 active:scale-95"
         style={{ color: "#A0A8C0" }}
       >
         <ArrowLeftIcon />
@@ -75,7 +75,7 @@ export default function AdminSidebar() {
           type="submit"
           title="Sign out"
           aria-label="Sign out"
-          className="w-11 h-11 rounded-xl flex items-center justify-center transition-transform hover:scale-110 active:scale-95"
+          className="w-11 h-11 rounded-xl flex items-center justify-center transition-transform hover:scale-125 active:scale-95"
           style={{ color: "#A0A8C0" }}
         >
           <LogOutIcon />

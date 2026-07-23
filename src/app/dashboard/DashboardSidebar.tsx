@@ -2,17 +2,15 @@ import Link from "next/link";
 import SidebarLink from "@/components/SidebarLink";
 import { GridIcon, FileTextIcon, UsersIcon, FlagIcon, CalendarIcon, PenIcon, HelpCircleIcon } from "@/components/SidebarIcons";
 import type { DashboardNavData } from "@/lib/dashboardNav";
-import ChatBell from "./ChatBell";
 import TasksBell from "./TasksBell";
-import NotificationBell from "./NotificationBell";
 import UserMenu from "./UserMenu";
 
 // Left icon rail for the staff dashboard -- primary nav, then Tasks
-// (directly under Q&A), then Chat/Notifications as circular badges, then
-// the account avatar pinned to the bottom. Stays fixed in place while the
-// content column scrolls (sticky + h-screen).
+// (directly under Q&A), then the account avatar pinned to the bottom.
+// Chat and Notifications live in TopRightIcons.tsx instead. Stays fixed in
+// place while the content column scrolls (sticky + h-screen).
 export default function DashboardSidebar({ data }: { data: DashboardNavData }) {
-  const { isAdmin, sections, userId, userName, avatarUrl, plan, profileHref, conversations, tasks, notifications } = data;
+  const { isAdmin, sections, userId, userName, avatarUrl, plan, profileHref, tasks } = data;
   const showSection = (key: string) => isAdmin || sections.includes(key);
 
   return (
@@ -33,10 +31,6 @@ export default function DashboardSidebar({ data }: { data: DashboardNavData }) {
       <SidebarLink href="/doctor/blog" label="Blog" icon={<PenIcon />} />
       <SidebarLink href="/doctor/questions" label="Q&A" icon={<HelpCircleIcon />} />
       <TasksBell tasks={tasks} />
-
-      <div className="my-2 w-8" style={{ borderTop: "1px solid var(--gray-200)" }} />
-      <ChatBell conversations={conversations} />
-      <NotificationBell notifications={notifications} />
 
       <div className="flex-1" />
 

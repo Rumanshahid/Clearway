@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getDashboardNavData } from "@/lib/dashboardNav";
 import DashboardSidebar from "./DashboardSidebar";
+import TopRightIcons from "./TopRightIcons";
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient();
@@ -17,6 +18,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
   return (
     <div className="min-h-screen flex">
       <DashboardSidebar data={navData} />
+      <TopRightIcons data={navData} />
       <div className="flex-1 min-w-0 flex flex-col">
         {navData.billingStatus === "suspended" && (
           <div className="text-[13px] px-6 py-2 text-center" style={{ background: "var(--danger-bg)", color: "var(--danger-red)" }}>

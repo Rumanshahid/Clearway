@@ -5,6 +5,7 @@ import SiteNav from "../../SiteNav";
 import SiteFooter from "../../SiteFooter";
 import LandingScripts from "../../LandingScripts";
 import DashboardSidebar from "@/app/dashboard/DashboardSidebar";
+import TopRightIcons from "@/app/dashboard/TopRightIcons";
 import { createAdminClient, createClient } from "@/lib/supabase/server";
 import { getDashboardNavData } from "@/lib/dashboardNav";
 
@@ -199,6 +200,7 @@ export async function DoctorProfileContent({
     return (
       <div className="min-h-screen flex">
         <DashboardSidebar data={navData} />
+        <TopRightIcons data={navData} />
         <div className="flex-1 min-w-0 landing-root">
           {content}
           <SiteFooter />

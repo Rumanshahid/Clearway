@@ -1,20 +1,16 @@
 import Link from "next/link";
 import SidebarLink from "@/components/SidebarLink";
 import { UserIcon, FileTextIcon, FlagIcon, SearchIcon, PenIcon, HelpCircleIcon } from "@/components/SidebarIcons";
-import NotificationBell, { type NotificationRow } from "../dashboard/NotificationBell";
 import PatientUserMenu from "./PatientUserMenu";
-import { markNotificationReadAction, markAllNotificationsReadAction } from "./notification-actions";
 
 export default function PatientSidebar({
   userId,
   name,
   avatarUrl,
-  notifications,
 }: {
   userId: string;
   name: string;
   avatarUrl: string | null;
-  notifications: NotificationRow[];
 }) {
   return (
     <aside className="w-[68px] flex-shrink-0 bg-white border-r flex flex-col items-center py-4 gap-1 sticky top-0 h-screen overflow-y-auto" style={{ borderColor: "var(--gray-200)" }}>
@@ -30,13 +26,6 @@ export default function PatientSidebar({
       <SidebarLink href="/patient/doctor" label="Find a Doctor" icon={<SearchIcon />} />
       <SidebarLink href="/patient/blog" label="Blog" icon={<PenIcon />} />
       <SidebarLink href="/patient/questions" label="Q&A" icon={<HelpCircleIcon />} />
-
-      <div className="my-2 w-8" style={{ borderTop: "1px solid var(--gray-200)" }} />
-      <NotificationBell
-        notifications={notifications}
-        markOneReadAction={markNotificationReadAction}
-        markAllReadAction={markAllNotificationsReadAction}
-      />
 
       <div className="flex-1" />
 

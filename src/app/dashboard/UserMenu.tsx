@@ -39,7 +39,7 @@ export default function UserMenu({
     <div ref={containerRef} className="relative">
       <button
         type="button"
-        className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 transition-transform hover:scale-110 active:scale-95"
+        className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 transition-transform hover:scale-125 active:scale-95"
         style={open ? { boxShadow: "0 0 0 2px var(--indigo-600)" } : undefined}
         onClick={() => setOpen((v) => !v)}
         aria-label="Account menu"

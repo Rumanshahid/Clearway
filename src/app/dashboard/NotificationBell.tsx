@@ -70,14 +70,14 @@ export default function NotificationBell({
     <div ref={containerRef} className="relative">
       <button
         type="button"
-        className="relative w-10 h-10 rounded-full bg-white flex items-center justify-center flex-shrink-0 transition-transform hover:scale-110 active:scale-95"
+        className="relative w-10 h-10 rounded-full bg-white flex items-center justify-center flex-shrink-0 transition-transform hover:scale-125 active:scale-95"
         style={{ border: "1px solid var(--gray-200)", boxShadow: "0 1px 2px rgba(16,24,40,0.04)", ...(open ? { background: "var(--gray-100)" } : {}) }}
         onClick={() => setOpen((v) => !v)}
         aria-label="Notifications"
       >
-        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-          <path d="M4 6a4 4 0 118 0c0 3 1 4 1 4H3s1-1 1-4z" stroke="var(--gray-600)" strokeWidth="1.3" strokeLinejoin="round" />
-          <path d="M6.5 12a1.5 1.5 0 003 0" stroke="var(--gray-600)" strokeWidth="1.3" strokeLinecap="round" />
+        <svg width="17" height="17" viewBox="0 0 16 16" fill="none">
+          <path d="M4 6a4 4 0 118 0c0 3 1 4 1 4H3s1-1 1-4z" stroke="var(--gray-900)" strokeWidth="1.4" strokeLinejoin="round" />
+          <path d="M6.5 12a1.5 1.5 0 003 0" stroke="var(--gray-900)" strokeWidth="1.4" strokeLinecap="round" />
         </svg>
         {unreadCount > 0 && (
           <span
@@ -91,7 +91,7 @@ export default function NotificationBell({
 
       <div
         className={`dropdown-panel fixed sm:absolute right-3 left-3 top-16 sm:w-[320px] card z-20 overflow-hidden ${
-          align === "right" ? "sm:right-auto sm:left-full sm:top-0 sm:ml-2" : "sm:right-0 sm:left-auto sm:top-11"
+          align === "right" ? "sm:right-auto sm:left-full sm:top-0 sm:ml-2" : "sm:right-0 sm:left-auto sm:top-full sm:mt-2"
         }${open ? " open" : ""}`}
       >
         <div className="flex items-center justify-between px-4 py-3" style={{ borderBottom: "1px solid var(--gray-200)" }}>
