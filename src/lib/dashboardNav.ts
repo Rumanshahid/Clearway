@@ -8,7 +8,9 @@ import type { NotificationRow } from "@/app/dashboard/NotificationBell";
 export interface DashboardNavData {
   isAdmin: boolean;
   sections: string[];
+  userId: string;
   userName: string;
+  avatarUrl: string | null;
   plan: string | null;
   billingStatus: string | null;
   profileHref: string;
@@ -30,7 +32,7 @@ export async function getDashboardNavData(userId: string): Promise<DashboardNavD
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("practice_id, full_name, role, allowed_sections")
+    .select("practice_id, full_name, role, allowed_sections, avatar_url")
     .eq("id", userId)
     .single();
 
@@ -63,7 +65,9 @@ export async function getDashboardNavData(userId: string): Promise<DashboardNavD
   return {
     isAdmin,
     sections: profile.allowed_sections || [],
+    userId,
     userName: profile.full_name || "Account",
+    avatarUrl: profile.avatar_url || null,
     plan: practice?.plan || null,
     billingStatus: practice?.billing_status || null,
     profileHref,

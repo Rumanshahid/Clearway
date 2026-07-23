@@ -26,7 +26,7 @@ export default function SidebarLink({
       title={label}
       aria-label={label}
       aria-current={active ? "page" : undefined}
-      className="w-11 h-11 rounded-xl flex items-center justify-center transition-colors flex-shrink-0"
+      className="w-11 h-11 rounded-xl flex items-center justify-center transition-transform transition-colors flex-shrink-0 hover:scale-110 active:scale-95"
       style={active ? { background: "var(--navy-900)", color: "#fff" } : { color: "var(--gray-400)" }}
     >
       {icon}

@@ -4,7 +4,7 @@ import "../../landing.css";
 import SiteNav from "../../SiteNav";
 import SiteFooter from "../../SiteFooter";
 import LandingScripts from "../../LandingScripts";
-import DashboardNavBar from "@/app/dashboard/DashboardNavBar";
+import DashboardSidebar from "@/app/dashboard/DashboardSidebar";
 import { createAdminClient, createClient } from "@/lib/supabase/server";
 import { getDashboardNavData } from "@/lib/dashboardNav";
 
@@ -192,9 +192,25 @@ export async function DoctorProfileContent({
 
   if (!showChrome) return content;
 
+  // A signed-in doctor viewing their own public profile gets the dashboard
+  // sidebar (same as the rest of their dashboard) instead of the marketing
+  // nav -- everyone else gets the normal SiteNav.
+  if (navData) {
+    return (
+      <div className="min-h-screen flex">
+        <DashboardSidebar data={navData} />
+        <div className="flex-1 min-w-0 landing-root">
+          {content}
+          <SiteFooter />
+          <LandingScripts />
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="landing-root">
-      {navData ? <DashboardNavBar data={navData} /> : <SiteNav />}
+      <SiteNav />
       {content}
       <SiteFooter />
       <LandingScripts />

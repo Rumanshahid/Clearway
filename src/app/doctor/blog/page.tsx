@@ -6,7 +6,7 @@ export const metadata = {
 };
 
 // Renders the same list as /blog but inside the staff dashboard chrome
-// (DashboardNavBar via layout.tsx here) instead of the marketing SiteNav --
+// (DashboardSidebar via layout.tsx here) instead of the marketing SiteNav --
 // a signed-in doctor clicking "Blog" from their own dashboard should stay
 // inside the dashboard shell. basePath="/doctor/blog" so post, write, and
 // edit links stay under the dashboard prefix too -- see

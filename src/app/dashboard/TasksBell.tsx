@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 
 export interface TaskPreviewItem {
@@ -9,30 +10,33 @@ export interface TaskPreviewItem {
   due_time: string | null;
 }
 
-export default function TasksBell({
-  tasks,
-  open,
-  onMouseEnter,
-  onMouseLeave,
-}: {
-  tasks: TaskPreviewItem[];
-  open: boolean;
-  onMouseEnter: () => void;
-  onMouseLeave: () => void;
-}) {
+// Self-contained, same pattern as ChatBell.tsx.
+export default function TasksBell({ tasks }: { tasks: TaskPreviewItem[] }) {
+  const [open, setOpen] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
 
+  useEffect(() => {
+    if (!open) return;
+    function handleClickOutside(e: MouseEvent) {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) setOpen(false);
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [open]);
+
   function goToTasks(openAdd?: boolean) {
+    setOpen(false);
     router.push(openAdd ? "/dashboard/tasks?openAdd=1" : "/dashboard/tasks");
   }
 
   return (
-    <div className="relative" onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave}>
+    <div ref={containerRef} className="relative">
       <button
         type="button"
-        className="relative w-9 h-9 rounded-md flex items-center justify-center flex-shrink-0 hover:bg-gray-100 active:scale-95"
-        style={{ transition: "background-color 0.2s ease, transform 0.1s ease" }}
-        onClick={() => goToTasks(false)}
+        className="relative w-10 h-10 rounded-full bg-white flex items-center justify-center flex-shrink-0 transition-transform hover:scale-110 active:scale-95"
+        style={{ border: "1px solid var(--gray-200)", boxShadow: "0 1px 2px rgba(16,24,40,0.04)", ...(open ? { background: "var(--gray-100)" } : {}) }}
+        onClick={() => setOpen((v) => !v)}
         aria-label="Tasks"
       >
         <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
@@ -50,7 +54,7 @@ export default function TasksBell({
       </button>
 
       <div
-        className={`dropdown-panel fixed sm:absolute right-3 sm:right-0 left-3 sm:left-auto top-16 sm:top-11 sm:w-[320px] card z-20 overflow-hidden${open ? " open" : ""}`}
+        className={`dropdown-panel fixed sm:absolute right-3 sm:right-auto left-3 sm:left-full top-16 sm:top-0 sm:ml-2 sm:w-[320px] card z-20 overflow-hidden${open ? " open" : ""}`}
       >
         <div className="flex items-center justify-between px-4 py-3" style={{ borderBottom: "1px solid var(--gray-200)" }}>
           <span className="text-[13.5px] font-semibold">Tasks</span>

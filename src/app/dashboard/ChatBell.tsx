@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 
 export interface ConversationPreview {
@@ -9,30 +10,36 @@ export interface ConversationPreview {
   lastMessage: string | null;
 }
 
-export default function ChatBell({
-  conversations,
-  open,
-  onMouseEnter,
-  onMouseLeave,
-}: {
-  conversations: ConversationPreview[];
-  open: boolean;
-  onMouseEnter: () => void;
-  onMouseLeave: () => void;
-}) {
+// Self-contained (own open state + click-outside-to-close) so it can be
+// placed anywhere in the sidebar independently of the other icons --
+// dropdown opens to the right (sm:left-full) since the trigger now lives
+// in a left rail, not a top bar.
+export default function ChatBell({ conversations }: { conversations: ConversationPreview[] }) {
+  const [open, setOpen] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
 
+  useEffect(() => {
+    if (!open) return;
+    function handleClickOutside(e: MouseEvent) {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) setOpen(false);
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [open]);
+
   function goToChat(conversationId?: string) {
+    setOpen(false);
     router.push(conversationId ? `/dashboard/chat?conversation=${conversationId}` : "/dashboard/chat");
   }
 
   return (
-    <div className="relative" onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave}>
+    <div ref={containerRef} className="relative">
       <button
         type="button"
-        className="relative w-9 h-9 rounded-md flex items-center justify-center flex-shrink-0 hover:bg-gray-100 active:scale-95"
-        style={{ transition: "background-color 0.2s ease, transform 0.1s ease" }}
-        onClick={() => goToChat()}
+        className="relative w-10 h-10 rounded-full bg-white flex items-center justify-center flex-shrink-0 transition-transform hover:scale-110 active:scale-95"
+        style={{ border: "1px solid var(--gray-200)", boxShadow: "0 1px 2px rgba(16,24,40,0.04)", ...(open ? { background: "var(--gray-100)" } : {}) }}
+        onClick={() => setOpen((v) => !v)}
         aria-label="Chat"
       >
         <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
@@ -41,7 +48,7 @@ export default function ChatBell({
       </button>
 
       <div
-        className={`dropdown-panel fixed sm:absolute right-3 sm:right-0 left-3 sm:left-auto top-16 sm:top-11 sm:w-[320px] card z-20 overflow-hidden${open ? " open" : ""}`}
+        className={`dropdown-panel fixed sm:absolute right-3 sm:right-auto left-3 sm:left-full top-16 sm:top-0 sm:ml-2 sm:w-[320px] card z-20 overflow-hidden${open ? " open" : ""}`}
       >
         <div className="flex items-center justify-between px-4 py-3" style={{ borderBottom: "1px solid var(--gray-200)" }}>
           <span className="text-[13.5px] font-semibold">Chat</span>

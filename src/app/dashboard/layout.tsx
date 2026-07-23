@@ -2,7 +2,6 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getDashboardNavData } from "@/lib/dashboardNav";
-import DashboardNavBar from "./DashboardNavBar";
 import DashboardSidebar from "./DashboardSidebar";
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -19,7 +18,6 @@ export default async function DashboardLayout({ children }: { children: React.Re
     <div className="min-h-screen flex">
       <DashboardSidebar data={navData} />
       <div className="flex-1 min-w-0 flex flex-col">
-        <DashboardNavBar data={navData} />
         {navData.billingStatus === "suspended" && (
           <div className="text-[13px] px-6 py-2 text-center" style={{ background: "var(--danger-bg)", color: "var(--danger-red)" }}>
             Your account is suspended for billing. <Link href="/dashboard/billing" className="underline">Update billing</Link> to resume drafting letters.

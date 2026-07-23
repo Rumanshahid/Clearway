@@ -1,6 +1,5 @@
 import { redirect } from "next/navigation";
 import { createClient, createAdminClient } from "@/lib/supabase/server";
-import PatientNavBar from "./PatientNavBar";
 import PatientSidebar from "./PatientSidebar";
 
 export default async function PatientLayout({ children }: { children: React.ReactNode }) {
@@ -11,7 +10,7 @@ export default async function PatientLayout({ children }: { children: React.Reac
   if (!user) redirect("/sign-in");
 
   const admin = await createAdminClient();
-  const { data: account } = await admin.from("patient_accounts").select("first_name").eq("id", user.id).maybeSingle();
+  const { data: account } = await admin.from("patient_accounts").select("first_name, avatar_url").eq("id", user.id).maybeSingle();
   if (!account) redirect("/auth/choose-role");
 
   const { data: notifications } = await admin
@@ -23,11 +22,8 @@ export default async function PatientLayout({ children }: { children: React.Reac
 
   return (
     <div className="min-h-screen flex">
-      <PatientSidebar />
-      <div className="flex-1 min-w-0 flex flex-col">
-        <PatientNavBar name={account.first_name} notifications={notifications || []} />
-        <main className="flex-1 bg-gray-50">{children}</main>
-      </div>
+      <PatientSidebar userId={user.id} name={account.first_name} avatarUrl={account.avatar_url} notifications={notifications || []} />
+      <main className="flex-1 min-w-0 bg-gray-50">{children}</main>
     </div>
   );
 }

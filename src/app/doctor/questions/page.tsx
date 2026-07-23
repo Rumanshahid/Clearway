@@ -6,7 +6,7 @@ export const metadata = {
 };
 
 // Renders the same list as /questions but inside the staff dashboard
-// chrome (DashboardNavBar via layout.tsx here) instead of the marketing
+// chrome (DashboardSidebar via layout.tsx here) instead of the marketing
 // SiteNav -- see doctor/blog/page.tsx for the same reasoning. Deliberately
 // NOT passing a custom basePath -- individual question, ask, and edit
 // links inside QuestionsListContent still resolve to their existing
