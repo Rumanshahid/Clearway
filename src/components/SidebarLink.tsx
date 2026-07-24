@@ -29,7 +29,9 @@ export default function SidebarLink({
       aria-label={label}
       aria-current={active ? "page" : undefined}
       className={`rounded-xl flex items-center transition-colors flex-shrink-0 ${
-        expanded ? "w-full h-11 justify-start gap-3 px-3" : "w-11 h-11 justify-center"
+        expanded
+          ? "w-full h-11 justify-start gap-3 px-3 hover:bg-gray-50"
+          : "w-11 h-11 justify-center transition-transform hover:scale-110 active:scale-95"
       }`}
       style={active ? { background: "rgba(10, 20, 85, 0.08)", color: "var(--navy-900)" } : { color: "var(--gray-600)" }}
     >

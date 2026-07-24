@@ -34,7 +34,7 @@ export default function TasksBell({ tasks }: { tasks: TaskPreviewItem[] }) {
     <div ref={containerRef} className="relative">
       <button
         type="button"
-        className="relative w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 transition-colors"
+        className="relative w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 transition-colors transition-transform hover:scale-110 active:scale-95"
         style={{ color: "var(--gray-600)", ...(open ? { background: "rgba(79, 70, 229, 0.1)", color: "var(--indigo-600)" } : {}) }}
         onClick={() => setOpen((v) => !v)}
         aria-label="Tasks"
